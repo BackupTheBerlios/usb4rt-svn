@@ -30,16 +30,18 @@
 
 #define MAX_BUFFER_SIZE       256
 #define TASK_PRIORITY         1
-
-/* Callback oder Blocking URBs. Aufruf in Task-Scheife */
 #define ANZ_URBS              16
+
+/* Callback or Blocking URBs (RT_SEM) */
 #define BLOCKING
-#define MAX_WAIT_TIME        500000000  // 500 ms (Timeout-RT-SEM)
 //#undef BLOCKING
 
-/* Callback URBs. Aufruf im Interrupt-Handler */
-//#define NEXT_URB_IN_CALLBACK
-#undef NEXT_URB_IN_CALLBACK
+/* Parameter for Blocking URBs: */
+#define MAX_WAIT_TIME   500000000  /* 500 ms max sleep-time on RT_SEM */
+
+/* Parameter for Callback URBs: */
+//#define NEXT_URB_IN_CALLBACK     /* Next URB called by Interrupt-Handler */
+#undef NEXT_URB_IN_CALLBACK        /* Next URB called in Task-Loop */
 
 
 MODULE_LICENSE("GPL");
@@ -47,19 +49,19 @@ MODULE_LICENSE("GPL");
 int vendor = 0x0000;
 int product= 0x0000;
 int pings = 0;
-unsigned int alloc_bytes = 0;   // Angeforderte Byte des Modules
-int anz_retrys = ANZ_URBS;      // Anzahl der Durchgänge
-int retry = 0;                  // Nummer des Durchgangs
-int all_urbs_finished = 0;      // ==1, wenn alle URBs durchgeführt
-int len;                        // Länge des Configuration-Descriptor
+unsigned int alloc_bytes = 0;   // allocated Byte
+int anz_retrys = ANZ_URBS;      // Number of retrys
+int retry = 0;                  // actual retry
+int all_urbs_finished = 0;      // ==1, if all URBs finished
+int len;                        // length of Configuration-Descriptor
 RTIME min,max;
 RTIME sum = 0;
 RTIME value[ANZ_URBS];
 
 MODULE_PARM (vendor,"i");
-MODULE_PARM_DESC (vendor,"Hex-Wert für Vendor");
+MODULE_PARM_DESC (vendor,"Hex-Value of Vendor-ID");
 MODULE_PARM (product,"i");
-MODULE_PARM_DESC (product,"Hex-Wert für Product");
+MODULE_PARM_DESC (product,"Hex-Value of Product-ID");
 
 __u8 stop_timer = 1;
 
@@ -221,7 +223,7 @@ void periodic_fkt( void *p_data )
     retry++;
   }
 
-/* Warten bis alle URBs fertig */
+/* Waiting until all URBs completed */
     while(!all_urbs_finished ){
     rt_task_wait_period();
 
@@ -235,7 +237,7 @@ void periodic_fkt( void *p_data )
 
 #else //NEXT_URB_IN_CALLBACK
 
-/* Sende ersten URB, die anderen werden im Interrupt-Handler aufgerufen */
+/* Sending the first URB, the other called by Interrupt-Handler */
   p_urbs->send_time[retry] = rt_timer_read();
   printk("RT-USB-PING: Send-Time URB[%d] (Callback): %llu \n",retry,p_urbs->send_time[retry]);
   ret = rt_usb_submit_ctrl_urb( p_urbs->p_urb[retry],
@@ -264,7 +266,7 @@ void periodic_fkt( void *p_data )
   }
 #endif //NEXT_URB_IN_CALLBACK
 
-/* Auswertung der Zeiten */
+  /* calculating times */
   min = max = p_urbs->end_time[0] - p_urbs->send_time[0];
   sum = 0;
 

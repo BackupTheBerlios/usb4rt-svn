@@ -819,37 +819,9 @@ handle:
     return;
 }
 
-int rt_irq_handler(struct xnintr *p_xnintr)
+static inline void handle_controller( struct uhc_device *p_uhcd, __u16 stat )
 {
-  struct uhc_device *p_uhcd = NULL;
-  struct uhc_device *p_test = (struct uhc_device *)p_xnintr->cookie;
-
-  int i;
-  __u16 stat = 0x0000;
-
-  for(i=0;i<MAX_UHC_CONTROLLER;i++){
-    if(p_test == &uhc_dev[i]){
-
-      if(!p_test || !p_test->p_io){ /* kein I/O-Zeiger */
-        continue;                   /* weitersuchen */
-      }
-
-      stat = inw(p_test->p_io->start + USBSTS);
-
-      if (!(stat & ~USBSTS_HCH)) {  /* kein Status-Bit gesetzt */
-        continue;                   /* weitersuchen */
-      } else {                      /* Controller gefunden */
-        p_uhcd = p_test;            /* evtl. doch anderer Controller (IRQ-Sharing) */
-      }
-    }
-  }
-
-  if(!p_uhcd){
-    return RT_INTR_CHAINED;         /* shared interrupt, not mine */
-  }
-
   DBG_MSG1(p_uhcd->p_hcd," =================== BEGIN RTAI-INTERRUPT HANDLER =============================\n");
-
 
   if (stat & USBSTS_ERROR) {  //Interrupt due to error
     DBG_MSG1(p_uhcd->p_hcd," ===> Incoming IRQ %d, ERROR \n",p_uhcd->irq);
@@ -897,8 +869,40 @@ int rt_irq_handler(struct xnintr *p_xnintr)
 
   outw(stat, p_uhcd->p_io->start + USBSTS);                 // Clear it
   DBG_MSG1(p_uhcd->p_hcd," =================== ENDE RTAI-INTERRUPT HANDLER ==============================\n");
-  return RT_INTR_ENABLE;
+}
 
+int rt_irq_handler(struct xnintr *p_xnintr)
+{
+  struct uhc_device *p_uhcd = NULL;
+  struct uhc_device *p_test = (struct uhc_device *)p_xnintr->cookie;
+
+  int i;
+  __u16 stat = 0x0000;
+
+  for(i=0;i<MAX_UHC_CONTROLLER;i++){
+    if(p_test == &uhc_dev[i]){
+
+      if(!p_test || !p_test->p_io){ /* no I/O-Pointer */
+        continue;                   /* searching */
+      }
+
+      stat = inw(p_test->p_io->start + USBSTS);
+
+      if (!(stat & ~USBSTS_HCH)) {  /* no State-Bit set */
+        continue;                   /* searching */
+      } else {                      /* Interrupt-Controller found */
+        p_uhcd = p_test;
+        handle_controller(p_uhcd,stat);  /* handle this Controller */
+        /* search next Controller (IRQ-Sharing) */
+      }
+    }
+  }
+
+  if(!p_uhcd){
+    return RT_INTR_CHAINED;         /* shared interrupt, not mine */
+  }
+
+  return RT_INTR_ENABLE;
 }
 
 /******************************************************************/

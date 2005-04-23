@@ -20,7 +20,7 @@ Requirements
 Compilation
     1. "cd .../rtusb".
     2. "make RTAIDIR=<path_to_fusion_installation>", or just "make" if fusion
-       has been installed to /usr/realtime.
+       has been installed to /usr/realtime/fusion.
 
 
 Test
