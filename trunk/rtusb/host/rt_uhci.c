@@ -32,6 +32,8 @@
 #define DRIVER_AUTHOR "Joerg Langenberg - joergel@gmx.net"
 #define DRIVER_DESC "Realtime Driver for Universal Host Controller"
 
+#define BANDWIDTH_RECLAMATION
+
 int list=0;
 int device=0x0000;
 MODULE_PARM (list,"i");
@@ -49,6 +51,7 @@ struct uhc_device uhc_dev[MAX_UHC_CONTROLLER];
 struct hcd_funktions hcd_fkt;
 struct pci_dev *p_pcidev_old = NULL;
 unsigned int alloc_bytes = 0;
+RTIME rt_timer_overhead = 0;
 
 
 static u32 pci_io_addr[] = {
@@ -338,7 +341,7 @@ static void destroy_flame_list( struct uhc_device *p_uhcd )
     return;
   }
 
-  DBG2("RT-UHC-Driver: Deleting Framelist @ 0x%p (%d Byte)\n",p_uhcd->p_fl, sizeof(struct frame_list));
+  DBG("RT-UHC-Driver: Deleting Framelist @ 0x%p (%d Byte)\n",p_uhcd->p_fl, sizeof(struct frame_list));
 
   dma_free_coherent(&p_uhcd->p_pcidev->dev,sizeof(struct frame_list),p_uhcd->p_fl,p_uhcd->p_fl->dma_handle);
   p_uhcd->p_fl = NULL;
@@ -384,12 +387,19 @@ static int init_skel( struct uhc_device *p_uhcd )
 {
   int i;
 
-  p_uhcd->p_qh_sched = create_qh(p_uhcd);
-  if(!p_uhcd->p_qh_sched) {
-    ERR2("RT-UHC-Driver: [ERROR] Cannot allocate Schedule-QH \n");
+  p_uhcd->p_qh_lowspeed = create_qh(p_uhcd);
+  if(!p_uhcd->p_qh_lowspeed) {
+    ERR2("RT-UHC-Driver: [ERROR] Cannot allocate Low-Speed-QH \n");
     return -ENOMEM;
   }
-  QH_DBG("RT-UHC-Driver: Schedule-QH  @ 0x%p, DMA: 0x%p \n",p_uhcd->p_qh_sched,(void *)p_uhcd->p_qh_sched->dma_handle);
+  QH_DBG("RT-UHC-Driver: Low-Speed-QH  @ 0x%p, DMA: 0x%p \n",p_uhcd->p_qh_lowspeed,(void *)p_uhcd->p_qh_lowspeed->dma_handle);
+
+  p_uhcd->p_qh_fullspeed = create_qh(p_uhcd);
+  if(!p_uhcd->p_qh_fullspeed) {
+    ERR2("RT-UHC-Driver: [ERROR] Cannot allocate Full-Speed-QH \n");
+    return -ENOMEM;
+  }
+  QH_DBG("RT-UHC-Driver: Full-Speed-QH  @ 0x%p, DMA: 0x%p \n",p_uhcd->p_qh_fullspeed,(void *)p_uhcd->p_qh_fullspeed->dma_handle);
 
   p_uhcd->p_qh_term = create_qh(p_uhcd);
   if(!p_uhcd->p_qh_term) {
@@ -413,19 +423,25 @@ static int init_skel( struct uhc_device *p_uhcd )
                                             td_token_addr(0x7f) |
                                             td_token_maxlen(7) );
 
+  p_uhcd->p_qh_lowspeed->link    = cpu_to_le32( p_uhcd->p_qh_fullspeed->dma_handle | LINK_TO_QH | LINK_NO_TERM );
+  p_uhcd->p_qh_lowspeed->element = cpu_to_le32( LINK_TERM );
 
-  /* TUNING */
-  p_uhcd->p_qh_term->link    = cpu_to_le32( p_uhcd->p_qh_sched->dma_handle | LINK_TO_QH | LINK_NO_TERM );
-//p_uhcd->p_qh_term->link    = cpu_to_le32( LINK_TERM );
+  p_uhcd->p_qh_fullspeed->link    = cpu_to_le32( p_uhcd->p_qh_term->dma_handle | LINK_TO_QH | LINK_NO_TERM );
+  p_uhcd->p_qh_fullspeed->element = cpu_to_le32( LINK_TERM );
+
+
+#ifdef BANDWIDTH_RECLAMATION
+  p_uhcd->p_qh_term->link    = cpu_to_le32( p_uhcd->p_qh_fullspeed->dma_handle | LINK_TO_QH | LINK_NO_TERM );
+#else
+  p_uhcd->p_qh_term->link    = cpu_to_le32( LINK_TERM );
+#endif
+
 //p_uhcd->p_qh_term->element = cpu_to_le32( LINK_TERM );
   p_uhcd->p_qh_term->element = cpu_to_le32( p_uhcd->p_td_loop->dma_handle | LINK_NO_TERM | LINK_TO_TD | LINK_NO_VF);
 
-  p_uhcd->p_qh_sched->link    = cpu_to_le32( p_uhcd->p_qh_term->dma_handle | LINK_TO_QH | LINK_NO_TERM );
-  p_uhcd->p_qh_sched->element = cpu_to_le32( LINK_TERM );
-
   int ret;
   for(i=0; i<MAX_FRAMES; i++) {
-    ret = append_qh_on_fl( p_uhcd->p_qh_sched, p_uhcd->p_fl, i);
+    ret = append_qh_on_fl( p_uhcd->p_qh_lowspeed, p_uhcd->p_fl, i);
   }
 
   return 0;
@@ -454,60 +470,60 @@ static void dump_uhcd( struct uhc_device *p_uhcd )
   stat = inw(p_uhcd->p_io->start + USBSTS);
   intr = inw(p_uhcd->p_io->start + USBINTR);
 
-  DBG2("========== DUMP UHC-Controller [%d] @ 0x%p ===========\n",p_uhcd->uhcd_nr,p_uhcd);
+  DBG("========== DUMP UHC-Controller [%d] @ 0x%p ===========\n",p_uhcd->uhcd_nr,p_uhcd);
 #ifdef CONFIG_PCI_NAMES
-  DBG2("   Name : %s \n",p_uhcd->p_pcidev->pretty_name);
+  DBG("   Name : %s \n",p_uhcd->p_pcidev->pretty_name);
 #else
-  DBG2("   Name : USB Universal Host Controller\n");
+  DBG("   Name : USB Universal Host Controller\n");
 #endif
-  DBG2("   Vendor = 0x%4x, Device = 0x%4x, Class = 0x%x, IRQ = %d ",
+  DBG("   Vendor = 0x%4x, Device = 0x%4x, Class = 0x%x, IRQ = %d ",
       p_uhcd->p_pcidev->vendor,p_uhcd->p_pcidev->device,p_uhcd->p_pcidev->class,p_uhcd->p_pcidev->irq);
-  DBG2("\n   COMMAND (0x%04x): ", cmd);
-  if (!(cmd & USBCMD_RS) )    DBG2("STOP ");
-  if (cmd & USBCMD_RS )       DBG2("RUN ");
-  if (cmd & USBCMD_HCRESET )  DBG2("HCRESET "); //Host-Controller Reset
-  if (cmd & USBCMD_GRESET )   DBG2("GRESET ");  //Global-Reset
-  if (cmd & USBCMD_EGSM )     DBG2("EGSM ");  //Enter global Suspend Mode
-  if (cmd & USBCMD_FGR )      DBG2("FGR ");     //Force global Resume
-  DBG2("\n   USBSTS  (0x%04x): ", stat);
-  if (! stat )                DBG2("OK ");
-  if (stat & USBSTS_HCH )     DBG2("HCH ");  //HC Halted
-  if (stat & USBSTS_HCPE )    DBG2("HCPE "); //Host Controller Process Error - the scripts were buggy
-  if (stat & USBSTS_USBINT )  DBG2("IOC ");  //Interrupt due to IOC
-  if (stat & USBSTS_ERROR )   DBG2("ERROR ");  //Interrupt due to error
-  if (stat & USBSTS_HSE )     DBG2("HSE ");  //Host System Error - basically PCI problems
-  if (stat & USBSTS_RD )      DBG2("RD "); //Resume Detect
-  DBG2("\n   USBINTR (0x%04x): ", intr);
-  if (! intr )                DBG2("NONE "); //No Interrupts
-  if (intr & USBINTR_TIMEOUT) DBG2("TIMEOUT ");//Timeout / CRC Interrupt Enable
-  if (intr & USBINTR_RESUME)  DBG2("RESUME "); //Resume Interrupt Enable
-  if (intr & USBINTR_IOC )    DBG2("IOC ");  //Interrupt on Complete (IOC)
-  if (intr & USBINTR_SP )     DBG2("SP "); //Short Packet Interrupt Enable \n");
-  DBG2("\n   FRNUM           : 0x%04x", inw(p_uhcd->p_io->start + FRNUM));
-  DBG2("\n   FLBASEADD       : 0x%08x", inl(p_uhcd->p_io->start + FRBASEADD));
-  DBG2("\n   SOFMOD          : 0x%02x", inb(p_uhcd->p_io->start + SOFMOD));
+  DBG("\n   COMMAND (0x%04x): ", cmd);
+  if (!(cmd & USBCMD_RS) )    DBG("STOP ");
+  if (cmd & USBCMD_RS )       DBG("RUN ");
+  if (cmd & USBCMD_HCRESET )  DBG("HCRESET "); //Host-Controller Reset
+  if (cmd & USBCMD_GRESET )   DBG("GRESET ");  //Global-Reset
+  if (cmd & USBCMD_EGSM )     DBG("EGSM ");  //Enter global Suspend Mode
+  if (cmd & USBCMD_FGR )      DBG("FGR ");     //Force global Resume
+  DBG("\n   USBSTS  (0x%04x): ", stat);
+  if (! stat )                DBG("OK ");
+  if (stat & USBSTS_HCH )     DBG("HCH ");  //HC Halted
+  if (stat & USBSTS_HCPE )    DBG("HCPE "); //Host Controller Process Error - the scripts were buggy
+  if (stat & USBSTS_USBINT )  DBG("IOC ");  //Interrupt due to IOC
+  if (stat & USBSTS_ERROR )   DBG("ERROR ");  //Interrupt due to error
+  if (stat & USBSTS_HSE )     DBG("HSE ");  //Host System Error - basically PCI problems
+  if (stat & USBSTS_RD )      DBG("RD "); //Resume Detect
+  DBG("\n   USBINTR (0x%04x): ", intr);
+  if (! intr )                DBG("NONE "); //No Interrupts
+  if (intr & USBINTR_TIMEOUT) DBG("TIMEOUT ");//Timeout / CRC Interrupt Enable
+  if (intr & USBINTR_RESUME)  DBG("RESUME "); //Resume Interrupt Enable
+  if (intr & USBINTR_IOC )    DBG("IOC ");  //Interrupt on Complete (IOC)
+  if (intr & USBINTR_SP )     DBG("SP "); //Short Packet Interrupt Enable \n");
+  DBG("\n   FRNUM           : 0x%04x", inw(p_uhcd->p_io->start + FRNUM));
+  DBG("\n   FLBASEADD       : 0x%08x", inl(p_uhcd->p_io->start + FRBASEADD));
+  DBG("\n   SOFMOD          : 0x%02x", inb(p_uhcd->p_io->start + SOFMOD));
 
   unsigned short k=0;
   for(k=0 ; k < p_uhcd->p_hcd->rh_numports; k++){
     port_base = p_uhcd->p_io->start + 0x10 + ( 0x02 * k);
     port[k] = inw(port_base);
-    DBG2("\n   PORTSC%d @ 0x%04x (0x%04x) : ",k,port_base,port[k]);
-    if (port[k] & PORTSC_CSC )      DBG2("CSC ");  //Connect Status Change
-    if (port[k] & PORTSC_PE)        DBG2("PE "); //Port Enabled
-    if (port[k] & PORTSC_PEC)       DBG2("PEC ");  //Port Enable/Disable Change
-    if (port[k] & PORTSC_DPLUS)     DBG2("D+ "); //D+ active
-    if (port[k] & PORTSC_DMINUS)    DBG2("D- "); //D- active
-    if (port[k] & PORTSC_RD)        DBG2("RD "); //Resume Detect on Port
+    DBG("\n   PORTSC%d @ 0x%04x (0x%04x) : ",k,port_base,port[k]);
+    if (port[k] & PORTSC_CSC )      DBG("CSC ");  //Connect Status Change
+    if (port[k] & PORTSC_PE)        DBG("PE "); //Port Enabled
+    if (port[k] & PORTSC_PEC)       DBG("PEC ");  //Port Enable/Disable Change
+    if (port[k] & PORTSC_DPLUS)     DBG("D+ "); //D+ active
+    if (port[k] & PORTSC_DMINUS)    DBG("D- "); //D- active
+    if (port[k] & PORTSC_RD)        DBG("RD "); //Resume Detect on Port
     if (port[k] & PORTSC_CCS) {
-      if (port[k] & PORTSC_LSDA)    DBG2("LS "); //Low Speed Device Attached
-      if (!(port[k] & PORTSC_LSDA)) DBG2("FS "); //Full Speed Device Attached
+      if (port[k] & PORTSC_LSDA)    DBG("LS "); //Low Speed Device Attached
+      if (!(port[k] & PORTSC_LSDA)) DBG("FS "); //Full Speed Device Attached
     }
-    if (port[k] & PORTSC_PR)        DBG2("PR "); //Port k is in Reset
-    if (port[k] & PORTSC_OC)        DBG2("OC "); //Overcurrent-Pin is Active
-    if (port[k] & PORTSC_OCC)       DBG2("OCC ");  //Overcurrent-Pin changed from Low to High
-    if (port[k] & PORTSC_SUSPEND)   DBG2("SUSPEND ");//Port k in suspend Mode
+    if (port[k] & PORTSC_PR)        DBG("PR "); //Port k is in Reset
+    if (port[k] & PORTSC_OC)        DBG("OC "); //Overcurrent-Pin is Active
+    if (port[k] & PORTSC_OCC)       DBG("OCC ");  //Overcurrent-Pin changed from Low to High
+    if (port[k] & PORTSC_SUSPEND)   DBG("SUSPEND ");//Port k in suspend Mode
   }
-  DBG2("\n========== END DUMP UHC-Controller [%d] @ 0x%p ==========\n",p_uhcd->uhcd_nr,p_uhcd);
+  DBG("\n========== END DUMP UHC-Controller [%d] @ 0x%p ==========\n",p_uhcd->uhcd_nr,p_uhcd);
 #endif
   return;
 }
@@ -524,7 +540,7 @@ int uhc_clear_stat( struct uhc_device *p_uhcd )
     return -ENODEV;
   }
 
-  DBG2("RT-UHC-Driver: Clear Status\n");
+  DBG("RT-UHC-Driver: Clear Status\n");
 
   unsigned short stat;
   stat = inw(p_uhcd->p_io->start + USBSTS);
@@ -567,7 +583,7 @@ int uhc_global_reset( struct uhc_device *p_uhcd )
     return -ENODEV;
   }
 
-  DBG2("RT-UHC-Driver: Global Reset\n");
+  DBG("RT-UHC-Driver: Global Reset\n");
 
   /* Turn off PIRQ .This also turns off the BIOS's USB Legacy Support.*/
   pci_write_config_word(p_uhcd->p_pcidev,USBLEGSUP, 0);
@@ -597,7 +613,7 @@ int uhc_start( struct uhc_device *p_uhcd )
     return -ENODEV;
   }
 
-  DBG2("RT-UHC-Driver: Starte Host Controller\n");
+  DBG("RT-UHC-Driver: Starte Host Controller\n");
   int timeout = 1000;
 
   /* Host Controller Reset */
@@ -632,7 +648,7 @@ int uhc_stop( struct uhc_device *p_uhcd )
     return -ENODEV;
   }
 
-  DBG2("RT-UHC-Driver: Stoppe Host Controller\n");
+  DBG("RT-UHC-Driver: Stoppe Host Controller\n");
 
   unsigned short tmp;
   tmp = inw(p_uhcd->p_io->start + USBCMD);
@@ -666,7 +682,7 @@ static int uhc_init( struct uhc_device *p_uhcd )
     ERR2("RT-UHC-Driver: [ERROR] %s - Creating Framelist failed\n",__FUNCTION__);
     return ret;
   }
-  DBG2("RT-UHC-Driver: Framelist    @ 0x%p, DMA: 0x%p (%d Byte) \n",
+  DBG("RT-UHC-Driver: Framelist    @ 0x%p, DMA: 0x%p (%d Byte) \n",
       (void *)p_uhcd->p_fl,(void *)p_uhcd->p_fl->dma_handle, sizeof(struct frame_list));
 
   /* Initialisiere Scheduler */
@@ -675,7 +691,7 @@ static int uhc_init( struct uhc_device *p_uhcd )
     ERR2("RT-UHC-Driver: [ERROR] %s - Init Skeleton failed\n",__FUNCTION__);
     return ret;
   }
-  DBG2("RT-UHC-Driver: Skeleton initialized\n");
+  DBG("RT-UHC-Driver: Skeleton initialized\n");
 
   ret = rh_init( p_uhcd );
   if(ret) {
@@ -684,28 +700,28 @@ static int uhc_init( struct uhc_device *p_uhcd )
   }
 
   /* Setting Bus-Master */
-  DBG2("RT-UHC-Driver: Setting Bus-Master\n");
+  DBG("RT-UHC-Driver: Setting Bus-Master\n");
   unsigned short tmp;
   pci_read_config_word(p_uhcd->p_pcidev,PCICMD,&tmp);
   tmp |= PCICMD_BME;
   pci_write_config_word(p_uhcd->p_pcidev,PCICMD,tmp);
 
   /* Writing Framellist */
-  DBG2("RT-UHC-Driver: Write Framellist 0x%p \n",(void *)p_uhcd->p_fl->dma_handle);
+  DBG("RT-UHC-Driver: Write Framellist 0x%p \n",(void *)p_uhcd->p_fl->dma_handle);
   outl( p_uhcd->p_fl->dma_handle, p_uhcd->p_io->start + FRBASEADD);
 
    /* Set Max-Packet to 64 */
-  DBG2("RT-UHC-Driver: Setting Max-Packet to 64 \n");
+  DBG("RT-UHC-Driver: Setting Max-Packet to 64 \n");
   outw( inw( p_uhcd->p_io->start + USBCMD ) | USBCMD_MAXP , p_uhcd->p_io->start + USBCMD);
 
   /* Setting Framenummer to 0 */
-  DBG2("RT-UHC-Driver: Set Framenummer to 0\n");
+  DBG("RT-UHC-Driver: Set Framenummer to 0\n");
   outw(0x0000,p_uhcd->p_io->start + FRNUM);
 
   uhc_disable_all_interrupts(p_uhcd);
 
   /* Setting Ports into Suspend-Mode */
-  DBG2("RT-UHC-Driver: Set Ports into Suspend-Mode\n");
+  DBG("RT-UHC-Driver: Set Ports into Suspend-Mode\n");
   for(i=0;i<p_uhcd->p_hcd->rh_numports;i++){
     rh_port = p_uhcd->p_io->start + 0x10 + (i * 0x02);
     outw(0x1000,rh_port);
@@ -783,7 +799,7 @@ static inline void handle_urb(__u16 stat, struct uhc_device *p_uhcd, struct rt_p
           (td_status(p_td) & TD_STAT_BABBLE)   ? "BABBLE ":"",
           (td_status(p_td) & TD_STAT_CRCTIMEO) ? "CRC or TIMEOUT ":"",
           (td_status(p_td) & TD_STAT_BITSTUFF) ? "BITSTUFF ":"");
-        DBG2("\n");
+        DBG("\n");
         dump_td_table(p_purb,0);
 
         int toggle = ( td_status(p_td) & TD_TOKEN_TOGGLE ? 1 : 0 );
@@ -1065,24 +1081,24 @@ void dump_urb( struct rt_urb *p_urb )
     return;
   }
 
-  DBG2("========== DUMP URB 0x%p ======================\n",p_urb);
-  DBG2(" Host-Controller   @ 0x%p\n",p_urb->p_hcd);
-  DBG2(" Max Buffer-Length : %d Byte\n",p_urb->max_buffer_len);
-  DBG2(" Max Packet-Size   : %d Byte\n",p_urb->max_packet_size);
-  DBG2(" \n");
-  DBG2(" USB-Device        @ 0x%p\n",p_urb->p_usbdev);
-  DBG2(" Pipe              : %d \n",p_urb->pipe);
-  DBG2(" Flags             : %d \n",p_urb->transfer_flags);
-  DBG2(" Transfer-Buffer   @ 0x%p\n",p_urb->p_transfer_buffer);
-  DBG2(" Transfer-DMA      @ 0x%p\n",(void *)p_urb->transfer_dma);
-  DBG2(" Transf-Buff-Length: %d Byte\n",p_urb->transfer_buffer_length);
-  DBG2(" Ctrl-Request-Pack @ 0x%p\n",p_urb->p_setup_packet);
-  DBG2(" Ctrl-Request-DMA  @ 0x%p\n",(void *)p_urb->setup_dma);
-  DBG2(" Private           @ 0x%p\n",p_urb->p_private);
-  DBG2(" RT-Complete-Funct @ 0x%p\n",p_urb->rt_complete_fkt);
-  DBG2(" Status            : %d\n",p_urb->status);
-  DBG2(" Actual Length     : %d Byte \n",p_urb->actual_length);
-  DBG2("======================================================\n");
+  DBG("========== DUMP URB 0x%p ======================\n",p_urb);
+  DBG(" Host-Controller   @ 0x%p\n",p_urb->p_hcd);
+  DBG(" Max Buffer-Length : %d Byte\n",p_urb->max_buffer_len);
+  DBG(" Max Packet-Size   : %d Byte\n",p_urb->max_packet_size);
+  DBG(" \n");
+  DBG(" USB-Device        @ 0x%p\n",p_urb->p_usbdev);
+  DBG(" Pipe              : %d \n",p_urb->pipe);
+  DBG(" Flags             : %d \n",p_urb->transfer_flags);
+  DBG(" Transfer-Buffer   @ 0x%p\n",p_urb->p_transfer_buffer);
+  DBG(" Transfer-DMA      @ 0x%p\n",(void *)p_urb->transfer_dma);
+  DBG(" Transf-Buff-Length: %d Byte\n",p_urb->transfer_buffer_length);
+  DBG(" Ctrl-Request-Pack @ 0x%p\n",p_urb->p_setup_packet);
+  DBG(" Ctrl-Request-DMA  @ 0x%p\n",(void *)p_urb->setup_dma);
+  DBG(" Private           @ 0x%p\n",p_urb->p_private);
+  DBG(" RT-Complete-Funct @ 0x%p\n",p_urb->rt_complete_fkt);
+  DBG(" Status            : %d\n",p_urb->status);
+  DBG(" Actual Length     : %d Byte \n",p_urb->actual_length);
+  DBG("======================================================\n");
 }
 
 static int map_dma( struct rt_privurb *p_purb )
@@ -1184,13 +1200,13 @@ static int wait_for_urb( struct rt_privurb *p_purb )
   }
 
   td_t *p_td = NULL;
-  RTIME ns_per_retry = 1000; // 1us
-  int retrys_per_td = 1000000; // 1ms
-  int retrys;
-  RTIME start,stop, urb_start, urb_end;
+  RTIME ns_per_retry =     80; // 80ns (12MHz @ Full-Speed)
+  unsigned int retrys_per_td = 6250000; // 500ms (500ms/80ns)
+  unsigned int retrys;
+  RTIME start, stop, urb_start, urb_end;
 
   struct list_head *p_list = p_purb->active_td_list.next;
-  urb_start = rt_timer_read();
+  urb_start = p_purb->p_urb->schedule_time;
 
   while(p_list !=  &p_purb->active_td_list){
     p_td = list_entry(p_list,td_t,active_td_list);
@@ -1199,15 +1215,20 @@ static int wait_for_urb( struct rt_privurb *p_purb )
     start = rt_timer_read();
 
     while(retrys && get_status_active(p_td)) {
-      /* TD still aktive, waiting usec_per_td */
+      /* TD still aktive, waiting ns_per_retry */
       rt_timer_spin( ns_per_retry );
       retrys--;
     }
 
     stop = rt_timer_read();
 
-    DBG_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: Wait for TD[%d]: %llu ns\n",p_purb->p_urb,
-             p_td->td_nr, stop - start );
+    if( retrys == retrys_per_td ){
+      DBG_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: Wait for TD[%d]: 0 ns\n",p_purb->p_urb,
+             p_td->td_nr);
+    } else {
+      DBG_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: Wait for TD[%d]: %llu ns\n",p_purb->p_urb,
+             p_td->td_nr, stop - start - rt_timer_overhead);
+    }
 
     if(!retrys){
       /* Time-Out for this TD */
@@ -1221,7 +1242,7 @@ static int wait_for_urb( struct rt_privurb *p_purb )
   urb_end = rt_timer_read();
 
   DBG_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: Complete Wait-Time: %llu ns\n",p_purb->p_urb,
-             urb_end - urb_start );
+             urb_end - urb_start - rt_timer_overhead );
 
   return 0;
 }
@@ -1317,7 +1338,7 @@ static void rt_unschedule_ctrl_bulk_urb( struct rt_privurb *p_purb )
 
   qh_t *p_urb_qh = p_purb->p_qh;
   qh_t *p_prev_qh;
-  qh_t *p_next_qh;
+//  qh_t *p_next_qh;
 
   if( list_empty(&p_urb_qh->qh_link_list) ){
     ERR2("[ERROR] %s - URB 0x%p: Not in QH-Link-List\n",__FUNCTION__,p_purb->p_urb);
@@ -1325,10 +1346,10 @@ static void rt_unschedule_ctrl_bulk_urb( struct rt_privurb *p_purb )
   }
 
   p_prev_qh = list_entry( p_urb_qh->qh_link_list.prev, qh_t, qh_link_list);
-  p_next_qh = list_entry( p_urb_qh->qh_link_list.next, qh_t, qh_link_list);
-  if(p_next_qh == p_purb->p_uhcd->p_qh_sched){
-    p_next_qh = p_purb->p_uhcd->p_qh_term;
-  }
+//  p_next_qh = list_entry( p_urb_qh->qh_link_list.next, qh_t, qh_link_list);
+//  if(p_next_qh == p_purb->p_uhcd->p_qh_sched){
+//    p_next_qh = p_purb->p_uhcd->p_qh_term;
+//  }
 
   /*
   DBG("VORHER  : ------------   ------------   ------------\n");
@@ -1350,7 +1371,8 @@ static void rt_unschedule_ctrl_bulk_urb( struct rt_privurb *p_purb )
   DBG("NACHHER : ------------   ------------\n");
   */
 
-  DBG_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: ---UNSCHEDULE---\n",p_purb->p_urb);
+  DBG_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: ---UNSCHEDULE from %s-List ---\n",p_purb->p_urb,
+    p_purb->p_urb->p_usbdev->speed == USB_SPEED_LOW ? "Low-Speed" : "Full-Speed" );
 
   p_purb->p_urb->unschedule_time = rt_timer_read();
 
@@ -1382,9 +1404,15 @@ static int rt_schedule_ctrl_bulk_urb( struct rt_privurb *p_purb )
     return -ENODEV;
   }
 
-  qh_t *p_sched_qh = p_purb->p_uhcd->p_qh_sched;
   qh_t *p_urb_qh = p_purb->p_qh;
   qh_t *p_prev_qh;
+  qh_t *p_sched_qh;
+
+  if( p_purb->p_urb->p_usbdev->speed == USB_SPEED_LOW){
+    p_sched_qh = p_purb->p_uhcd->p_qh_lowspeed;
+  } else {
+    p_sched_qh = p_purb->p_uhcd->p_qh_fullspeed;
+  }
 
   if(list_empty(&p_sched_qh->qh_link_list)){  // Dieser URB ist erster
     p_prev_qh = p_sched_qh;
@@ -1419,7 +1447,8 @@ static int rt_schedule_ctrl_bulk_urb( struct rt_privurb *p_purb )
 
   */
 
-  DBG_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: ---SCHEDULE ---\n",p_purb->p_urb);
+  DBG_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: ---SCHEDULE in %s-List ---\n",p_purb->p_urb,
+    p_purb->p_urb->p_usbdev->speed == USB_SPEED_LOW ? "Low-Speed" : "Full-Speed" );
 
   p_purb->p_urb->schedule_time = rt_timer_read();
 
@@ -1531,7 +1560,7 @@ static int rt_uhci_send_ctrl_urb( struct rt_privurb *p_purb )
                                   td_status_lowspeed( p_urb->p_usbdev->speed == USB_SPEED_LOW ? 1 : 0 ) |
                                   td_status_spd( p_urb->transfer_flags & URB_SHORT_NOT_OK ? 1 : 0 ) |
                                   td_status_errcount(0) |
-                                  td_status_ioc(1) );
+                                  td_status_ioc( p_purb->urb_wait_flags == URB_WAIT_BUSY ? 0 : 1) );
   p_list->token   = cpu_to_le32(  td_token_pid( out ? IN_TOKEN : OUT_TOKEN ) |
                                   td_token_maxlen(0x7ff) |
                                   td_token_endpoint( usb_pipeendpoint(p_urb->pipe) ) |
@@ -1583,7 +1612,7 @@ static int rt_uhci_send_bulk_urb( struct rt_privurb *p_purb )
                                   td_status_bits(0) |
                                   td_status_lowspeed( p_urb->p_usbdev->speed == USB_SPEED_LOW ? 1 : 0 ) |
                                   td_status_spd( p_urb->transfer_flags & URB_SHORT_NOT_OK ? 1 : 0 ) |
-                                  td_status_ioc( remaining ? 0 : 1 ) |
+                                  td_status_ioc( remaining ? 0 : p_purb->urb_wait_flags == URB_WAIT_BUSY ? 0 : 1 ) |
                                   td_status_errcount(0) );
     p_list->token  = cpu_to_le32( td_token_pid( out ? OUT_TOKEN : IN_TOKEN ) |
                                   td_token_endpoint( usb_pipeendpoint(p_urb->pipe) ) |
@@ -1851,7 +1880,8 @@ void nrt_uhci_remove_controller( struct uhc_device *p_uhcd )
   }
 
   destroy_td(p_uhcd->p_td_loop);
-  destroy_qh(p_uhcd->p_qh_sched);
+  destroy_qh(p_uhcd->p_qh_fullspeed);
+  destroy_qh(p_uhcd->p_qh_lowspeed);
   destroy_qh(p_uhcd->p_qh_term);
 
   destroy_flame_list(p_uhcd);
@@ -2257,7 +2287,13 @@ int __init mod_start(void)
     return -ENODEV;
   }
 
+  RTIME start, end;
+  start = rt_timer_read();
+  end = rt_timer_read();
+  rt_timer_overhead = end - start;
+
   PRNT("RT-UHC-Driver: Loading Completed (%d Byte allocated) \n",alloc_bytes);
+
 
   return 0;
 }

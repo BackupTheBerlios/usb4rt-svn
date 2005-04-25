@@ -111,7 +111,7 @@ int rh_init( struct uhc_device *p_uhcd )
   }
 
   if (port < 2 || port > UHC_RH_MAXCHILD) {
-    DBG2("RT-UHC-Driver: Root-Hub: Port count misdetected? Forcing to 2 ports\n");
+    DBG("RT-UHC-Driver: Root-Hub: Port count misdetected? Forcing to 2 ports\n");
     port = 2;
   }
   p_uhcd->p_hcd->rh_numports = port;

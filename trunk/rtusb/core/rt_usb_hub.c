@@ -45,7 +45,7 @@ int usb_init_hub( struct rt_urb *p_urb )
 	}
 
 	alloc_bytes += sizeof(hub_descriptor_t);
-	DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "+", sizeof(hub_descriptor_t) );
+	DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "+", sizeof(hub_descriptor_t) );
 
 	memset( p_hub_desc,0,sizeof( hub_descriptor_t ) );
 	p_urb->p_usbdev->p_hub_desc = p_hub_desc;
@@ -54,7 +54,7 @@ int usb_init_hub( struct rt_urb *p_urb )
 	if( hub_get_descriptor( p_urb, p_hub_desc ) ){
 		kfree(p_hub_desc);
 		alloc_bytes -= sizeof(hub_descriptor_t);
-		DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof(hub_descriptor_t) );
+		DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof(hub_descriptor_t) );
 
 		return -1;
 	}

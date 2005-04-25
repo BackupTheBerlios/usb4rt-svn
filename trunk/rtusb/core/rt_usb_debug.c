@@ -88,10 +88,10 @@ void dump_configuration_descriptor( struct usb_device *p_usbdev )
 	DBG_MSG2(p_usbdev->p_hcd,p_usbdev," Conf Value    : 0x%02x \n",p_desc->bConfigurationValue);
 	DBG_MSG2(p_usbdev->p_hcd,p_usbdev," Config        : 0x%02x \n",p_desc->iConfiguration);
 	DBG_MSG2(p_usbdev->p_hcd,p_usbdev," Attributes    : 0x%02x -" ,p_desc->bmAttributes);
-	if(p_desc->bmAttributes & 0x20 ) DBG2(" Remote-Wakeup");
-	if(p_desc->bmAttributes & 0x40 ) DBG2(" Self-Powered");
-	if(p_desc->bmAttributes & 0x80 ) DBG2(" Bus-Powered");
-	DBG2("\n");
+	if(p_desc->bmAttributes & 0x20 ) DBG(" Remote-Wakeup");
+	if(p_desc->bmAttributes & 0x40 ) DBG(" Self-Powered");
+	if(p_desc->bmAttributes & 0x80 ) DBG(" Bus-Powered");
+	DBG("\n");
 	DBG_MSG2(p_usbdev->p_hcd,p_usbdev," Max Power     : %d mA \n", 2 * p_desc->bMaxPower);
   return;
 }
@@ -125,13 +125,13 @@ void dump_endpoint_descriptor( struct usb_device *p_usbdev, struct usb_endpoint_
 	DBG_MSG2(p_usbdev->p_hcd,p_usbdev," Length        : 0x%02x (%d Bytes)\n",p_desc->bLength,p_desc->bLength);
 	DBG_MSG2(p_usbdev->p_hcd,p_usbdev," Type          : 0x%02x \n",p_desc->bDescriptorType);
 	DBG_MSG2(p_usbdev->p_hcd,p_usbdev," Endpoint-Nr   : 0x%02x - ",p_desc->bEndpointAddress);
-	if( (p_desc->bEndpointAddress & 0x80))	DBG2("IN-EP \n");
-	if(!(p_desc->bEndpointAddress & 0x80))	DBG2("OUT-EP \n");
+	if( (p_desc->bEndpointAddress & 0x80))	DBG("IN-EP \n");
+	if(!(p_desc->bEndpointAddress & 0x80))	DBG("OUT-EP \n");
 	DBG_MSG2(p_usbdev->p_hcd,p_usbdev," Attributes    : 0x%02x - ",p_desc->bmAttributes);
-	if( p_desc->bmAttributes == 0x00 )			DBG2("Control-Transfer \n");
-	if( p_desc->bmAttributes == 0x01)				DBG2("Isochronous-Transfer \n");
-	if( p_desc->bmAttributes == 0x02)				DBG2("Bulk-Transfer \n");
-	if( p_desc->bmAttributes == 0x03)				DBG2("Interrupt-Transfer \n");
+	if( p_desc->bmAttributes == 0x00 )			DBG("Control-Transfer \n");
+	if( p_desc->bmAttributes == 0x01)				DBG("Isochronous-Transfer \n");
+	if( p_desc->bmAttributes == 0x02)				DBG("Bulk-Transfer \n");
+	if( p_desc->bmAttributes == 0x03)				DBG("Interrupt-Transfer \n");
 	DBG_MSG2(p_usbdev->p_hcd,p_usbdev," Max Packetsize: %d Bytes \n",p_desc->wMaxPacketSize);
 	DBG_MSG2(p_usbdev->p_hcd,p_usbdev," Interval      : %d ms \n",p_desc->bInterval);
 	return;
@@ -371,23 +371,23 @@ void dump_urb( struct rt_urb *p_urb )
 		return;
 	}
 
-	DBG2("========== DUMP URB 0x%p ======================\n",p_urb);
-	DBG2(" Host-Controller   @ 0x%p\n",p_urb->p_hcd);
-	DBG2(" Max Buffer-Length : %d Byte\n",p_urb->max_buffer_len);
-	DBG2(" Max Packet-Size   : %d Byte\n",p_urb->max_packet_size);
-	DBG2(" \n");
-	DBG2(" USB-Device        @ 0x%p\n",p_urb->p_usbdev);
-	DBG2(" Pipe              : %d \n",p_urb->pipe);
-	DBG2(" Flags             : %d \n",p_urb->transfer_flags);
-	DBG2(" Transfer-Buffer   @ 0x%p\n",p_urb->p_transfer_buffer);
-	DBG2(" Transfer-DMA      @ 0x%p\n",(void *)p_urb->transfer_dma);
-	DBG2(" Transf-Buff-Length: %d Byte\n",p_urb->transfer_buffer_length);
-	DBG2(" Ctrl-Request-Pack @ 0x%p\n",p_urb->p_setup_packet);
-	DBG2(" Ctrl-Request-DMA  @ 0x%p\n",(void *)p_urb->setup_dma);
-	DBG2(" Private           @ 0x%p\n",p_urb->p_private);
-	DBG2(" RT-Complete-Funct @ 0x%p\n",p_urb->rt_complete_fkt);
-	DBG2(" Status            : %d\n",p_urb->status);
-	DBG2(" Actual Length     : %d Byte \n",p_urb->actual_length);
-	DBG2("======================================================\n");
+	DBG("========== DUMP URB 0x%p ======================\n",p_urb);
+	DBG(" Host-Controller   @ 0x%p\n",p_urb->p_hcd);
+	DBG(" Max Buffer-Length : %d Byte\n",p_urb->max_buffer_len);
+	DBG(" Max Packet-Size   : %d Byte\n",p_urb->max_packet_size);
+	DBG(" \n");
+	DBG(" USB-Device        @ 0x%p\n",p_urb->p_usbdev);
+	DBG(" Pipe              : %d \n",p_urb->pipe);
+	DBG(" Flags             : %d \n",p_urb->transfer_flags);
+	DBG(" Transfer-Buffer   @ 0x%p\n",p_urb->p_transfer_buffer);
+	DBG(" Transfer-DMA      @ 0x%p\n",(void *)p_urb->transfer_dma);
+	DBG(" Transf-Buff-Length: %d Byte\n",p_urb->transfer_buffer_length);
+	DBG(" Ctrl-Request-Pack @ 0x%p\n",p_urb->p_setup_packet);
+	DBG(" Ctrl-Request-DMA  @ 0x%p\n",(void *)p_urb->setup_dma);
+	DBG(" Private           @ 0x%p\n",p_urb->p_private);
+	DBG(" RT-Complete-Funct @ 0x%p\n",p_urb->rt_complete_fkt);
+	DBG(" Status            : %d\n",p_urb->status);
+	DBG(" Actual Length     : %d Byte \n",p_urb->actual_length);
+	DBG("======================================================\n");
 
 }

@@ -221,7 +221,8 @@ struct uhc_device {
   struct list_head reg_urb_list;      /* list pointer to all registered urbs */
   struct list_head handle_urb_list;   /* list pointer to all active urbs */
 
-  qh_t *p_qh_sched;
+  qh_t *p_qh_lowspeed;
+  qh_t *p_qh_fullspeed;
   qh_t *p_qh_term;
   td_t *p_td_loop;
 };

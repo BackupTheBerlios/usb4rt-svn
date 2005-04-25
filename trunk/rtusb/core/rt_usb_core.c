@@ -82,7 +82,7 @@ static __u8 get_free_hcd_nr( void )
 		i++;
 	}
 	ctrl_mask |= (1 << i);
-	DBG2("RT-USBCORE: Get free HCD %d. Mask: 0x%08lx \n",i, ctrl_mask);
+	DBG("RT-USBCORE: Get free HCD %d. Mask: 0x%08lx \n",i, ctrl_mask);
 	return i;
 }
 
@@ -98,7 +98,7 @@ static void put_free_hcd_nr( struct hc_device *p_hcd )
 		return;
 	}
 	ctrl_mask &= ~( 1 << p_hcd->hcd_nr);
-	DBG2("RT-USBCORE: Delete HCD %d. Mask: 0x%08lx \n",p_hcd->hcd_nr, ctrl_mask);
+	DBG("RT-USBCORE: Delete HCD %d. Mask: 0x%08lx \n",p_hcd->hcd_nr, ctrl_mask);
 	return;
 }
 
@@ -137,14 +137,14 @@ void nrt_usb_search_devices( struct hc_device *p_hcd )
 		} else {
 			DBG_MSG1(p_hcd,"%02d: Device found ... ",i);
 			if( p_new_usbdev->class == 0x09 && p_new_usbdev->p_hub_desc){
-				DBG2("-> New HUB\n");
+				DBG("-> New HUB\n");
 				p_hub = kmalloc( sizeof(struct hub_device), GFP_KERNEL);
 				if(!p_hub){
 					ERR_MSG1(p_hcd," No Memory for HUB-Device");
 				} else {
 
 					alloc_bytes += sizeof(struct hub_device);
-					DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n",alloc_bytes,"+",sizeof(struct hub_device));
+					DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n",alloc_bytes,"+",sizeof(struct hub_device));
 
 					p_hub->p_usbdev = p_new_usbdev;
 					p_hub->configured = 0;
@@ -152,7 +152,7 @@ void nrt_usb_search_devices( struct hc_device *p_hcd )
 					list_add_tail(&p_hub->hub_list, &hub_list);
 				}
 			} else {
-				DBG2("-> No HUB\n");
+				DBG("-> No HUB\n");
 			}
 		}
 		DBG_MSG1(p_hcd,"%02d: Root-Hub portscan complete\n",i);
@@ -222,14 +222,14 @@ void nrt_usb_search_devices( struct hc_device *p_hcd )
 				} else {
 					DBG_MSG2(p_hcd,p_new_usbdev,"%02d: Device on HUB-Port found ... ",hub_port_nr);
 					if( p_new_usbdev->class == 0x09 && p_new_usbdev->p_hub_desc){
-						DBG2("-> New HUB ( %d Ports)\n",p_new_usbdev->p_hub_desc->bNbrPorts);
+						DBG("-> New HUB ( %d Ports)\n",p_new_usbdev->p_hub_desc->bNbrPorts);
 						p_hub_new = kmalloc( sizeof(struct hub_device), GFP_KERNEL);
 						if(!p_hub_new){
 							ERR_MSG1(p_hcd," No Memory for HUB-Device");
 						} else {
 
 							alloc_bytes += sizeof(struct hub_device);
-							DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n",alloc_bytes,"+",sizeof(struct hub_device));
+							DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n",alloc_bytes,"+",sizeof(struct hub_device));
 
 							p_hub_new->p_usbdev = p_new_usbdev;
 							p_hub_new->configured = 0;
@@ -237,7 +237,7 @@ void nrt_usb_search_devices( struct hc_device *p_hcd )
 							list_add_tail(&p_hub_new->hub_list, &hub_list);
 						}
 					} else {
-						DBG2("-> No HUB\n");
+						DBG("-> No HUB\n");
 					}
 				}
 				DBG_MSG2(p_hcd,p_hub->p_usbdev,"%02d: HUB-Portscan complete\n",hub_port_nr);
@@ -456,21 +456,21 @@ static void usb_clear_device( struct usb_device *p_usbdev )
 			DBG_MSG2(p_hcd,p_usbdev," Free Hub-Descriptor @ 0x%p\n",p_usbdev->p_hub_desc);
 			kfree(p_usbdev->p_hub_desc);
 			alloc_bytes -= sizeof( hub_descriptor_t );
-			DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof( hub_descriptor_t) );
+			DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof( hub_descriptor_t) );
 		}
 		if(p_usbdev->p_cfg_desc){
 			len = p_usbdev->p_cfg_desc->wTotalLength;
 			DBG_MSG2(p_hcd,p_usbdev," Free Configuration-Descriptor @ 0x%p\n",p_usbdev->p_cfg_desc);
 			kfree(p_usbdev->p_cfg_desc);
 			alloc_bytes -= len;
-			DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", len );
+			DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", len );
 		}
 		if(p_usbdev->p_dev_desc){
 			len = p_usbdev->p_dev_desc->bLength;
 			DBG_MSG2(p_hcd,p_usbdev," Free Device-Descriptor @ 0x%p\n",p_usbdev->p_dev_desc);
 			kfree(p_usbdev->p_dev_desc);
 			alloc_bytes -= len;
-			DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", len );
+			DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", len );
 		}
 	}
 
@@ -825,7 +825,7 @@ struct usb_device *nrt_usb_config_dev( struct hc_device *p_hcd, __u8 rh_port_nr,
 	}
 
 	alloc_bytes += len;
-	DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n",alloc_bytes,"+",len);
+	DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n",alloc_bytes,"+",len);
 
 	memcpy( p_usbdev->p_dev_desc, p_dev_desc, len);
 
@@ -884,7 +884,7 @@ struct usb_device *nrt_usb_config_dev( struct hc_device *p_hcd, __u8 rh_port_nr,
 	}
 
 	alloc_bytes += len;
-	DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n",alloc_bytes,"+",len);
+	DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n",alloc_bytes,"+",len);
 
 	memcpy( p_usbdev->p_cfg_desc, p_conf_desc, len);
 
@@ -1046,7 +1046,7 @@ static int rt_intern_usb_submit_urb( struct rt_urb *p_urb, __u16 urb_submit_flag
 
 		case USB_ENDPOINT_XFER_CONTROL:
 
-			DBG2("CTRL\n");
+			DBG("CTRL\n");
 			if( !(p_urb->p_usbdev->ctrl_mask[(out?1:0)] & (1 << endpoint))){
 				ERR_MSG2(p_urb->p_hcd,p_urb->p_usbdev," %s - %s-Endpoint %d is no CTRL \n",__FUNCTION__,out?"OUT":"IN",endpoint);
 				return -ENODEV;
@@ -1073,7 +1073,7 @@ static int rt_intern_usb_submit_urb( struct rt_urb *p_urb, __u16 urb_submit_flag
 
 		case USB_ENDPOINT_XFER_BULK:
 
-			DBG2("BULK\n");
+			DBG("BULK\n");
 			if( !(p_urb->p_usbdev->bulk_mask[(out?1:0)] & (1 << endpoint))){
 				ERR_MSG2(p_urb->p_hcd,p_urb->p_usbdev," %s - %s-Endpoint %d is no BULK \n",__FUNCTION__,out?"OUT":"IN",endpoint);
 				return -ENODEV;
@@ -1086,7 +1086,7 @@ static int rt_intern_usb_submit_urb( struct rt_urb *p_urb, __u16 urb_submit_flag
 			break;
 		case USB_ENDPOINT_XFER_INT:
 
-			DBG2("INT\n");
+			DBG("INT\n");
 			if( !(p_urb->p_usbdev->int_mask[(out?1:0)] & (1 << endpoint))){
 				ERR_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB 0x%p: %s-Endpoint %d is no INT \n",p_urb,out?"OUT":"IN",endpoint);
 				return -ENODEV;
@@ -1096,7 +1096,7 @@ static int rt_intern_usb_submit_urb( struct rt_urb *p_urb, __u16 urb_submit_flag
 
 		case USB_ENDPOINT_XFER_ISOC:
 
-			DBG2("ISO\n");
+			DBG("ISO\n");
 			if( !(p_urb->p_usbdev->iso_mask[(out?1:0)] & (1 << endpoint))){
 				ERR_MSG2(p_urb->p_hcd,p_urb->p_usbdev," %s - %s-Endpoint %d is no ISO \n",__FUNCTION__,out?"OUT":"IN",endpoint);
 				return -ENODEV;
@@ -1274,7 +1274,7 @@ int nrt_hcd_unregister_driver( struct hc_device *p_hcd)
 			list_del_init(&p_hub->hub_list);
 			kfree(p_hub);
 			alloc_bytes -= sizeof( struct hub_device );
-			DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof(struct hub_device) );
+			DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof(struct hub_device) );
 		}
 		p_list = p_next;
 	}
@@ -1314,7 +1314,7 @@ struct usb_device *rt_usb_get_device(__u16 vendor, __u16 product , struct usb_de
 		start = p_old_device->address + 1;
 	}
 
-	DBG2("RT-USBCORE: Driver is searching for Device with Vendor = 0x%04x, Product = 0x%04x \n",vendor,product);
+	DBG("RT-USBCORE: Driver is searching for Device with Vendor = 0x%04x, Product = 0x%04x \n",vendor,product);
 
 	for(i = start; i < MAX_USB_DEV ; i++ ){
 
@@ -1328,9 +1328,9 @@ struct usb_device *rt_usb_get_device(__u16 vendor, __u16 product , struct usb_de
 			list_usb_devices();
 
 			if(!p_dev){
-				DBG2("RT-USBCORE: Cannot lock USB-Device[%d] \n",p_list->address);
+				DBG("RT-USBCORE: Cannot lock USB-Device[%d] \n",p_list->address);
 			} else {
-				DBG2("RT-USBCORE: USB-Device[%d] LOCKED \n",p_dev->address);
+				DBG("RT-USBCORE: USB-Device[%d] LOCKED \n",p_dev->address);
 				return p_dev;
 			}
 
@@ -1350,7 +1350,7 @@ void rt_usb_put_device( struct usb_device *p_usbdev )
 		return;
 	}
 
-	DBG2("RT-USBCORE: Driver releases USB-Device[%d] \n",p_usbdev->address);
+	DBG("RT-USBCORE: Driver releases USB-Device[%d] \n",p_usbdev->address);
 
 	usb_unlock_device(p_usbdev);
 
@@ -1369,11 +1369,11 @@ struct rt_urb *nrt_usb_alloc_urb( void )
 		ERR2("RT-USBCORE: [ERROR] No memory for RT-URB \n");
 		return NULL;
 	}
-	DBG2("RT-USBCORE: URB 0x%p created (%d Byte)\n",p_urb, sizeof(struct rt_urb));
+	DBG("RT-USBCORE: URB 0x%p created (%d Byte)\n",p_urb, sizeof(struct rt_urb));
 	memset(p_urb,0,sizeof(struct rt_urb));
 
 	alloc_bytes += sizeof(struct rt_urb);
-	DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "+", sizeof(struct rt_urb) );
+	DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "+", sizeof(struct rt_urb) );
 
 	p_urb->p_setup_packet = NULL;
 	p_urb->setup_dma = 0;
@@ -1391,11 +1391,11 @@ void nrt_usb_free_urb( struct rt_urb *p_urb )
 		return;
 	}
 
-	DBG2("RT-USBCORE: URB 0x%p deleted\n",p_urb);
+	DBG("RT-USBCORE: URB 0x%p deleted\n",p_urb);
 	kfree(p_urb);
 
 	alloc_bytes -= sizeof(struct rt_urb);
-	DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof(struct rt_urb) );
+	DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof(struct rt_urb) );
 
 }
 
@@ -1420,11 +1420,11 @@ struct rt_urb *nrt_usb_alloc_ctrl_urb( void )
 		return NULL;
 	}
 
-	DBG2("RT-USBCORE: URB 0x%p: Control-Request created (%d Byte)\n",p_urb,sizeof(struct usb_ctrlrequest));
+	DBG("RT-USBCORE: URB 0x%p: Control-Request created (%d Byte)\n",p_urb,sizeof(struct usb_ctrlrequest));
 	memset(p_ctrl,0,sizeof(struct usb_ctrlrequest));
 
 	alloc_bytes += sizeof(struct usb_ctrlrequest);
-	DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "+", sizeof(struct usb_ctrlrequest) );
+	DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "+", sizeof(struct usb_ctrlrequest) );
 
 	p_urb->p_setup_packet = p_ctrl;
 
@@ -1443,10 +1443,10 @@ void nrt_usb_free_ctrl_urb( struct rt_urb *p_urb )
 
 	if(p_urb->p_setup_packet){
 		kfree(p_urb->p_setup_packet);
-		DBG2("RT-USBCORE: URB 0x%p: Control-Request deleted (%d Byte)\n",p_urb,sizeof(struct usb_ctrlrequest));
+		DBG("RT-USBCORE: URB 0x%p: Control-Request deleted (%d Byte)\n",p_urb,sizeof(struct usb_ctrlrequest));
 
 		alloc_bytes -= sizeof(struct usb_ctrlrequest);
-		DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof(struct usb_ctrlrequest) );
+		DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof(struct usb_ctrlrequest) );
 
 	}
 
@@ -1529,7 +1529,7 @@ struct rt_urb *nrt_usb_create_ctrl_semaphore_urb( unsigned char *name , RTIME rt
 	p_urb->rt_complete_fkt = NULL;
 	p_urb->rt_sem_timeout = rt_sem_timeout;
 
-	DBG2("RT-USBCORE: URB 0x%p: Init RT-Semaphore (%s)\n",p_urb,name);
+	DBG("RT-USBCORE: URB 0x%p: Init RT-Semaphore (%s)\n",p_urb,name);
 	int ret = rt_sem_create( &p_urb->rt_sem, name, 0, S_PRIO );
 	if(ret){
 		if(ret == -EEXIST) ERR2("RT-USBCORE: [ERROR] RT-SEM: The name is already in use by some registered object \n");
@@ -1550,7 +1550,7 @@ struct rt_urb *nrt_usb_create_ctrl_semaphore_urb( unsigned char *name , RTIME rt
  */
 void nrt_usb_destroy_ctrl_semaphore_urb( struct rt_urb *p_urb )
 {
-	DBG2("RT-USBCORE: URB 0x%p: Unregister RT-Semaphore\n",p_urb);
+	DBG("RT-USBCORE: URB 0x%p: Unregister RT-Semaphore\n",p_urb);
 	rt_sem_delete( &p_urb->rt_sem );
 	nrt_usb_free_ctrl_urb( p_urb );
 }
@@ -1573,7 +1573,7 @@ struct rt_urb *nrt_usb_create_semaphore_urb( unsigned char *name , RTIME rt_sem_
 	p_urb->rt_complete_fkt = NULL;
 	p_urb->rt_sem_timeout = rt_sem_timeout;
 
-	DBG2("RT-USBCORE: URB 0x%p: Init RT-Semaphore (%s)\n",p_urb,name);
+	DBG("RT-USBCORE: URB 0x%p: Init RT-Semaphore (%s)\n",p_urb,name);
 	int ret = rt_sem_create( &p_urb->rt_sem, name, 0, S_PRIO );
 	if(ret){
 		if(ret == -EEXIST) ERR2("RT-USBCORE: [ERROR] RT-SEM: The name is already in use by some registered object \n");
@@ -1594,7 +1594,7 @@ struct rt_urb *nrt_usb_create_semaphore_urb( unsigned char *name , RTIME rt_sem_
  */
 void nrt_usb_destroy_semaphore_urb( struct rt_urb *p_urb )
 {
-	DBG2("RT-USBCORE: URB 0x%p: Unregister RT-Semaphore\n",p_urb);
+	DBG("RT-USBCORE: URB 0x%p: Unregister RT-Semaphore\n",p_urb);
 	rt_sem_delete( &p_urb->rt_sem );
 	nrt_usb_free_urb( p_urb );
 }
@@ -1799,20 +1799,20 @@ static int init_ctrl_urbs( void )
 	}
 
 	alloc_bytes += sizeof(struct rt_urb);
-	DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "+", sizeof(struct rt_urb) );
+	DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "+", sizeof(struct rt_urb) );
 
 	p_ctrl_16_urb = kmalloc( sizeof(struct rt_urb) ,GFP_KERNEL);
 	if(!p_ctrl_16_urb){
 		kfree(p_ctrl_08_urb);
 
 		alloc_bytes -= sizeof( struct rt_urb );
-		DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof(struct rt_urb));
+		DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof(struct rt_urb));
 
 		return -ENOMEM;
 	}
 
 	alloc_bytes += sizeof(struct rt_urb);
-	DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "+", sizeof(struct rt_urb) );
+	DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "+", sizeof(struct rt_urb) );
 
 	p_ctrl_32_urb = kmalloc( sizeof(struct rt_urb) ,GFP_KERNEL);
 	if(!p_ctrl_32_urb){
@@ -1820,12 +1820,12 @@ static int init_ctrl_urbs( void )
 		kfree(p_ctrl_16_urb);
 		kfree(p_ctrl_08_urb);
 		alloc_bytes -= 2 * sizeof( struct rt_urb );
-		DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", 2*sizeof(struct rt_urb));
+		DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", 2*sizeof(struct rt_urb));
 		return -ENOMEM;
 	}
 
 	alloc_bytes += sizeof(struct rt_urb);
-	DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "+", sizeof(struct rt_urb) );
+	DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "+", sizeof(struct rt_urb) );
 
 	p_ctrl_64_urb = kmalloc( sizeof(struct rt_urb) ,GFP_KERNEL);
 	if(!p_ctrl_64_urb){
@@ -1833,13 +1833,13 @@ static int init_ctrl_urbs( void )
 		kfree(p_ctrl_16_urb);
 		kfree(p_ctrl_08_urb);
 		alloc_bytes -= 3 * sizeof( struct rt_urb );
-		DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", 3*sizeof(struct rt_urb));
+		DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", 3*sizeof(struct rt_urb));
 
 		return -ENOMEM;
 	}
 
 	alloc_bytes += sizeof(struct rt_urb);
-	DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "+", sizeof(struct rt_urb) );
+	DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "+", sizeof(struct rt_urb) );
 
 	p_ctrl_req = kmalloc( sizeof(struct usb_ctrlrequest) ,GFP_KERNEL);
 	if(!p_ctrl_req){
@@ -1848,13 +1848,13 @@ static int init_ctrl_urbs( void )
 		kfree(p_ctrl_16_urb);
 		kfree(p_ctrl_08_urb);
 		alloc_bytes -= 4 * sizeof( struct rt_urb );
-		DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", 4*sizeof(struct rt_urb));
+		DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", 4*sizeof(struct rt_urb));
 
 		return -ENOMEM;
 	}
 
 	alloc_bytes += sizeof(struct usb_ctrlrequest);
-	DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "+", sizeof(struct usb_ctrlrequest) );
+	DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "+", sizeof(struct usb_ctrlrequest) );
 
 	p_buffer = kmalloc( m_buff_size ,GFP_KERNEL);
 	if(!p_buffer){
@@ -1865,13 +1865,13 @@ static int init_ctrl_urbs( void )
 		kfree(p_ctrl_08_urb);
 		alloc_bytes -= 4 * sizeof( struct rt_urb );
 		alloc_bytes -= 1 * sizeof( struct usb_ctrlrequest);
-		DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", 4*sizeof(struct rt_urb) + sizeof( struct usb_ctrlrequest));
+		DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", 4*sizeof(struct rt_urb) + sizeof( struct usb_ctrlrequest));
 
 		return -ENOMEM;
 	}
 
 	alloc_bytes += m_buff_size;
-	DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "+", m_buff_size );
+	DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "+", m_buff_size );
 
 	// CTRL-URB EP 0
 	memset(p_ctrl_08_urb, 0, sizeof(struct rt_urb) );
@@ -1971,27 +1971,27 @@ void destroy_ctrl_urbs( void )
 
 	kfree(p_ctrl_08_urb);
 	alloc_bytes -= sizeof( struct rt_urb );
-	DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof( struct rt_urb ) );
+	DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof( struct rt_urb ) );
 
 	kfree(p_ctrl_16_urb);
 	alloc_bytes -= sizeof( struct rt_urb );
-	DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof( struct rt_urb ) );
+	DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof( struct rt_urb ) );
 
 	kfree(p_ctrl_32_urb);
 	alloc_bytes -= sizeof( struct rt_urb );
-	DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof( struct rt_urb ) );
+	DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof( struct rt_urb ) );
 
 	kfree(p_ctrl_64_urb);
 	alloc_bytes -= sizeof( struct rt_urb );
-	DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof( struct rt_urb ) );
+	DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof( struct rt_urb ) );
 
 	kfree(p_ctrl_req);
 	alloc_bytes -= sizeof( struct usb_ctrlrequest );
-	DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof( struct usb_ctrlrequest ) );
+	DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof( struct usb_ctrlrequest ) );
 
 	kfree(p_buffer);
 	alloc_bytes -= m_buff_size;
-	DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", m_buff_size );
+	DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", m_buff_size );
 
 }
 
@@ -2050,7 +2050,7 @@ void mod_exit(void)
 		kfree(p_hub);
 
 		alloc_bytes -= sizeof( struct hub_device );
-		DBG2("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof(struct hub_device) );
+		DBG("RT-USBCORE: %d Byte allocated (%s %d Byte)\n", alloc_bytes, "-", sizeof(struct hub_device) );
 
 		p_list = p_next;
 	}
