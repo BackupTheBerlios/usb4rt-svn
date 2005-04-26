@@ -52,7 +52,7 @@ struct hcd_funktions hcd_fkt;
 struct pci_dev *p_pcidev_old = NULL;
 unsigned int alloc_bytes = 0;
 RTIME rt_timer_overhead = 0;
-
+RTIME frame_start;
 
 static u32 pci_io_addr[] = {
   PCI_BASE_ADDRESS_0,
@@ -892,7 +892,7 @@ int rt_irq_handler(struct xnintr *p_xnintr)
   struct uhc_device *p_uhcd = NULL;
   struct uhc_device *p_test = (struct uhc_device *)p_xnintr->cookie;
 
-  int i;
+  int i,fs=0;
   __u16 stat = 0x0000;
 
   for(i=0;i<MAX_UHC_CONTROLLER;i++){
@@ -900,6 +900,10 @@ int rt_irq_handler(struct xnintr *p_xnintr)
 
       if(!p_test || !p_test->p_io){ /* no I/O-Pointer */
         continue;                   /* searching */
+      }
+
+      if(!fs){
+        frame_start = rt_timer_read();
       }
 
       stat = inw(p_test->p_io->start + USBSTS);
@@ -1222,12 +1226,12 @@ static int wait_for_urb( struct rt_privurb *p_purb )
 
     stop = rt_timer_read();
 
-    if( retrys == retrys_per_td ){
-      DBG_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: Wait for TD[%d]: 0 ns\n",p_purb->p_urb,
-             p_td->td_nr);
+    if(retrys == retrys_per_td){
+      TDBG_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: TD[%d] completed in %llu ns @ %llu ns\n",p_purb->p_urb,
+             p_td->td_nr, 0llu , stop - frame_start - rt_timer_overhead );
     } else {
-      DBG_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: Wait for TD[%d]: %llu ns\n",p_purb->p_urb,
-             p_td->td_nr, stop - start - rt_timer_overhead);
+      TDBG_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: TD[%d] completed in %llu ns @ %llu ns\n",p_purb->p_urb,
+             p_td->td_nr, stop - start - rt_timer_overhead, stop - frame_start - rt_timer_overhead );
     }
 
     if(!retrys){
@@ -1560,7 +1564,7 @@ static int rt_uhci_send_ctrl_urb( struct rt_privurb *p_purb )
                                   td_status_lowspeed( p_urb->p_usbdev->speed == USB_SPEED_LOW ? 1 : 0 ) |
                                   td_status_spd( p_urb->transfer_flags & URB_SHORT_NOT_OK ? 1 : 0 ) |
                                   td_status_errcount(0) |
-                                  td_status_ioc( p_purb->urb_wait_flags == URB_WAIT_BUSY ? 0 : 1) );
+                                  td_status_ioc( 1 ) );
   p_list->token   = cpu_to_le32(  td_token_pid( out ? IN_TOKEN : OUT_TOKEN ) |
                                   td_token_maxlen(0x7ff) |
                                   td_token_endpoint( usb_pipeendpoint(p_urb->pipe) ) |
@@ -1612,7 +1616,7 @@ static int rt_uhci_send_bulk_urb( struct rt_privurb *p_purb )
                                   td_status_bits(0) |
                                   td_status_lowspeed( p_urb->p_usbdev->speed == USB_SPEED_LOW ? 1 : 0 ) |
                                   td_status_spd( p_urb->transfer_flags & URB_SHORT_NOT_OK ? 1 : 0 ) |
-                                  td_status_ioc( remaining ? 0 : p_purb->urb_wait_flags == URB_WAIT_BUSY ? 0 : 1 ) |
+                                  td_status_ioc( 1 ) | //remaining ? 0 : 1 ) |
                                   td_status_errcount(0) );
     p_list->token  = cpu_to_le32( td_token_pid( out ? OUT_TOKEN : IN_TOKEN ) |
                                   td_token_endpoint( usb_pipeendpoint(p_urb->pipe) ) |
