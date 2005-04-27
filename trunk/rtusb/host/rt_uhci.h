@@ -88,9 +88,10 @@
 #define LINK_VF               (1 << 2)  /* Vertikal zuerst */
 #define LINK_NO_VF            (0 << 2)  /* Horizontal zuerst */
 
-#define MAX_TD                1024
-#define MAX_QH                255
-#define MAX_TA                10
+#define FS_NS_PER_BYTE        667
+#define FS_NS_PER_SOF         3500  /* 5 Byte @ 12MHz */
+#define FS_NS_PER_preSOF      52000 /* preSOF for 64-Byte-Packets */
+#define EOP_DELAY_BYTE        1     /* Time for EOP and Delay between two packets */
 
  /**
   * Frame-Liste.
@@ -266,16 +267,13 @@ struct rt_privurb {
   // save
   int pipe_save;
 
-  __u16 status;
-  __u16 urb_wait_flags;             /* Callback or Wait */
-  int fsbr : 1;                   /* URB turned on FSBR */
-  int fsbr_timeout : 1;           /* URB timed out on FSBR */
-  int queued : 1;                 /* QH was queued (not linked in) */
-  int short_control_packet : 1;   /* If we get a short packet during */
-                                  /*  a control transfer, retrigger */
-                                  /*  the status phase */
-  unsigned long inserttime;       /* In jiffies */
-  unsigned long fsbrtime;         /* In jiffies */
+  __u16 status;                   /* URB-state IDLE,PROGRESS,...*/
+  __u16 urb_wait_flags;           /* Callback or Wait */
+
+  int get_time_of_first_bit;
+  int compl_tds_at_first_irq;
+  RTIME time_at_first_irq;
+  unsigned int byte_at_first_irq;
 
 };
 

@@ -753,6 +753,97 @@ static void rt_unschedule_int_urb( struct rt_privurb *p_purb );
 static void rt_unschedule_isoc_urb( struct rt_privurb *p_purb );
 
 
+static void handle_first_irq(struct rt_privurb *p_purb)
+{
+  td_t *p_td = NULL;
+  unsigned int bytes = 0;
+  struct list_head *p_list = p_purb->active_td_list.next;
+
+  while( p_list != &p_purb->active_td_list ){
+    p_td = list_entry( p_list, td_t, active_td_list);
+    if( get_status_active(p_td) ){
+
+      p_purb->byte_at_first_irq = bytes;
+      p_purb->compl_tds_at_first_irq = p_td->td_nr;
+      p_purb->time_at_first_irq = frame_start;
+      p_purb->get_time_of_first_bit = 2;
+
+      INFO_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: IRQ 1: active TD[%d] \n",p_purb->p_urb,p_td->td_nr);
+      INFO_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: IRQ 1: %u Byte in %d TDs transferred \n",p_purb->p_urb,
+        bytes, p_purb->compl_tds_at_first_irq);
+
+      p_list = p_list->next;
+      if(p_list != &p_purb->active_td_list){
+        p_td = list_entry( p_list->next, td_t, active_td_list);
+        set_status_ioc(p_td);                /* Set IOC */
+      }
+
+      return;
+    } else {
+       bytes += get_status_actlen(p_td)+1 + /* data-bytes*/
+                4 + /* Token-Overhead */
+                4 + /* Data-Overhead */
+                2 + /* Handshake-Overhead */
+                3 * EOP_DELAY_BYTE; /* 3 packets EOP and Delay */
+    }
+    p_list = p_list->next;
+  }
+  /* URB completed in the first frame */
+  unsigned long transfer_time = FS_NS_PER_BYTE * bytes;
+  unsigned long offset = FS_NS_PER_preSOF + transfer_time + 1000000 + FS_NS_PER_SOF;
+  p_purb->p_urb->timestamp_first_data = frame_start - ( offset >> 1);
+  INFO_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: IRQ 1: Timestamp: %llu \n",p_purb->p_urb,
+        p_purb->p_urb->timestamp_first_data );
+  p_purb->get_time_of_first_bit = 0;
+}
+
+static void handle_second_irq(struct rt_privurb *p_purb)
+{
+  unsigned long transfer_time;
+  unsigned long offset;
+  unsigned int bytes = 0;
+  td_t *p_td = &p_purb->p_td_table[p_purb->compl_tds_at_first_irq];
+  struct list_head *p_list = &p_td->active_td_list;
+
+  while( p_list != &p_purb->active_td_list ){
+    p_td = list_entry( p_list, td_t, active_td_list);
+
+    if( get_status_active(p_td) ){
+
+      unsigned int bytes_per_frame = bytes - p_purb->byte_at_first_irq;
+      unsigned int ns_per_frame = (unsigned long)( frame_start - p_purb->time_at_first_irq );
+      unsigned int ns_per_byte = ns_per_frame / bytes_per_frame;
+      unsigned int bit_per_s = (bytes_per_frame * 8) * 1000 ;
+      offset = p_purb->byte_at_first_irq * ns_per_byte;
+      p_purb->p_urb->timestamp_first_data = p_purb->time_at_first_irq - offset;
+      p_purb->get_time_of_first_bit = 0;
+
+      INFO_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: IRQ 2: %u Bytes in %u ns \n",p_purb->p_urb,
+        bytes_per_frame, ns_per_frame );
+      INFO_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: IRQ 2: Bitrate: %u Bit/s \n",p_purb->p_urb,
+        bit_per_s );
+      INFO_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: IRQ 2: Timestamp: %llu \n",p_purb->p_urb,
+        p_purb->p_urb->timestamp_first_data );
+      return;
+    } else {
+      bytes += get_status_actlen(p_td)+1 + /* data-bytes*/
+               4 + /* Token-Overhead */
+               4 + /* Data-Overhead */
+               2 + /* Handshake-Overhead */
+               3 * EOP_DELAY_BYTE; /* 3 packets EOP and Delay */
+    }
+    p_list = p_list->next;
+  }
+
+  /* URB completed in the second frame */
+  transfer_time = FS_NS_PER_BYTE * p_purb->byte_at_first_irq;
+  offset = (FS_NS_PER_preSOF >> 1) + transfer_time;
+  p_purb->p_urb->timestamp_first_data = p_purb->time_at_first_irq - offset;
+  INFO_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: IRQ 2: Timestamp: %llu \n",p_purb->p_urb,
+        p_purb->p_urb->timestamp_first_data );
+  p_purb->get_time_of_first_bit = 0;
+}
+
 static inline void handle_urb(__u16 stat, struct uhc_device *p_uhcd, struct rt_privurb *p_purb)
 {
   if(p_purb->urb_wait_flags == URB_WAIT_BUSY){
@@ -768,7 +859,7 @@ static inline void handle_urb(__u16 stat, struct uhc_device *p_uhcd, struct rt_p
     goto handle;
   }
 
-    // UHCD-Not Running
+  // UHCD-Not Running
   if( !(p_uhcd->status & UHC_RUNNING) ){
     DBG_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: HOST-CONTROLLER STOPPED\n",p_purb->p_urb);
     p_purb->p_urb->status = -3;
@@ -812,7 +903,7 @@ static inline void handle_urb(__u16 stat, struct uhc_device *p_uhcd, struct rt_p
 
       p_list = p_list->next;
     }
-}
+  }
   // no handle
   return;
 
@@ -877,9 +968,19 @@ static inline void handle_controller( struct uhc_device *p_uhcd, __u16 stat )
   while(p_list != &p_uhcd->reg_urb_list){
     p_next = p_list->next;
     p_purb = list_entry(p_list, struct rt_privurb, reg_urb_list);
+
+    if(p_purb->get_time_of_first_bit == 2){
+      handle_second_irq(p_purb);
+    }
+
+    if(p_purb->get_time_of_first_bit == 1){
+      handle_first_irq(p_purb);
+    }
+
     if( (p_purb->status == PURB_IN_PROGRESS) || (p_uhcd->status & UHC_HOST_ERROR) || !(p_uhcd->status & UHC_RUNNING) ){
       handle_urb(stat,p_uhcd,p_purb);
     }
+
     p_list = p_next;
   }
 
@@ -1204,7 +1305,7 @@ static int wait_for_urb( struct rt_privurb *p_purb )
   }
 
   td_t *p_td = NULL;
-  RTIME ns_per_retry =     80; // 80ns (12MHz @ Full-Speed)
+  RTIME ns_per_retry = 80; // 80ns (12MHz @ Full-Speed)
   unsigned int retrys_per_td = 6250000; // 500ms (500ms/80ns)
   unsigned int retrys;
   RTIME start, stop, urb_start, urb_end;
@@ -1602,6 +1703,25 @@ static int rt_uhci_send_bulk_urb( struct rt_privurb *p_purb )
   td_t *p_list = p_purb->p_td_table;
   td_t *p_end  = &p_purb->p_td_table[p_purb->anz_tds -1];
 
+  int ioc_after_first_td = 0;
+  int ioc_after_all_tds = 0;
+  int ioc_after_last_td = 0;
+  p_purb->compl_tds_at_first_irq = 0;
+  p_purb->byte_at_first_irq = 0;
+  p_purb->time_at_first_irq = 0;
+
+  if( p_purb->urb_wait_flags == URB_WAIT_BUSY ){
+    ioc_after_all_tds = 1; /* to get Frametime */
+  }
+  if( p_purb->urb_wait_flags == URB_WAIT_SEM ||
+      p_purb->urb_wait_flags == URB_CALLBACK ) {
+    if(p_purb->p_urb->transfer_flags & URB_TIMESTAMP_DATA ){ /* get Timestamp */
+      ioc_after_first_td = 1;  /* to get time of the first bits */
+      p_purb->get_time_of_first_bit = 1;
+    }
+    ioc_after_last_td = 1;   /* Interrupt IOC (wake up caller-task) */
+  }
+
   p_purb->p_qh->element = cpu_to_le32(p_list->dma_handle | LINK_NO_TERM | LINK_TO_TD | LINK_VF );
 
   while(remaining > 0 && p_list != p_end){
@@ -1616,7 +1736,9 @@ static int rt_uhci_send_bulk_urb( struct rt_privurb *p_purb )
                                   td_status_bits(0) |
                                   td_status_lowspeed( p_urb->p_usbdev->speed == USB_SPEED_LOW ? 1 : 0 ) |
                                   td_status_spd( p_urb->transfer_flags & URB_SHORT_NOT_OK ? 1 : 0 ) |
-                                  td_status_ioc( 1 ) | //remaining ? 0 : 1 ) |
+                                  td_status_ioc( ( (p_list->td_nr == 0 && ioc_after_first_td ) | /* first TD */
+                                                   ioc_after_all_tds | /* all TDs */
+                                                   (remaining == 0 && ioc_after_last_td) ) ? 1 : 0 ) |
                                   td_status_errcount(0) );
     p_list->token  = cpu_to_le32( td_token_pid( out ? OUT_TOKEN : IN_TOKEN ) |
                                   td_token_endpoint( usb_pipeendpoint(p_urb->pipe) ) |
