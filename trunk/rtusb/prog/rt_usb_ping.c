@@ -37,7 +37,7 @@
 //#undef BLOCKING
 
 /* Parameter for Blocking URBs: */
-#define MAX_WAIT_TIME   500000000  /* 500 ms max sleep-time on RT_SEM */
+#define MAX_WAIT_TIME   500000000  /* 500ms max sleep-time on RT_SEM */
 
 /* Parameter for Callback URBs: */
 //#define NEXT_URB_IN_CALLBACK     /* Next URB called by Interrupt-Handler */

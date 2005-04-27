@@ -30,14 +30,14 @@
 /*--------------------------*/
 /*        Descriptors       */
 /*--------------------------*/
-typedef struct hub_descriptor {	// 9 Byte 
+typedef struct hub_descriptor { // 9 Byte
   __u8 bLength;
   __u8 type;
   __u8 bNbrPorts;
   __u16 wHubCharacteristics;
   __u8 bPwrOn2PwrGood;
   __u8 bHubCntrCurrent;
-  __u8 DeviceRemovable;  	// assume bNbrPorts <=8
+  __u8 DeviceRemovable;   // assume bNbrPorts <=8
   __u8 PortPwrCntrMask;
 } __attribute__((packed)) hub_descriptor_t;
 
@@ -58,17 +58,17 @@ struct usb_device {
   struct usb_device_descriptor *p_dev_desc;
   enum usb_device_state state;
   enum usb_device_speed speed;
-  
+
   __u8 in_use;
   spinlock_t lock;
   struct hc_device *p_hcd;
- 
+
   __u16 vendor;
   __u16 product;
 
   __u8 rh_port;
   __u8 address;
-  
+
   __u8 class;
   __u8 subclass;
   __u8 protocol;
@@ -77,25 +77,26 @@ struct usb_device {
   int epmaxpacketout[16];
 
   __u16 toggle_mask[2]; // 1 Bit per Endpoint; [0]=IN [1]=OUT
-  __u16 ctrl_mask[2];	// 1 Bit per Endpoint; [0]=IN [1]=OUT
-  __u16 bulk_mask[2];	// 1 Bit per Endpoint; [0]=IN [1]=OUT
-  __u16 int_mask[2];	// 1 Bit per Endpoint; [0]=IN [1]=OUT
-  __u16 iso_mask[2];	// 1 Bit per Endpoint; [0]=IN [1]=OUT
-  
-  void *p_private;		// Core-Internal Data
+  __u16 ctrl_mask[2]; // 1 Bit per Endpoint; [0]=IN [1]=OUT
+  __u16 bulk_mask[2]; // 1 Bit per Endpoint; [0]=IN [1]=OUT
+  __u16 int_mask[2];  // 1 Bit per Endpoint; [0]=IN [1]=OUT
+  __u16 iso_mask[2];  // 1 Bit per Endpoint; [0]=IN [1]=OUT
+
+  void *p_private;    // Core-Internal Data
 };
 
 /*--------------------------*/
 /*   URB- Transfer-Flags    */
 /*--------------------------*/
 #define URB_SHORT_NOT_OK         0x0001  /* report short reads as errors */
-#define URB_ISO_ASAP		 0x0002  /* iso-only, urb->start_frame ignored */
-#define URB_NO_TRANSFER_DMA_MAP	 0x0004  /* urb->transfer_dma valid on submit */
+#define URB_ISO_ASAP             0x0002  /* iso-only, urb->start_frame ignored */
+#define URB_NO_TRANSFER_DMA_MAP  0x0004  /* urb->transfer_dma valid on submit */
 #define URB_NO_SETUP_DMA_MAP     0x0008  /* urb->setup_dma valid on submit */
 #define URB_ASYNC_UNLINK         0x0010  /* usb_unlink_urb() returns asap */
 #define URB_NO_FSBR              0x0020  /* UHCI-specific */
-#define URB_ZERO_PACKET	         0x0040  /* Finish bulk OUTs with short packet */
-#define URB_NO_INTERRUPT         0x0080	 /* HINT: no non-error interrupt needed */
+#define URB_ZERO_PACKET          0x0040  /* Finish bulk OUTs with short packet */
+#define URB_NO_INTERRUPT         0x0080  /* HINT: no non-error interrupt needed */
+#define URB_TIMESTAMP_DATA       0x0100  /* Bulk-only: Get Timestamp of first transferred TD */
 
 struct rt_urb;
 struct pt_regs;
@@ -142,6 +143,8 @@ struct rt_urb
 
   RTIME schedule_time;                    /* Send-Time */
   RTIME unschedule_time;                  /* Complete-Time */
+
+  RTIME timestamp_first_data;             /* Timestamp of first transferred Data-Package */
 };
 
 
@@ -221,7 +224,7 @@ extern int rt_usb_submit_ctrl_urb(struct rt_urb *p_urb, __u8 request_type,__u8 r
 
 static inline unsigned int __create_pipe(struct usb_device *p_usbdev, unsigned int endpoint)
 {
-	return (p_usbdev->address << PIPE_DEVICE_SHIFT) | (endpoint << PIPE_ENPOINT_SHIFT);
+  return (p_usbdev->address << PIPE_DEVICE_SHIFT) | (endpoint << PIPE_ENPOINT_SHIFT);
 }
 
 /* Create various pipes... */
