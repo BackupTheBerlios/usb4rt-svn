@@ -124,7 +124,7 @@ struct usb_device *nrt_uhci_poll_root_hub_port( struct hc_device *p_hcd , __u8 r
   struct uhc_device *p_uhcd = p_hcd->p_private;
 
   if(!p_uhcd || !p_uhcd->p_io){
-    ERR2("RT-UHC-Driver: %s - Invalid Pointer to UHCD \n",__FUNCTION__);
+    ERR("RT-UHC-Driver: %s - Invalid Pointer to UHCD \n",__FUNCTION__);
     return NULL;
   }
 
