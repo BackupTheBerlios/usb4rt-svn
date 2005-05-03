@@ -389,21 +389,21 @@ static int init_skel( struct uhc_device *p_uhcd )
 
   p_uhcd->p_qh_lowspeed = create_qh(p_uhcd);
   if(!p_uhcd->p_qh_lowspeed) {
-    ERR2("RT-UHC-Driver: [ERROR] Cannot allocate Low-Speed-QH \n");
+    ERR("RT-UHC-Driver: [ERROR] Cannot allocate Low-Speed-QH \n");
     return -ENOMEM;
   }
   QH_DBG("RT-UHC-Driver: Low-Speed-QH  @ 0x%p, DMA: 0x%p \n",p_uhcd->p_qh_lowspeed,(void *)p_uhcd->p_qh_lowspeed->dma_handle);
 
   p_uhcd->p_qh_fullspeed = create_qh(p_uhcd);
   if(!p_uhcd->p_qh_fullspeed) {
-    ERR2("RT-UHC-Driver: [ERROR] Cannot allocate Full-Speed-QH \n");
+    ERR("RT-UHC-Driver: [ERROR] Cannot allocate Full-Speed-QH \n");
     return -ENOMEM;
   }
   QH_DBG("RT-UHC-Driver: Full-Speed-QH  @ 0x%p, DMA: 0x%p \n",p_uhcd->p_qh_fullspeed,(void *)p_uhcd->p_qh_fullspeed->dma_handle);
 
   p_uhcd->p_qh_term = create_qh(p_uhcd);
   if(!p_uhcd->p_qh_term) {
-    ERR2("RT-UHC-Driver: [ERROR] Cannot allocate Terminate-QH \n");
+    ERR("RT-UHC-Driver: [ERROR] Cannot allocate Terminate-QH \n");
     return -ENOMEM;
   }
   QH_DBG("RT-UHC-Driver: Terminate-QH @ 0x%p, DMA: 0x%p \n",p_uhcd->p_qh_term,(void *)p_uhcd->p_qh_term->dma_handle);
@@ -411,7 +411,7 @@ static int init_skel( struct uhc_device *p_uhcd )
 
   p_uhcd->p_td_loop = create_td(p_uhcd);
   if(!p_uhcd->p_td_loop) {
-    ERR2("RT-UHC-Driver: [ERROR] Cannot allocate Loop-TD \n");
+    ERR("RT-UHC-Driver: [ERROR] Cannot allocate Loop-TD \n");
     return -ENOMEM;
   }
   TD_DBG("RT-UHC-Driver: Loop-TD      @ 0x%p, DMA: 0x%p \n",p_uhcd->p_td_loop,(void *)p_uhcd->p_td_loop->dma_handle);
@@ -620,7 +620,7 @@ int uhc_start( struct uhc_device *p_uhcd )
   outw(USBCMD_HCRESET, p_uhcd->p_io->start + USBCMD);
   while (inw(p_uhcd->p_io->start + USBCMD) & USBCMD_HCRESET) {
     if (!--timeout) {
-      ERR2("RT-UHC-Driver: [ERROR] %s - USBCMD_HCRESET timed out! \n",__FUNCTION__);
+      ERR("RT-UHC-Driver: [ERROR] %s - USBCMD_HCRESET timed out! \n",__FUNCTION__);
       break;
     }
   }
@@ -658,7 +658,7 @@ int uhc_stop( struct uhc_device *p_uhcd )
     outw(USBSTS_HCH,p_uhcd->p_io->start + USBSTS);
   }
   if(uhc_global_reset(p_uhcd)) {
-    ERR2("RT-UHC-Driver: [ERROR] %s - Resetting Host-Controller failed\n",__FUNCTION__);
+    ERR("RT-UHC-Driver: [ERROR] %s - Resetting Host-Controller failed\n",__FUNCTION__);
   }
   return (0);
 }
@@ -679,7 +679,7 @@ static int uhc_init( struct uhc_device *p_uhcd )
   /* Initialisiere Framelist */
   ret = init_framelist( p_uhcd );
   if( ret ){
-    ERR2("RT-UHC-Driver: [ERROR] %s - Creating Framelist failed\n",__FUNCTION__);
+    ERR("RT-UHC-Driver: [ERROR] %s - Creating Framelist failed\n",__FUNCTION__);
     return ret;
   }
   DBG("RT-UHC-Driver: Framelist    @ 0x%p, DMA: 0x%p (%d Byte) \n",
@@ -688,14 +688,14 @@ static int uhc_init( struct uhc_device *p_uhcd )
   /* Initialisiere Scheduler */
   ret = init_skel( p_uhcd );
   if( ret ) {
-    ERR2("RT-UHC-Driver: [ERROR] %s - Init Skeleton failed\n",__FUNCTION__);
+    ERR("RT-UHC-Driver: [ERROR] %s - Init Skeleton failed\n",__FUNCTION__);
     return ret;
   }
   DBG("RT-UHC-Driver: Skeleton initialized\n");
 
   ret = rh_init( p_uhcd );
   if(ret) {
-    ERR2("RT-UHC-Driver: [ERROR] %s - Init Root-Hub failed\n",__FUNCTION__);
+    ERR("RT-UHC-Driver: [ERROR] %s - Init Root-Hub failed\n",__FUNCTION__);
     return ret;
   }
 
@@ -1182,7 +1182,7 @@ static void put_irq( struct uhc_device *p_uhcd )
 void dump_urb( struct rt_urb *p_urb )
 {
   if(!p_urb){
-    ERR2("[ERROR] %s - Invalid URB-Pointer \n",__FUNCTION__);
+    ERR("[ERROR] %s - Invalid URB-Pointer \n",__FUNCTION__);
     return;
   }
 
@@ -1209,7 +1209,7 @@ void dump_urb( struct rt_urb *p_urb )
 static int map_dma( struct rt_privurb *p_purb )
 {
   if(!p_purb){
-    ERR2("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
+    ERR("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
     return -ENODEV;
   }
 
@@ -1258,7 +1258,7 @@ static int map_dma( struct rt_privurb *p_purb )
 static void unmap_dma( struct rt_privurb *p_purb )
 {
   if(!p_purb){
-    ERR2("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
+    ERR("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
     return;
   }
 
@@ -1296,7 +1296,7 @@ static void unmap_dma( struct rt_privurb *p_purb )
 static int wait_for_urb( struct rt_privurb *p_purb )
 {
   if(!p_purb){
-    ERR2("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
+    ERR("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
     return -ENODEV;
   }
 
@@ -1329,10 +1329,10 @@ static int wait_for_urb( struct rt_privurb *p_purb )
 
     if(retrys == retrys_per_td){
       TDBG_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: TD[%d] completed in %llu ns @ %llu ns\n",p_purb->p_urb,
-             p_td->td_nr, 0llu , stop - frame_start - rt_timer_overhead );
+             p_td->td_nr, 0llu , stop - rt_timer_overhead );
     } else {
       TDBG_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: TD[%d] completed in %llu ns @ %llu ns\n",p_purb->p_urb,
-             p_td->td_nr, stop - start - rt_timer_overhead, stop - frame_start - rt_timer_overhead );
+             p_td->td_nr, stop - start - rt_timer_overhead, stop - rt_timer_overhead );
     }
 
     if(!retrys){
@@ -1355,7 +1355,7 @@ static int wait_for_urb( struct rt_privurb *p_purb )
 static void clear_rt_privurb( struct rt_privurb *p_purb )
 {
   if(!p_purb){
-    ERR2("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
+    ERR("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
     return;
   }
 
@@ -1371,7 +1371,7 @@ static void clear_rt_privurb( struct rt_privurb *p_purb )
 static int rt_uhci_bytes_send( struct rt_privurb *p_purb )
 {
   if(!p_purb){
-    ERR2("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
+    ERR("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
     return -ENODEV;
   }
 
@@ -1406,7 +1406,7 @@ static int rt_uhci_bytes_send( struct rt_privurb *p_purb )
 static void rt_free_urb_tds( struct rt_privurb *p_purb )
 {
   if(!p_purb){
-    ERR2("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
+    ERR("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
     return;
   }
 
@@ -1437,7 +1437,7 @@ static void rt_free_urb_tds( struct rt_privurb *p_purb )
 static void rt_unschedule_ctrl_bulk_urb( struct rt_privurb *p_purb )
 {
   if(!p_purb){
-    ERR2("[ERROR] %s - Invalid Pointer to Private URB \n",__FUNCTION__);
+    ERR("[ERROR] %s - Invalid Pointer to Private URB \n",__FUNCTION__);
     return;
   }
 
@@ -1446,7 +1446,7 @@ static void rt_unschedule_ctrl_bulk_urb( struct rt_privurb *p_purb )
 //  qh_t *p_next_qh;
 
   if( list_empty(&p_urb_qh->qh_link_list) ){
-    ERR2("[ERROR] %s - URB 0x%p: Not in QH-Link-List\n",__FUNCTION__,p_purb->p_urb);
+    ERR("[ERROR] %s - URB 0x%p: Not in QH-Link-List\n",__FUNCTION__,p_purb->p_urb);
     return;
   }
 
@@ -1579,7 +1579,7 @@ static int rt_schedule_isoc_urb( struct rt_privurb *p_purb )
 static int rt_uhci_send_ctrl_urb( struct rt_privurb *p_purb )
 {
   if(!p_purb || !p_purb->p_urb){
-    ERR2("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
+    ERR("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
     return -ENODEV;
   }
 
@@ -1665,7 +1665,7 @@ static int rt_uhci_send_ctrl_urb( struct rt_privurb *p_purb )
                                   td_status_lowspeed( p_urb->p_usbdev->speed == USB_SPEED_LOW ? 1 : 0 ) |
                                   td_status_spd( p_urb->transfer_flags & URB_SHORT_NOT_OK ? 1 : 0 ) |
                                   td_status_errcount(0) |
-                                  td_status_ioc( 1 ) );
+                                  td_status_ioc( p_purb->urb_wait_flags == URB_WAIT_BUSY ? 0 : 1 ) );
   p_list->token   = cpu_to_le32(  td_token_pid( out ? IN_TOKEN : OUT_TOKEN ) |
                                   td_token_maxlen(0x7ff) |
                                   td_token_endpoint( usb_pipeendpoint(p_urb->pipe) ) |
@@ -1687,7 +1687,7 @@ static int rt_uhci_send_ctrl_urb( struct rt_privurb *p_purb )
 static int rt_uhci_send_bulk_urb( struct rt_privurb *p_purb )
 {
   if(!p_purb || !p_purb->p_urb){
-    ERR2("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
+    ERR("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
     return -ENODEV;
   }
   struct rt_urb *p_urb = p_purb->p_urb;
@@ -1704,15 +1704,11 @@ static int rt_uhci_send_bulk_urb( struct rt_privurb *p_purb )
   td_t *p_end  = &p_purb->p_td_table[p_purb->anz_tds -1];
 
   int ioc_after_first_td = 0;
-  int ioc_after_all_tds = 0;
   int ioc_after_last_td = 0;
   p_purb->compl_tds_at_first_irq = 0;
   p_purb->byte_at_first_irq = 0;
   p_purb->time_at_first_irq = 0;
 
-  if( p_purb->urb_wait_flags == URB_WAIT_BUSY ){
-    ioc_after_all_tds = 1; /* to get Frametime */
-  }
   if( p_purb->urb_wait_flags == URB_WAIT_SEM ||
       p_purb->urb_wait_flags == URB_CALLBACK ) {
     if(p_purb->p_urb->transfer_flags & URB_TIMESTAMP_DATA ){ /* get Timestamp */
@@ -1737,7 +1733,6 @@ static int rt_uhci_send_bulk_urb( struct rt_privurb *p_purb )
                                   td_status_lowspeed( p_urb->p_usbdev->speed == USB_SPEED_LOW ? 1 : 0 ) |
                                   td_status_spd( p_urb->transfer_flags & URB_SHORT_NOT_OK ? 1 : 0 ) |
                                   td_status_ioc( ( (p_list->td_nr == 0 && ioc_after_first_td ) | /* first TD */
-                                                   ioc_after_all_tds | /* all TDs */
                                                    (remaining == 0 && ioc_after_last_td) ) ? 1 : 0 ) |
                                   td_status_errcount(0) );
     p_list->token  = cpu_to_le32( td_token_pid( out ? OUT_TOKEN : IN_TOKEN ) |
@@ -2113,17 +2108,17 @@ int nrt_uhci_register_urb( struct rt_urb *p_urb)
   }
 
   if(!p_uhcd || !p_uhcd->p_pcidev ){
-    ERR2("[ERROR] %s - Invalid Pointer to UHC \n",__FUNCTION__);
+    ERR("[ERROR] %s - Invalid Pointer to UHC \n",__FUNCTION__);
     return -ENODEV;
   }
 
   if(p_uhcd->status & UHC_HOST_ERROR){
-    ERR2("[ERROR] %s - Host-Controller-Error, REJECT \n",__FUNCTION__);
+    ERR("[ERROR] %s - Host-Controller-Error, REJECT \n",__FUNCTION__);
     return -ENODEV;
   }
 
   if( !(p_uhcd->status & UHC_RUNNING) ) {
-    ERR2("[ERROR] %s - Host-Controller not running, REJECT \n",__FUNCTION__);
+    ERR("[ERROR] %s - Host-Controller not running, REJECT \n",__FUNCTION__);
     return -ENODEV;
   }
 
@@ -2218,13 +2213,13 @@ int nrt_uhci_unregister_urb( struct rt_urb *p_urb)
 
   struct rt_privurb *p_purb = p_urb->p_private;
   if(!p_purb){
-    ERR2("[ERROR] %s - Invalid Pointer to Private URB-Data \n",__FUNCTION__);
+    ERR("[ERROR] %s - Invalid Pointer to Private URB-Data \n",__FUNCTION__);
     return -ENODEV;
   }
 
   struct uhc_device *p_uhcd = p_purb->p_uhcd;
   if(!p_uhcd){
-    ERR2("[ERROR] %s - Invalid Pointer to UHC \n",__FUNCTION__);
+    ERR("[ERROR] %s - Invalid Pointer to UHC \n",__FUNCTION__);
     return -ENODEV;
   }
 
@@ -2270,23 +2265,23 @@ int rt_uhci_submit_urb(struct rt_urb *p_urb , __u16 urb_submit_flags )
 
   struct rt_privurb *p_purb = p_urb->p_private;
   if(!p_purb){
-    ERR2("[ERROR] %s - Invalid Pointer to Private URB-Data \n",__FUNCTION__);
+    ERR("[ERROR] %s - Invalid Pointer to Private URB-Data \n",__FUNCTION__);
     return -ENODEV;
   }
 
   struct uhc_device *p_uhcd = p_purb->p_uhcd;
   if(!p_uhcd){
-    ERR2("[ERROR] %s - Invalid Pointer to UHC \n",__FUNCTION__);
+    ERR("[ERROR] %s - Invalid Pointer to UHC \n",__FUNCTION__);
     return -ENODEV;
   }
 
   if( p_uhcd->status & UHC_HOST_ERROR ) {
-    ERR2("[ERROR] %s - Host-Controller-Error, REJECT \n",__FUNCTION__);
+    ERR("[ERROR] %s - Host-Controller-Error, REJECT \n",__FUNCTION__);
     return -ENODEV;
   }
 
   if( !(p_uhcd->status & UHC_RUNNING) ) {
-    ERR2("[ERROR] %s - Host-Controller not running, REJECT \n",__FUNCTION__);
+    ERR("[ERROR] %s - Host-Controller not running, REJECT \n",__FUNCTION__);
     return -ENODEV;
   }
 
