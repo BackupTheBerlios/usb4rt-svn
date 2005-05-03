@@ -75,27 +75,27 @@
 #endif
 
 #ifdef ERROR
-# define ERR2(txt, args...)                         PRNT(txt, ##args); /* error messages */
-# define ERR_MSG1(p_hcd,txt,args...)                PRNT("%03d: [ERROR]" txt, (p_hcd)->hcd_nr, ##args);
-# define ERR_MSG2(p_hcd,p_usbdev,txt,args...)       PRNT("%03d:%02d-%03d: [ERROR]" txt,\
-                                                        (p_hcd)->hcd_nr, \
-                                                        (p_usbdev)->rh_port,\
-                                                        (p_usbdev)->address, ##args);
+# define ERR(txt, args...)                         PRNT(txt, ##args); /* error messages */
+# define ERR_MSG1(p_hcd,txt,args...)               PRNT("%03d: [ERROR]" txt, (p_hcd)->hcd_nr, ##args);
+# define ERR_MSG2(p_hcd,p_usbdev,txt,args...)      PRNT("%03d:%02d-%03d: [ERROR]" txt,\
+                                                       (p_hcd)->hcd_nr, \
+                                                       (p_usbdev)->rh_port,\
+                                                       (p_usbdev)->address, ##args);
 #else
-# define ERR2(txt, args...)
+# define ERR(txt, args...)
 # define ERR_MSG1(p_hcd,txt,args...)
 # define ERR_MSG2(p_hcd,p_usbdev,txt,args...)
 #endif
 
 #ifdef TIME_DEBUG
-# define TDBG2(txt, args...)                        PRNT(txt, ##args);
-# define TDBG_MSG1( p_hcd, txt, args...)            PRNT("%03d:" txt, (p_hcd)->hcd_nr, ##args);
-# define TDBG_MSG2( p_hcd, p_usbdev, txt, args...)  PRNT("%03d:%02d-%03d:" txt,\
-                                                       (p_hcd)->hcd_nr, \
-                                                       (p_usbdev)->rh_port,\
-                                                       (p_usbdev)->address, ##args);
+# define TDBG(txt, args...)                        PRNT(txt, ##args);
+# define TDBG_MSG1( p_hcd, txt, args...)           PRNT("%03d:" txt, (p_hcd)->hcd_nr, ##args);
+# define TDBG_MSG2( p_hcd, p_usbdev, txt, args...) PRNT("%03d:%02d-%03d:" txt,\
+                                                      (p_hcd)->hcd_nr, \
+                                                      (p_usbdev)->rh_port,\
+                                                      (p_usbdev)->address, ##args);
 #else
-# define TDBG2(txt, args...)
+# define TDBG(txt, args...)
 # define TDBG_MSG1(p_hcd,txt,args...)
 # define TDBG_MSG2(p_hcd,p_usbdev,txt,args...)
 #endif
