@@ -1779,7 +1779,7 @@ int nrt_usb_unregister_urb( struct rt_urb *p_urb)
   if( !p_urb->p_hcd ||
       list_empty( &p_urb->p_hcd->usb_ctrl_list ) ||
       !p_urb->p_hcd->p_hcd_fkt ||
-      !p_urb->p_hcd->p_hcd_fkt->nrt_hcd_register_urb){
+      !p_urb->p_hcd->p_hcd_fkt->nrt_hcd_unregister_urb){
     ERR("[ERROR] %s - Invalid Host-Controller-Pointer in URB 0x%p \n",__FUNCTION__,p_urb);
     return -ENODEV;
   }
