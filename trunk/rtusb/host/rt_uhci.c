@@ -2230,7 +2230,6 @@ int nrt_uhci_unregister_urb( struct rt_urb *p_urb)
 
     rt_complete_urb(p_purb);
 
-    return 0;
   }
 
   list_del_init(&p_purb->reg_urb_list);
