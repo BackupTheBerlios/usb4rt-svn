@@ -1030,12 +1030,17 @@ static int rt_intern_usb_submit_urb( struct rt_urb *p_urb, __u16 urb_submit_flag
   __u8 endpoint = usb_pipeendpoint(p_urb->pipe);
   __u16 max_pl  = usb_maxpacket(p_urb->p_usbdev, p_urb->pipe);
 
-  if(p_urb->transfer_flags & URB_SHORT_NOT_OK)  DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB_SHORT_NOT_OK \n");
-  if(p_urb->transfer_flags & URB_ISO_ASAP)      DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB_ISO_ASAP \n");
-  if(p_urb->transfer_flags & URB_ASYNC_UNLINK)  DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB_ASYNC_UNLINK \n");
-  if(p_urb->transfer_flags & URB_NO_FSBR)       DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB_NO_FSBR \n");
-  if(p_urb->transfer_flags & URB_ZERO_PACKET)   DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB_ZERO_PACKET \n");
-  if(p_urb->transfer_flags & URB_NO_INTERRUPT)  DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB_NO_INTERRUPT \n");
+  if(p_urb->transfer_flags & URB_SHORT_NOT_OK)
+    DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB_SHORT_NOT_OK \n");
+
+  if(p_urb->transfer_flags & URB_NO_TRANSFER_DMA_MAP)
+    DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB_NO_TRANSFER_DMA_MAP \n");
+
+  if(p_urb->transfer_flags & URB_NO_SETUP_DMA_MAP)
+    DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB_NO_SETUP_DMA_MAP \n");
+
+  if(p_urb->transfer_flags & URB_TIMESTAMP_DATA)
+    DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB_TIMESTAMP_DATA \n");
 
   DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB 0x%p: Pipe: %s\n",p_urb, out ? "OUT" : "IN" );
   DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB 0x%p: USB-Device %d\n",p_urb,device);
