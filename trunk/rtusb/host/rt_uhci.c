@@ -2041,7 +2041,7 @@ start_search:
     uhc_clear(p_uhcd);
 
   /* searching controller */
-  p_pcidev_new = pci_find_class(UHC_CLASS_CODE,p_pcidev_old);
+  p_pcidev_new = pci_get_class(UHC_CLASS_CODE,p_pcidev_old);
   if(!p_pcidev_new) {
     p_pcidev_old = NULL;
     return 1; // No device found
