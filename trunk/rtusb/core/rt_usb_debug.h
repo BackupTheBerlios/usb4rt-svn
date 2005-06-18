@@ -28,8 +28,8 @@
 #undef TD_DEBUG
 //#define QH_DEBUG
 #undef QH_DEBUG
-//#define DEBUG
-#undef DEBUG
+#define DEBUG
+//#undef DEBUG
 #define ERROR
 //#undef ERROR
 #define TIME_DEBUG
