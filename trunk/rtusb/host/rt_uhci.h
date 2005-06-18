@@ -201,10 +201,11 @@ typedef struct transf_desc {
 } __attribute__((aligned(16))) td_t;
 
 /* UHC-STATUS */
-#define UHC_INITIALIZED   0x0001
-#define UHC_HOST_ERROR    0x0002
-#define UHC_RUNNING       0x0004
-#define UHC_REGISTERED    0x0008
+#define UHC_ALLOCATED     0x0001
+#define UHC_INITIALIZED   0x0002
+#define UHC_HOST_ERROR    0x0004
+#define UHC_RUNNING       0x0008
+#define UHC_REGISTERED    0x0010
 
 
 struct uhc_device {
@@ -246,7 +247,7 @@ struct rt_privurb {
 
   struct rt_urb *p_urb;           /* Pointer to the URB */
 
-  qh_t *p_qh;                     /* Queue-Header for this URB */
+  qh_t *p_qh;                     /* Queue-Head for this URB */
 
   td_t  *p_td_table;              /* Pointer to the TD-Table */
   int table_size;                 /* Size of the TD-Table in Byte */
