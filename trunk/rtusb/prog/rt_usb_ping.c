@@ -423,7 +423,7 @@ int create_urbs( struct usb_device *p_dev)
 int init_module(void)
 {
   int ret;
-  ret = rt_task_create ( &rtTask, "rt_usb_ping", 0, 1, 0 );
+  ret = rt_task_create ( &rtTask, "rt_usb_ping", 0, 99, 0 );
   if(ret){
     printk("RT-USB-PING: Failed to create Task, code = %d\n",ret);
     return -1;
