@@ -157,7 +157,6 @@ extern void rt_usb_put_device( struct usb_device *p_usbdev );
 /*-------------------------------*/
 /*      URB Allocate-Helper      */
 /*-------------------------------*/
-
 extern struct rt_urb *nrt_usb_create_ctrl_callback_urb( rt_usb_complete_t rt_callback_fkt );
 extern void nrt_usb_destroy_ctrl_callback_urb( struct rt_urb *p_urb );
 
