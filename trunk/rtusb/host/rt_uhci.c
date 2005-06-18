@@ -28,7 +28,7 @@
 #include "rt_uhci_hub.h"
 #include "../core/rt_usb_debug.h"
 
-#define DRIVER_VERSION "v0.1"
+#define DRIVER_VERSION "v0.2.1"
 #define DRIVER_AUTHOR "Joerg Langenberg - joergel@gmx.net"
 #define DRIVER_DESC "Realtime Driver for Universal Host Controller"
 
@@ -292,10 +292,12 @@ static void destroy_qh( qh_t *p_qh )
  * Nachdem der Speicher fuer eine Frame-Liste angefordert ist, wird der Bereich wird mit Nullen gefuellt.
  * Der Zeiger auf die Frame-Liste muss mit 0x000 enden, da der Controller diese Bits fuer die Frame-Nummer (10 Bit),
  * fuer das QH-Bit und das Terminate-Bit verwendet.
+ * - NO DEBUG-MESSAGES -
  * @param hcd_nr Nummer des Host-Controllers
  * @return 0 bei Erfolg
  * @return -ENODEV, wenn p_hdc nicht auf ein gueltiges struct hc_device zeigt.
  * @return -ENOMEM, wenn kein Speicher vorhanden oder Frame-List-Pointer ungueltig.
+ * @return -EBUSY, Frameliste existiert bereits für diesen Controller.
  */
 static int init_framelist( struct uhc_device *p_uhcd )
 {
@@ -309,12 +311,15 @@ static int init_framelist( struct uhc_device *p_uhcd )
   struct frame_list *p_fl;
   dma_addr_t fl_dma;
 
-  p_fl = (struct frame_list *)dma_alloc_coherent(&p_uhcd->p_pcidev->dev,sizeof(struct frame_list),&fl_dma, 0);
+  p_fl = (struct frame_list *)dma_alloc_coherent( &p_uhcd->p_pcidev->dev,
+                                                  sizeof(struct frame_list),
+                                                  &fl_dma,
+                                                  0);
   if(!p_fl || !fl_dma){
     return -ENOMEM;
   }
 
-  memset(p_fl,0,sizeof(struct frame_list));
+  memset(p_fl, 0, sizeof(struct frame_list) );
 
   p_uhcd->p_fl = p_fl;
   p_uhcd->p_fl->dma_handle = fl_dma;
@@ -350,14 +355,14 @@ static void destroy_flame_list( struct uhc_device *p_uhcd )
 }
 
 /**
- * Haengt einen QH an eine Frame-List an.
- * @param p_qh Zeiger auf ein QH, welcher an die Frame-Liste angehaengt werden soll.
- * @param p_fl Zeiger auf ein struct frame_list.
- * @param nr Nummer des Frame-Pointers.
- * @return -EINVAL, wenn Zeiger p_td oder p_qh ungueltig
- * @return 0, wenn erfolgreich.
+ * Insert QH-pointer into the frame-list.
+ * @param p_qh Pointer to a Queue-Head.
+ * @param p_fl Pointer to the frame_list.
+ * @param nr Number of the frame-list entry.
+ * @return -EINVAL The pointers p_qh or p_fl are invalid. Furthermore the index could be wrong.
+ * @return 0, successful.
  */
-static int append_qh_on_fl( qh_t *p_qh,struct frame_list *p_fl,int nr)
+static int append_qh_on_fl( qh_t *p_qh, struct frame_list *p_fl, int nr)
 {
   if(!p_qh || !p_qh->dma_handle || !p_fl){
     return -EINVAL;
@@ -372,50 +377,52 @@ static int append_qh_on_fl( qh_t *p_qh,struct frame_list *p_fl,int nr)
 }
 
 /******************************************************************************/
-/*                   UHC - Funktionen                                         */
-/*           ( fuer jeden gefundenen Controller )                             */
+/*                   UHC - Functions                                          */
+/*               ( for any Controllers )                                      */
 /******************************************************************************/
 
 /**
  * Initialisiert die grundlegende Datenstruktur fuer einen Universal Host Controller.
+ * Wenn ein Fehler aufteten sollte, werden alle erzeugten Datenstrukturen wieder gelöscht.
  * @param hcd_nr Nummer des Host-Controllers
  * @return 0, wenn erfolgreich
- * @return -ENODEV, wenn hcd_nr ungueltig
- * @return -ENOMEM, wenn keine TDs oder QHs mehr frei
+ * @return -ENODEV, if p_uhcd invalid
+ * @return -EINVAL,
+ * @return -ENOMEM, no memory for HCD available
  */
 static int init_skel( struct uhc_device *p_uhcd )
 {
   int i;
+  int ret = 0;
+  if(!p_uhcd){
+    return -ENODEV;
+  }
 
   p_uhcd->p_qh_lowspeed = create_qh(p_uhcd);
   if(!p_uhcd->p_qh_lowspeed) {
-    ERR("RT-UHC-Driver: [ERROR] Cannot allocate Low-Speed-QH \n");
-    return -ENOMEM;
+    goto err_skel_ls;
   }
   QH_DBG("RT-UHC-Driver: Low-Speed-QH  @ 0x%p, DMA: 0x%p \n",p_uhcd->p_qh_lowspeed,(void *)p_uhcd->p_qh_lowspeed->dma_handle);
 
   p_uhcd->p_qh_fullspeed = create_qh(p_uhcd);
   if(!p_uhcd->p_qh_fullspeed) {
-    ERR("RT-UHC-Driver: [ERROR] Cannot allocate Full-Speed-QH \n");
-    return -ENOMEM;
+    goto err_skel_fs;
   }
   QH_DBG("RT-UHC-Driver: Full-Speed-QH  @ 0x%p, DMA: 0x%p \n",p_uhcd->p_qh_fullspeed,(void *)p_uhcd->p_qh_fullspeed->dma_handle);
 
   p_uhcd->p_qh_term = create_qh(p_uhcd);
   if(!p_uhcd->p_qh_term) {
-    ERR("RT-UHC-Driver: [ERROR] Cannot allocate Terminate-QH \n");
-    return -ENOMEM;
+    goto err_skel_term;
   }
   QH_DBG("RT-UHC-Driver: Terminate-QH @ 0x%p, DMA: 0x%p \n",p_uhcd->p_qh_term,(void *)p_uhcd->p_qh_term->dma_handle);
 
-
   p_uhcd->p_td_loop = create_td(p_uhcd);
   if(!p_uhcd->p_td_loop) {
-    ERR("RT-UHC-Driver: [ERROR] Cannot allocate Loop-TD \n");
-    return -ENOMEM;
+    goto err_skel_loop;
   }
   TD_DBG("RT-UHC-Driver: Loop-TD      @ 0x%p, DMA: 0x%p \n",p_uhcd->p_td_loop,(void *)p_uhcd->p_td_loop->dma_handle);
 
+  /* initialize loop-td */
   p_uhcd->p_td_loop->buffer = 0;
   p_uhcd->p_td_loop->link   = cpu_to_le32(  p_uhcd->p_td_loop->dma_handle | LINK_NO_TERM | LINK_TO_TD );
   p_uhcd->p_td_loop->status = cpu_to_le32(  td_status_errcount(0) );
@@ -423,28 +430,59 @@ static int init_skel( struct uhc_device *p_uhcd )
                                             td_token_addr(0x7f) |
                                             td_token_maxlen(7) );
 
+  /* initialize lowspeed-qh */
   p_uhcd->p_qh_lowspeed->link    = cpu_to_le32( p_uhcd->p_qh_fullspeed->dma_handle | LINK_TO_QH | LINK_NO_TERM );
   p_uhcd->p_qh_lowspeed->element = cpu_to_le32( LINK_TERM );
 
+  /* initialize fullspeed-qh */
   p_uhcd->p_qh_fullspeed->link    = cpu_to_le32( p_uhcd->p_qh_term->dma_handle | LINK_TO_QH | LINK_NO_TERM );
   p_uhcd->p_qh_fullspeed->element = cpu_to_le32( LINK_TERM );
 
-
+  /* initialize terminate-qh */
 #ifdef BANDWIDTH_RECLAMATION
   p_uhcd->p_qh_term->link    = cpu_to_le32( p_uhcd->p_qh_fullspeed->dma_handle | LINK_TO_QH | LINK_NO_TERM );
 #else
   p_uhcd->p_qh_term->link    = cpu_to_le32( LINK_TERM );
 #endif
-
-//p_uhcd->p_qh_term->element = cpu_to_le32( LINK_TERM );
   p_uhcd->p_qh_term->element = cpu_to_le32( p_uhcd->p_td_loop->dma_handle | LINK_NO_TERM | LINK_TO_TD | LINK_NO_VF);
 
-  int ret;
+  /* insert pointer of the lowspeed-qh into the frame_list */
   for(i=0; i<MAX_FRAMES; i++) {
     ret = append_qh_on_fl( p_uhcd->p_qh_lowspeed, p_uhcd->p_fl, i);
+    if(ret){
+      goto err_skel_append;
+    }
   }
 
   return 0;
+
+/* Error - Handling */
+
+err_skel_append:
+  destroy_td(p_uhcd->p_td_loop);
+  ERR("RT-UHC-Driver: [ERROR] Cannot insert Adress of LS-QH into the framelist \n");
+  ret = -EINVAL;
+
+err_skel_loop:
+  destroy_qh(p_uhcd->p_qh_term);
+  ERR("RT-UHC-Driver: [ERROR] Cannot allocate memory for Loop-TD \n");
+  ret = -ENOMEM;
+
+err_skel_term:
+  destroy_qh(p_uhcd->p_qh_fullspeed);
+  ERR("RT-UHC-Driver: [ERROR] Cannot allocate memory for Terminate-QH \n");
+  ret = -ENOMEM;
+
+err_skel_fs:
+  destroy_qh(p_uhcd->p_qh_lowspeed);
+  ERR("RT-UHC-Driver: [ERROR] Cannot allocate memory for Full-Speed-QH \n");
+  ret = -ENOMEM;
+
+err_skel_ls:
+  ERR("RT-UHC-Driver: [ERROR] Cannot allocate memory for Low-Speed-QH \n");
+  ret = -ENOMEM;
+
+  return ret;
 }
 
 /**
@@ -664,10 +702,11 @@ int uhc_stop( struct uhc_device *p_uhcd )
 }
 
 /**
- * Initialisiert einen Universal Host Controller.
+ * Initialisiert die Frameliste, die Datenstrukturen und den Root-Hub eines Universal Host Controllers.
+ * Außerdem werden alle Parameter des Controllers gesetzt.
  * @param hcd_nr Nummer des Host-Controllers
  * @return 0, wenn erfolgreich
- * @return -ENODEV, wenn hcd_nr ungueltig
+ * @return -ENODEV, wenn p_uhcd ungueltig oder der Host-Controller keine Ressourcen bekommen hat.
  */
 static int uhc_init( struct uhc_device *p_uhcd )
 {
@@ -676,27 +715,28 @@ static int uhc_init( struct uhc_device *p_uhcd )
   }
   int ret,i,rh_port;
 
-  /* Initialisiere Framelist */
+  /* 1. initialize framelist */
   ret = init_framelist( p_uhcd );
   if( ret ){
     ERR("RT-UHC-Driver: [ERROR] %s - Creating Framelist failed\n",__FUNCTION__);
-    return ret;
+    return -1;
   }
   DBG("RT-UHC-Driver: Framelist    @ 0x%p, DMA: 0x%p (%d Byte) \n",
       (void *)p_uhcd->p_fl,(void *)p_uhcd->p_fl->dma_handle, sizeof(struct frame_list));
 
-  /* Initialisiere Scheduler */
+  /* 2. initialize skeleton */
   ret = init_skel( p_uhcd );
   if( ret ) {
     ERR("RT-UHC-Driver: [ERROR] %s - Init Skeleton failed\n",__FUNCTION__);
-    return ret;
+    return -2;
   }
   DBG("RT-UHC-Driver: Skeleton initialized\n");
 
+  /* 3. initialize Root-Hub*/
   ret = rh_init( p_uhcd );
   if(ret) {
     ERR("RT-UHC-Driver: [ERROR] %s - Init Root-Hub failed\n",__FUNCTION__);
-    return ret;
+    return -3;
   }
 
   /* Setting Bus-Master */
@@ -1114,6 +1154,7 @@ static int get_irq( struct uhc_device *p_uhcd )
         uhc_dev[i].irq == p_uhcd->p_pcidev->irq &&
         &uhc_dev[i] != p_uhcd){
       PRNT("RT-UHC-Driver: RTAI-IRQ %d registered by UHC %d, use it.\n",p_uhcd->p_pcidev->irq,uhc_dev[i].uhcd_nr);
+      p_uhcd->irq = p_uhcd->p_pcidev->irq;
       return 0;
     }
   }
@@ -1159,7 +1200,8 @@ static void put_irq( struct uhc_device *p_uhcd )
     if( uhc_dev[i].irq &&
         uhc_dev[i].irq == p_uhcd->p_pcidev->irq &&
         &uhc_dev[i] != p_uhcd ){
-      PRNT("RT-UHC-Driver: RTAI-IRQ %d used by UHC %d\n",p_uhcd->p_pcidev->irq,uhc_dev[i].uhcd_nr);
+      PRNT("RT-UHC-Driver: RTAI-IRQ %d still used by UHC %d\n",p_uhcd->p_pcidev->irq,uhc_dev[i].uhcd_nr);
+      p_uhcd->irq = 0;
       return;
     }
   }
@@ -1223,6 +1265,7 @@ static int map_dma( struct rt_privurb *p_purb )
                                               p_urb->p_setup_packet,
                                               sizeof( struct usb_ctrlrequest ),
                                               PCI_DMA_TODEVICE);
+
       if(!dma_handle){
         ERR_MSG2(p_urb->p_hcd,p_urb->p_usbdev," %s - Couldn't map Setup-Packet to DMA!\n",__FUNCTION__);
         return -ENOMEM;
@@ -1237,11 +1280,10 @@ static int map_dma( struct rt_privurb *p_purb )
     if( !(p_urb->transfer_flags & URB_NO_TRANSFER_DMA_MAP) ){
 
       /* Transfer-Buffer to DMA */
-      int direction = usb_pipein(p_urb->pipe) ? PCI_DMA_FROMDEVICE : PCI_DMA_TODEVICE ;
       dma_addr_t dma_handle = pci_map_single( p_purb->p_uhcd->p_pcidev,
                                               p_urb->p_transfer_buffer,
                                               p_urb->transfer_buffer_length,
-                                              direction);
+                                              usb_pipein(p_purb->p_urb->pipe) ? PCI_DMA_FROMDEVICE : PCI_DMA_TODEVICE);
       if(!dma_handle){
         ERR_MSG2(p_urb->p_hcd,p_urb->p_usbdev," %s - Couldn't map Transfer-Buffer to DMA!\n",__FUNCTION__);
         return -ENOMEM;
@@ -1250,6 +1292,8 @@ static int map_dma( struct rt_privurb *p_purb )
       DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB 0x%p: Transfer-Buffer @ 0x%p (%d Byte) mapped to DMA: 0x%p [%s]\n",
           p_urb,p_urb->p_transfer_buffer,p_urb->transfer_buffer_length,
           (void *)p_urb->transfer_dma,usb_pipein(p_urb->pipe) ? "IN" : "OUT");
+
+      p_urb->transfer_dma = dma_handle;
     }
   }
   return 0;
@@ -1267,8 +1311,11 @@ static void unmap_dma( struct rt_privurb *p_purb )
   /* Unmappe evtl Transfer-Buffer */
   if( p_purb->p_urb->transfer_buffer_length ){
     if( !(p_purb->p_urb->transfer_flags & URB_NO_TRANSFER_DMA_MAP) ){
-      int direction = usb_pipein(p_purb->p_urb->pipe) ? PCI_DMA_FROMDEVICE : PCI_DMA_TODEVICE ;
-      pci_unmap_single( p_purb->p_uhcd->p_pcidev, p_urb->transfer_dma, p_urb->transfer_buffer_length, direction);
+
+      pci_unmap_single( p_purb->p_uhcd->p_pcidev,
+                        p_urb->transfer_dma,
+                        p_urb->transfer_buffer_length,
+                        usb_pipein(p_purb->p_urb->pipe) ? PCI_DMA_FROMDEVICE : PCI_DMA_TODEVICE);
 
       DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB 0x%p: Unmap Transfer-Buffer @ 0x%p (%d Byte) from DMA: 0x%p\n",
           p_urb,p_purb->p_urb->p_transfer_buffer,p_urb->transfer_buffer_length,
@@ -1281,8 +1328,10 @@ static void unmap_dma( struct rt_privurb *p_purb )
   /* Unmappe evtl Setup-Packet */
   if(usb_pipecontrol(p_purb->p_urb->pipe)){
     if( !(p_purb->p_urb->transfer_flags & URB_NO_SETUP_DMA_MAP) ){
-      int direction = usb_pipein(p_purb->p_urb->pipe) ? PCI_DMA_FROMDEVICE : PCI_DMA_TODEVICE ;
-      pci_unmap_single( p_purb->p_uhcd->p_pcidev, p_urb->setup_dma, sizeof( struct usb_ctrlrequest ), direction);
+      pci_unmap_single( p_purb->p_uhcd->p_pcidev,
+                        p_urb->setup_dma,
+                        sizeof( struct usb_ctrlrequest ),
+                        usb_pipein(p_purb->p_urb->pipe) ? PCI_DMA_FROMDEVICE : PCI_DMA_TODEVICE);
 
       DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB 0x%p: Unmap Setup-Packet @ 0x%p (%d Byte) from DMA: 0x%p\n",
           p_urb,p_purb->p_urb->p_setup_packet,sizeof(struct usb_ctrlrequest),
@@ -1718,6 +1767,13 @@ static int rt_uhci_send_bulk_urb( struct rt_privurb *p_purb )
     ioc_after_last_td = 1;   /* Interrupt IOC (wake up caller-task) */
   }
 
+  if(out){
+   printk("Sending %d Bytes: [0]: 0x%02x, [1]: 0x%02x \n",
+      remaining,
+      *(unsigned char *)p_urb->p_transfer_buffer,
+      *(unsigned char *)(p_urb->p_transfer_buffer+1));
+  }
+
   p_purb->p_qh->element = cpu_to_le32(p_list->dma_handle | LINK_NO_TERM | LINK_TO_TD | LINK_VF );
 
   while(remaining > 0 && p_list != p_end){
@@ -1757,7 +1813,9 @@ static int rt_uhci_send_bulk_urb( struct rt_privurb *p_purb )
     p_list++;
   }
 
-  //dump_td_table( p_purb,0);
+  if(out){
+    dump_td_table( p_purb,0);
+  }
 
   return rt_schedule_ctrl_bulk_urb( p_purb );
 }
@@ -1989,50 +2047,42 @@ void nrt_uhci_remove_controller( struct uhc_device *p_uhcd )
 {
   if(p_uhcd->status & UHC_REGISTERED){
     nrt_hcd_unregister_driver( p_uhcd->p_hcd );
+    p_uhcd->status &= ~UHC_REGISTERED;
   }
 
   if(p_uhcd->status & UHC_RUNNING){
     uhc_stop(p_uhcd);
+    p_uhcd->status &= ~UHC_RUNNING;
   }
 
-  if(p_uhcd->p_hcd){
-    kfree(p_uhcd->p_hcd);
-    alloc_bytes -= sizeof(struct hc_device);
+  if(p_uhcd->status & UHC_INITIALIZED){
+    destroy_td(p_uhcd->p_td_loop);
+    destroy_qh(p_uhcd->p_qh_fullspeed);
+    destroy_qh(p_uhcd->p_qh_lowspeed);
+    destroy_qh(p_uhcd->p_qh_term);
+    destroy_flame_list(p_uhcd);
+    p_uhcd->status &= ~UHC_INITIALIZED;
   }
 
-  destroy_td(p_uhcd->p_td_loop);
-  destroy_qh(p_uhcd->p_qh_fullspeed);
-  destroy_qh(p_uhcd->p_qh_lowspeed);
-  destroy_qh(p_uhcd->p_qh_term);
-
-  destroy_flame_list(p_uhcd);
-
-  put_irq(p_uhcd);
-
-  release_ioport(p_uhcd);
-}
-
-void nrt_uhci_init_controller( struct uhc_device *p_uhcd )
-{
-  if(!p_uhcd){
-    return;
+  if(p_uhcd->status & UHC_ALLOCATED){
+    if(p_uhcd->p_hcd){
+      kfree(p_uhcd->p_hcd);
+      alloc_bytes -= sizeof(struct hc_device);
+    }
+    put_irq(p_uhcd);
+    release_ioport(p_uhcd);
+    p_uhcd->status &= ~UHC_ALLOCATED;
   }
-
-  /* Initialize Controller */
-  if (uhc_init( p_uhcd ) ){
-    return;
-  }
-  p_uhcd->status |= UHC_INITIALIZED;
-
-  /* Starte Controller */
-  if( uhc_start( p_uhcd ) ){
-    return;
-  }
-  p_uhcd->status |= UHC_RUNNING;
-
   return;
 }
 
+/**
+ * Searching for UH-Controller on the Host. Furthermore this function creates the struct hc_device for the rt-usbcore.
+ * @param p_uhcd Pointer to an empty uhc_device
+ * @return 0, device found
+ * @return > 0, no device found
+ * @return -ENOMEM, no memory for hc_device available
+ */
 int nrt_uhci_search_controller( struct uhc_device *p_uhcd )
 {
   struct pci_dev *p_pcidev_new = NULL;
@@ -2044,38 +2094,40 @@ start_search:
   p_pcidev_new = pci_get_class(UHC_CLASS_CODE,p_pcidev_old);
   if(!p_pcidev_new) {
     p_pcidev_old = NULL;
-    return 1; // No device found
+    return 1; /* no device found */
   }
   p_pcidev_old = p_pcidev_new;
 
-  /* device located but not wanted */
+  /* device found but is undesired */
   if(device && device != p_pcidev_new->device){
     goto start_search;
   }
 
-  /* Device gefunden */
+  /* device found */
   PRNT("USB Universal Host Controller found : Vendor = 0x%04x, Device = 0x%04x\n",
        p_pcidev_new->vendor,p_pcidev_new->device);
 
+  /* generate hc_device for the rt-core-module */
   struct hc_device *p_hcd = kmalloc( sizeof(struct hc_device),GFP_KERNEL);
   if(!p_hcd){
-    return -1;
+    uhc_clear(p_uhcd);
+    return -ENOMEM;
   }
   alloc_bytes += sizeof(struct hc_device);
 
-  p_hcd->type  = 0x00;  /* UHC Device */
+  p_hcd->type  = 0x00;
   p_hcd->p_hcd_fkt = &hcd_fkt;
-
   p_uhcd->p_pcidev = p_pcidev_new;
   p_uhcd->p_hcd = p_hcd;
 
-  /* Pruefe ob Ressourcen schon belegt*/
+  /* checking io-resource */
   if(request_ioport(p_uhcd)){
     kfree(p_hcd);
     alloc_bytes -= sizeof(struct hc_device);
     goto start_search;
   }
 
+  /* allocate RTAI-interrupt */
   if(get_irq(p_uhcd)){
     release_ioport(p_uhcd);
     kfree(p_hcd);
@@ -2084,7 +2136,6 @@ start_search:
   }
 
   return 0;
-
 }
 
 int nrt_uhci_register_urb( struct rt_urb *p_urb)
@@ -2368,39 +2419,53 @@ int __init mod_start(void)
 
   anz_uhc_ctrl = 0;
   struct uhc_device *p_uhcd;
-  PRNT("RT-UHC-Driver: Searching for UHCI-Host-Controller \n");
+
+  PRNT("RT-UHC-Driver: Searching for Universal-Host-Controller \n");
+
   for(i=0;i < MAX_UHC_CONTROLLER;i++) {
+
     p_uhcd = &uhc_dev[i];
     p_uhcd->uhcd_nr = i;
+
     ret = nrt_uhci_search_controller(p_uhcd);
-    if(!ret){
-
-      nrt_uhci_init_controller(p_uhcd);
-      if(!(p_uhcd->status & UHC_INITIALIZED) || !(p_uhcd->status & UHC_RUNNING) ){
-        PRNT("RT-UHC-Driver: Error while initializing UHC (%d)\n",ret);
-        nrt_uhci_remove_controller(p_uhcd);
-        break;
-      }
-
-      ret = nrt_hcd_register_driver(p_uhcd->p_hcd);
-      p_uhcd->p_hcd->p_private = (void *)p_uhcd;
-
-      if(ret){
-        PRNT("RT-UHC-Driver: Error while registering UHC (%d)\n",ret);
-        nrt_uhci_remove_controller(p_uhcd);
-        break;
-      }
-      p_uhcd->status |= UHC_REGISTERED;
-
-      anz_uhc_ctrl++;
-      DBG_MSG1(p_uhcd->p_hcd," USB Universal Host Controller @ 0x%p registered \n",p_uhcd);
-
-      p_uhcd->p_hcd->p_hcd_fkt->nrt_usb_search_devices(p_uhcd->p_hcd);
-
-    } else {
+    if(ret){  /* no controller found or no memory for new controller */
       break;
     }
-  }
+    p_uhcd->status |= UHC_ALLOCATED;
+
+    /* initializing controller */
+    ret = uhc_init( p_uhcd );
+    if(ret){
+      PRNT("RT-UHC-Driver: Error while initializing UHC (%d)\n",ret);
+      nrt_uhci_remove_controller(p_uhcd);
+    }
+    p_uhcd->status |= UHC_INITIALIZED;
+
+    /* Starting Controller */
+    ret = uhc_start(p_uhcd);
+    if(ret){
+      PRNT("RT-UHC-Driver: Error while starting UHC (%d)\n",ret);
+      nrt_uhci_remove_controller(p_uhcd);
+    }
+    p_uhcd->status |= UHC_RUNNING;
+
+    /* Registering Controller */
+    ret = nrt_hcd_register_driver(p_uhcd->p_hcd);
+    if(ret){
+      PRNT("RT-UHC-Driver: Error while registering UHC (%d)\n",ret);
+      nrt_uhci_remove_controller(p_uhcd);
+      break;
+    }
+    p_uhcd->status |= UHC_REGISTERED;
+    p_uhcd->p_hcd->p_private = (void *)p_uhcd;
+
+    anz_uhc_ctrl++;
+    DBG_MSG1(p_uhcd->p_hcd," USB Universal Host Controller @ 0x%p registered \n",p_uhcd);
+
+    /* Searching USB-Devices on this Controller */
+    p_uhcd->p_hcd->p_hcd_fkt->nrt_usb_search_devices(p_uhcd->p_hcd);
+
+  } /* for-loop */
 
   if(!anz_uhc_ctrl){
     PRNT("RT-UHC-Driver: No UHC-Driver registered -> Exit Module \n");
@@ -2422,7 +2487,6 @@ void mod_exit(void)
 {
   int i=0;
   for(i=0; i < anz_uhc_ctrl; i++) {
-
     nrt_uhci_remove_controller(&uhc_dev[i]);
   }
 
