@@ -1315,6 +1315,11 @@ struct usb_device *rt_usb_get_device(__u16 vendor, __u16 product , struct usb_de
   struct usb_device *p_list = NULL;
   int i,start = 1;
 
+  if( (vendor  == 0x0000 ) &&
+      (product == 0x0000) ){
+    return NULL;
+  }
+
   if( p_old_device && p_old_device->address < MAX_USB_DEV ){
     start = p_old_device->address + 1;
   }
