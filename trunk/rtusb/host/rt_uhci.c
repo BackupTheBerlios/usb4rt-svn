@@ -34,12 +34,26 @@
 
 #define BANDWIDTH_RECLAMATION
 
+/* init module-parameter */
+/*
 int list=0;
-int device=0x0000;
 MODULE_PARM (list,"i");
 MODULE_PARM_DESC (list,"Listet alle UHCI-Controller auf");
-MODULE_PARM (device,"i");
-MODULE_PARM_DESC (device,"Treiber nur fuer Geraet mit Device-ID device (HEX)");
+*/
+#define MAX_DEVICE_PARMS    4
+int deviceid[4] = {0,0,0,0};
+MODULE_PARM (deviceid,"0-4i");
+MODULE_PARM_DESC (deviceid,"Load driver only for controller with a specific device-id device (HEX).");
+
+#define MAX_IRQ_PARMS    4
+int irq[4]    = {0,0,0,0};
+MODULE_PARM (irq,"0-4i");
+MODULE_PARM_DESC (irq,"Load driver only for controller with a specific irq-number (INT).");
+
+#define MAX_IOPORT_PARMS    4
+int ioport[4]    = {0,0,0,0};
+MODULE_PARM (ioport,"0-4i");
+MODULE_PARM_DESC (ioport,"Load driver only for controller with a specific io-port (HEX).");
 
 /* rt_uhci_hub */
 extern int rh_init( struct uhc_device *p_uhcd );
@@ -48,6 +62,7 @@ extern struct usb_device *nrt_uhci_poll_root_hub_port( struct hc_device *p_hcd ,
 unsigned short anz_uhc_ctrl;
 unsigned short reg_uhc_ctrl;
 struct uhc_device uhc_dev[MAX_UHC_CONTROLLER];
+struct uhc_irq uhc_irq_tab[MAX_UHC_CONTROLLER];
 struct hcd_funktions hcd_fkt;
 struct pci_dev *p_pcidev_old = NULL;
 unsigned int alloc_bytes = 0;
@@ -776,6 +791,7 @@ static void uhc_clear( struct uhc_device *p_uhcd )
   memset(p_uhcd,0,sizeof(struct uhc_device));
   p_uhcd->uhcd_nr = nr;
 
+  INIT_LIST_HEAD(&p_uhcd->irq_list);
   INIT_LIST_HEAD(&p_uhcd->reg_urb_list);
   INIT_LIST_HEAD(&p_uhcd->handle_urb_list);
 
@@ -968,8 +984,6 @@ handle:
 
 static inline void handle_controller( struct uhc_device *p_uhcd, __u16 stat )
 {
-  DBG_MSG1(p_uhcd->p_hcd," =================== BEGIN RTAI-INTERRUPT HANDLER =============================\n");
-
   if (stat & USBSTS_ERROR) {  //Interrupt due to error
     DBG_MSG1(p_uhcd->p_hcd," ===> Incoming IRQ %d, ERROR \n",p_uhcd->irq);
   }
@@ -1005,6 +1019,7 @@ static inline void handle_controller( struct uhc_device *p_uhcd, __u16 stat )
   struct rt_privurb *p_purb;
   struct list_head *p_list, *p_next;
   p_list = p_uhcd->reg_urb_list.next;
+
   while(p_list != &p_uhcd->reg_urb_list){
     p_next = p_list->next;
     p_purb = list_entry(p_list, struct rt_privurb, reg_urb_list);
@@ -1023,43 +1038,58 @@ static inline void handle_controller( struct uhc_device *p_uhcd, __u16 stat )
 
     p_list = p_next;
   }
-
-  outw(stat, p_uhcd->p_io->start + USBSTS);                 // Clear it
-  DBG_MSG1(p_uhcd->p_hcd," =================== ENDE RTAI-INTERRUPT HANDLER ==============================\n");
 }
 
 int rt_irq_handler(struct xnintr *p_xnintr)
 {
-  struct uhc_device *p_uhcd = NULL;
-  struct uhc_device *p_test = (struct uhc_device *)p_xnintr->cookie;
+  struct uhc_irq *p_uhc_irq = (struct uhc_irq *)p_xnintr->cookie;
 
-  int i,fs=0;
-  __u16 stat = 0x0000;
-
-  for(i=0;i<MAX_UHC_CONTROLLER;i++){
-    if(p_test == &uhc_dev[i]){
-
-      if(!p_test || !p_test->p_io){ /* no I/O-Pointer */
-        continue;                   /* searching */
-      }
-
-      if(!fs){
-        frame_start = rt_timer_read();
-      }
-
-      stat = inw(p_test->p_io->start + USBSTS);
-
-      if (!(stat & ~USBSTS_HCH)) {  /* no State-Bit set */
-        continue;                   /* searching */
-      } else {                      /* Interrupt-Controller found */
-        p_uhcd = p_test;
-        handle_controller(p_uhcd,stat);  /* handle this Controller */
-        /* search next Controller (IRQ-Sharing) */
-      }
-    }
+  if(!p_uhc_irq || list_empty(&p_uhc_irq->irq_list) ){
+    return RT_INTR_CHAINED;           /* shared interrupt, not mine */
   }
 
-  if(!p_uhcd){
+  DBG(" =================== BEGIN RTAI-INTERRUPT HANDLER =============================\n");
+
+  int fs=0;
+  int handled_uhc = 0;
+  __u16 stat = 0x0000;
+  struct uhc_device *p_uhcd = NULL;
+
+  struct list_head *p_list = p_uhc_irq->irq_list.next;
+  while(p_list != &p_uhc_irq->irq_list){
+    p_uhcd = list_entry(p_list,struct uhc_device,irq_list);
+    printk("UHC @ 0x%p: Checking for Interrupts \n",p_uhcd);
+    if( !p_uhcd ||                    /* invalid pointer */
+        !p_uhcd->p_io ||              /* no io-port */
+        !p_uhcd->irq){                /* no interrupt-number */
+      printk("UHC @ 0x%p: p_uhcd invalid \n",p_uhcd);
+      goto irq_next_uhc;
+    }
+
+    /* get time */
+    if(!fs){
+      frame_start = rt_timer_read();
+    }
+
+    /* read controller-state */
+    stat = inw(p_uhcd->p_io->start + USBSTS);
+    if ( !(stat & ~USBSTS_HCH) ) {                /* no State-Bit set */
+      printk("UHC[%d]: No state-bit set\n",p_uhcd->uhcd_nr);
+      goto irq_next_uhc;                          /* searching */
+    } else {                                      /* Interrupt-Controller found */
+      printk("UHC[%d]: Handling \n",p_uhcd->uhcd_nr);
+      handle_controller( p_uhcd, stat);           /* handle this Controller */
+      handled_uhc++;
+      outw(stat, p_uhcd->p_io->start + USBSTS);   /* Clear it */
+    }
+
+irq_next_uhc:
+    p_list = p_list->next;
+  }
+
+  DBG(" =================== ENDE RTAI-INTERRUPT HANDLER ==============================\n");
+
+  if(!handled_uhc){
     return RT_INTR_CHAINED;         /* shared interrupt, not mine */
   }
 
@@ -1070,6 +1100,26 @@ int rt_irq_handler(struct xnintr *p_xnintr)
 /*  Ressource-Functions                                           */
 /******************************************************************/
 
+static int get_ioport_info(struct pci_dev *p_pcidev, unsigned long *io_start, unsigned long *io_size){
+  if(!p_pcidev || !io_start || !io_size){
+    return -EINVAL;
+  }
+
+  int i;
+  unsigned long io_flags = 0;
+
+  /* searching for the first io-port */
+  for(i=0; pci_io_addr[i]; i++){
+    io_flags = pci_resource_flags(p_pcidev,i);
+    if(io_flags & IORESOURCE_IO){
+      *io_start = pci_resource_start(p_pcidev,i);
+      *io_size  = pci_resource_len(p_pcidev,i);
+      return 0;
+    }
+  }
+  return -ENODEV;
+}
+
 /**
  * Versucht fuer einen Controller einen IO-Port anzufordern.
  * @param p_uhcd Zeiger auf ein gueltiges struct hc_device
@@ -1077,43 +1127,29 @@ int rt_irq_handler(struct xnintr *p_xnintr)
  * @return -EBUSY, wenn IO-Port schon belegt
  * @return -ENODEV, wenn p_uhcd ungueltig
  */
-static int request_ioport( struct uhc_device *p_uhcd )
+static int request_ioport( struct uhc_device *p_uhcd, unsigned long io_start, unsigned long io_size )
 {
-  if(!p_uhcd->p_pcidev){
-    return -ENODEV;
+  if(!p_uhcd || !io_start || !io_size){
+    return -EINVAL;
   }
+
   p_uhcd->p_io = NULL;
 
-  int i;
-  unsigned long io_flags,io_start,io_end,io_size;
-  io_flags = io_start = io_end = io_size = 0;
+  PRNT("RT-UHC-Driver: Request IO-Port @ 0x%08lx (%lu Byte) for UHC[%d] ... ",
+        io_start, io_size, p_uhcd->uhcd_nr);
 
-  for(i=0; pci_io_addr[i]; i++){
+  char uhc_name[20];
+  sprintf(uhc_name,"rt_uhcd[%02d]",p_uhcd->uhcd_nr);
+  p_uhcd->p_io = NULL;
+  p_uhcd->p_io = request_region(io_start,io_size,uhc_name);
 
-    io_flags = pci_resource_flags(p_uhcd->p_pcidev,i);
-
-    if(io_flags & IORESOURCE_IO){
-      io_start = pci_resource_start(p_uhcd->p_pcidev,i);
-      io_end   = pci_resource_end(p_uhcd->p_pcidev,i);
-      io_size  = pci_resource_len(p_uhcd->p_pcidev,i);
-
-      PRNT("RT-UHC-Driver: Request IO-Port @ 0x%08lx (%d Byte) for Device 0x%04x ... ",
-           io_start,(int)io_size,p_uhcd->p_pcidev->device);
-
-      p_uhcd->p_io = NULL;
-      p_uhcd->p_io = request_region(io_start,io_size,"rt_uhci");
-
-      if(p_uhcd->p_io){
-        PRNT("[OK]\n");
-        return 0;
-      }
-
-      PRNT("[BUSY]\n");
-      return -EBUSY;
-
-    }
+  if(p_uhcd->p_io){
+    PRNT("[OK]\n");
+    return 0;
   }
-  return -ENODEV;
+  PRNT("[BUSY]\n");
+  return -EBUSY;
+
 }
 
 /**
@@ -1144,44 +1180,96 @@ static void release_ioport( struct uhc_device *p_uhcd )
  */
 static int get_irq( struct uhc_device *p_uhcd )
 {
-  if(!p_uhcd->p_pcidev){
+  if(!p_uhcd->p_pcidev || !p_uhcd->p_pcidev->irq){
     return -ENODEV;
   }
 
-  int i;
-  for(i=0;i<MAX_UHC_CONTROLLER;i++){
-    if( uhc_dev[i].irq &&
-        uhc_dev[i].irq == p_uhcd->p_pcidev->irq &&
-        &uhc_dev[i] != p_uhcd){
-      PRNT("RT-UHC-Driver: RTAI-IRQ %d registered by UHC %d, use it.\n",p_uhcd->p_pcidev->irq,uhc_dev[i].uhcd_nr);
-      p_uhcd->irq = p_uhcd->p_pcidev->irq;
-      return 0;
+  int i,ret;
+  int uhc_irq_idx = -1;
+  int uhc_irq_free = -1;
+  int wanted_irq = p_uhcd->p_pcidev->irq;
+
+  struct uhc_irq *p_uhc_irq = NULL;
+
+  /* checking irq-table */
+  printk("Suche IRQ %d in der IRQ-Tabelle\n",wanted_irq);
+  for(i=0; i < MAX_UHC_CONTROLLER; i++){
+    printk("uhc_irq_tab[%d].irq = %d\n",i,uhc_irq_tab[i].irq);
+    if(uhc_irq_tab[i].irq == wanted_irq){
+      /* irq ist registered */
+      p_uhc_irq = &uhc_irq_tab[i];
+      uhc_irq_idx = i;
+      printk("Eintag gefunden, p_uhc_irq[%d] @ 0x%p, \n",uhc_irq_idx,p_uhc_irq);
+      break;
+    }
+
+    if( uhc_irq_free == -1 &&
+        uhc_irq_tab[i].irq == 0){ /* free entry */
+      printk("uhc_irq_tab[%d].irq = 0 -> free entry\n",i);
+      uhc_irq_free = i;
     }
   }
 
-  int ret;
-  PRNT("RT-UHC-Driver: Request RTAI-IRQ %d ... ",p_uhcd->p_pcidev->irq);
-  ret = rt_intr_create ( &p_uhcd->rt_intr, p_uhcd->p_pcidev->irq, (rt_isr_t) &rt_irq_handler );
-  if(ret){
-    p_uhcd->irq = 0;
-    PRNT("[BUSY]\n");
+  if( p_uhc_irq ){
+    PRNT("RT-UHC-Driver: RTAI-IRQ %d registered yet, add UHC to IRQ-List\n",wanted_irq);
+    p_uhcd->irq = wanted_irq;
+    list_add_tail( &p_uhcd->irq_list, &p_uhc_irq->irq_list);
+    return 0;
+  }
+
+
+  /* first UHC with this irq -> init uhc_irq-structure */
+  if(uhc_irq_free == -1){
     return -EBUSY;
   }
-  p_uhcd->irq = p_uhcd->p_pcidev->irq;
-  PRNT("[OK]\n");
 
-  xnintr_attach ( &p_uhcd->rt_intr.intr_base,(void *)p_uhcd );
+  p_uhc_irq = &uhc_irq_tab[uhc_irq_free];
+  printk("New Entry: uhc_irq_tab[%d] @ 0x%p\n",uhc_irq_free,p_uhc_irq);
+  p_uhc_irq->irq = wanted_irq;
+  INIT_LIST_HEAD(&p_uhc_irq->irq_list);
+  list_add_tail( &p_uhcd->irq_list, &p_uhc_irq->irq_list);
 
-  PRNT("RT-UHC-Driver: Enable  RTAI-IRQ %d ... ",p_uhcd->p_pcidev->irq );
-  ret = rt_intr_enable ( &p_uhcd->rt_intr);
+  /* request rtai-irq */
+  PRNT("RT-UHC-Driver: Request RTAI-IRQ %d ... ", wanted_irq);
+  ret = rt_intr_create ( &p_uhc_irq->rt_intr, wanted_irq, (rt_isr_t) &rt_irq_handler );
   if(ret){
-    p_uhcd->irq = 0;
     PRNT("[BUSY]\n");
-    rt_intr_delete( &p_uhcd->rt_intr);
+
+    /* reset irq-values of p_uhcd*/
+    p_uhcd->irq = 0;
+    list_del_init(&p_uhcd->irq_list);
+
+    /* reset irq-values of struct uhc_irq*/
+    memset( p_uhc_irq, 0, sizeof(struct uhc_irq) );
+    INIT_LIST_HEAD(&p_uhc_irq->irq_list);
+
     return -EBUSY;
   }
   PRNT("[OK]\n");
+  p_uhcd->irq = wanted_irq;
 
+  /* save head of the irq-list with this new interrupt-number */
+  xnintr_attach ( &p_uhc_irq->rt_intr.intr_base, p_uhc_irq );
+
+  PRNT("RT-UHC-Driver: Enable  RTAI-IRQ %d ... ",wanted_irq );
+  ret = rt_intr_enable ( &p_uhc_irq->rt_intr);
+  if(ret){
+    PRNT("[BUSY]\n");
+
+    /* delete rtai-interrupt */
+    rt_intr_delete( &p_uhc_irq->rt_intr);
+
+    /* reset irq-values of p_uhcd*/
+    p_uhcd->irq = 0;
+    list_del_init(&p_uhcd->irq_list);
+
+    /* reset irq-values of struct uhc_irq*/
+    memset( p_uhc_irq, 0, sizeof(struct uhc_irq) );
+    INIT_LIST_HEAD(&p_uhc_irq->irq_list);
+
+    return -EBUSY;
+  }
+  PRNT("[OK]\n");
   return 0;
 }
 
@@ -1196,23 +1284,59 @@ static void put_irq( struct uhc_device *p_uhcd )
   }
 
   int i;
-  for(i=0;i<MAX_UHC_CONTROLLER;i++){
-    if( uhc_dev[i].irq &&
-        uhc_dev[i].irq == p_uhcd->p_pcidev->irq &&
-        &uhc_dev[i] != p_uhcd ){
-      PRNT("RT-UHC-Driver: RTAI-IRQ %d still used by UHC %d\n",p_uhcd->p_pcidev->irq,uhc_dev[i].uhcd_nr);
-      p_uhcd->irq = 0;
-      return;
+  int uhc_irq_idx = -1;
+  int release_irq = p_uhcd->irq;
+
+  struct uhc_irq *p_uhc_irq = NULL;
+
+  /* checking irq-table */
+  for(i=0; i < MAX_UHC_CONTROLLER; i++){
+    if(uhc_irq_tab[i].irq == release_irq){
+      /* irq ist registered */
+      p_uhc_irq = &uhc_irq_tab[i];
+      uhc_irq_idx = i;
+      break;
     }
   }
 
-  PRNT("RT-UHC-Driver: Disable RTAI-IRQ %d\n",p_uhcd->irq);
-  rt_intr_disable ( &p_uhcd->rt_intr );
+  if(!p_uhc_irq){
+    return;
+  }
 
-  PRNT("RT-UHC-Driver: Delete  RTAI-IRQ %d\n",p_uhcd->irq);
-  rt_intr_delete ( &p_uhcd->rt_intr );
+  /* searching for p_uhcd in irq-list */
+  struct uhc_device *p_uhcd_dummy = NULL;
+  struct list_head *p_list = p_uhc_irq->irq_list.next;
 
-  p_uhcd->irq = 0;
+  while(p_list != &p_uhc_irq->irq_list){
+    p_uhcd_dummy = list_entry(p_list, struct uhc_device, irq_list);
+
+    if(p_uhcd_dummy == p_uhcd){
+
+      /* reset irq-values of p_uhcd*/
+      p_uhcd->irq = 0;
+      list_del_init(&p_uhcd->irq_list);
+
+      break;
+    }
+    p_list = p_list->next;
+  }
+
+  /* checking if irq-list empty */
+  if( !list_empty(&p_uhc_irq->irq_list) ){
+    PRNT("RT-UHC-Driver: RTAI-IRQ %d still needed by another UHC\n",release_irq);
+    return;
+  }
+
+  /* irq-list is empty -> disable and delete rtai-irq */
+  PRNT("RT-UHC-Driver: Disable RTAI-IRQ %d\n",release_irq);
+  rt_intr_disable ( &p_uhc_irq->rt_intr );
+
+  PRNT("RT-UHC-Driver: Delete  RTAI-IRQ %d\n",release_irq);
+  rt_intr_delete ( &p_uhc_irq->rt_intr );
+
+  /* reset irq-values of struct uhc_irq*/
+  memset( p_uhc_irq, 0, sizeof(struct uhc_irq) );
+  INIT_LIST_HEAD(&p_uhc_irq->irq_list);
 
   return;
 }
@@ -2098,14 +2222,39 @@ start_search:
   }
   p_pcidev_old = p_pcidev_new;
 
-  /* device found but is undesired */
-  if(device && device != p_pcidev_new->device){
+  /* device found but the device-id is undesired */
+  int i;
+  for(i=0; i<MAX_DEVICE_PARMS; i++){
+    if( deviceid[i] && deviceid[i] != p_pcidev_new->device){
+      goto start_search;
+    }
+  }
+
+  /* device found but the irq-number is invalid */
+  for(i=0; i<MAX_IRQ_PARMS; i++){
+    if( irq[i] && irq[i] != p_pcidev_new->irq){
+      goto start_search;
+    }
+  }
+
+  /* device found but the io-port is invalid */
+  unsigned long io_start = 0;
+  unsigned long io_size  = 0;
+  int ret = get_ioport_info( p_pcidev_new, &io_start, &io_size);
+  if(ret){
+    PRNT("Couldn't get informations of the IO-Port \n");
     goto start_search;
   }
 
+  for(i=0; i<MAX_IOPORT_PARMS; i++){
+    if( ioport[i] && ioport[i] != io_start){
+      goto start_search;
+    }
+  }
+
   /* device found */
-  PRNT("USB Universal Host Controller found : Vendor = 0x%04x, Device = 0x%04x\n",
-       p_pcidev_new->vendor,p_pcidev_new->device);
+  PRNT("USB Universal Host Controller found : Vendor = 0x%04x, Device = 0x%04x, IRQ = %d, IO-Port = 0x%08lx (%lu Bytes)\n",
+       p_pcidev_new->vendor,p_pcidev_new->device,p_pcidev_new->irq,io_start,io_size);
 
   /* generate hc_device for the rt-core-module */
   struct hc_device *p_hcd = kmalloc( sizeof(struct hc_device),GFP_KERNEL);
@@ -2121,7 +2270,7 @@ start_search:
   p_uhcd->p_hcd = p_hcd;
 
   /* checking io-resource */
-  if(request_ioport(p_uhcd)){
+  if( request_ioport( p_uhcd, io_start, io_size) ){
     kfree(p_hcd);
     alloc_bytes -= sizeof(struct hc_device);
     goto start_search;
@@ -2417,12 +2566,30 @@ int __init mod_start(void)
   /* Root-Hub Functions */
   hcd_fkt.nrt_hcd_poll_root_hub_port  = nrt_uhci_poll_root_hub_port;
 
+  /* init uhc_irq-table */
+  for(i=0; i < MAX_UHC_CONTROLLER; i++){
+    memset( &uhc_irq_tab[i], 0, sizeof(struct uhc_irq) );
+    INIT_LIST_HEAD(&uhc_irq_tab[i].irq_list);
+  }
+
   anz_uhc_ctrl = 0;
   struct uhc_device *p_uhcd;
 
   PRNT("RT-UHC-Driver: Searching for Universal-Host-Controller \n");
 
-  for(i=0;i < MAX_UHC_CONTROLLER;i++) {
+  for(i=0; i<4; i++){
+    if( deviceid[i] > 0 ){
+      PRNT("RT-UHC-Driver: -> Use only HC with Device-ID 0x%04x \n",deviceid[i])
+    }
+  }
+
+  for(i=0; i<4; i++){
+    if(irq[i] > 0){
+      PRNT("RT-UHC-Driver: -> Use only HC with IRQ %d \n",irq[i])
+    }
+  }
+
+  for(i=0; i < MAX_UHC_CONTROLLER; i++) {
 
     p_uhcd = &uhc_dev[i];
     p_uhcd->uhcd_nr = i;
