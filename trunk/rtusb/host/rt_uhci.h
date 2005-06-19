@@ -210,7 +210,6 @@ typedef struct transf_desc {
 
 struct uhc_device {
   int irq;
-  RT_INTR rt_intr;
 
   __u16 status;
   __u8 uhcd_nr;
@@ -220,6 +219,7 @@ struct uhc_device {
   struct pci_dev *p_pcidev;
   struct frame_list *p_fl;
 
+  struct list_head irq_list;          /* list of all uhc with the same rtai-irq */
   struct list_head reg_urb_list;      /* list pointer to all registered urbs */
   struct list_head handle_urb_list;   /* list pointer to all active urbs */
 
@@ -276,6 +276,12 @@ struct rt_privurb {
   RTIME time_at_first_irq;
   unsigned int byte_at_first_irq;
 
+};
+
+struct uhc_irq{
+  RT_INTR rt_intr;
+  int irq;
+  struct list_head irq_list;
 };
 
 struct rt_urb_priv{
