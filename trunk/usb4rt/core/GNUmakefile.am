@@ -1,0 +1,40 @@
+moduledir = $(DESTDIR)@USB4RT_MODULE_DIR@
+modext = @USB4RT_MODULE_EXT@
+
+## libkernel_rtai_rtusbcore.a ###################
+
+EXTRA_LIBRARIES = libkernel_rtai_rtusbcore.a
+
+nobase_include_HEADERS = rt_usb.h rt_usb_core.h
+
+libkernel_rtai_rtusbcore_a_CPPFLAGS = \
+	@RTAI_KMOD_CFLAGS@
+
+libkernel_rtai_rtusbcore_a_SOURCES = \
+	rt_usb_core.c rt_usb_debug.c rt_usb_hub.c
+
+###############################################
+
+OBJS = rt_usbcore$(modext)
+
+rt_usbcore.o: libkernel_rtai_rtusbcore.a
+	$(LD) --whole-archive $< -r -o $@
+
+rt_usbcore.ko: @USB4RT_KBUILD_ENV@
+rt_usbcore.ko: $(libkernel_rtai_rtusbcore_a_SOURCES) FORCE
+	@USB4RT_KBUILD_CMD@
+
+all-local: $(OBJS)
+
+install-exec-local: $(OBJS)
+	$(mkinstalldirs) $(moduledir)
+	$(INSTALL_DATA) $^ $(moduledir)
+
+clean-local: $(libkernel_rtai_rtusbcore_a_SOURCES)
+	@USB4RT_KBUILD_CLEAN@
+
+EXTRA_DIST = Makefile.kbuild
+
+DISTCLEANFILES = Makefile
+
+.PHONY: FORCE
