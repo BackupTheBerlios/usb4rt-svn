@@ -25,8 +25,9 @@
 #include "rt_usb_core.h"
 #include "rt_usb_debug.h"
 #include "rt_usb_hub.h"
+#include "usb4rt_config.h"
 
-#define DRIVER_VERSION "v0.1"
+#define DRIVER_VERSION 	USB4RT_PACKAGE_VERSION
 #define DRIVER_AUTHOR "Joerg Langenberg - joergel@gmx.net"
 #define DRIVER_DESC "Realtime USB-Core Module"
 

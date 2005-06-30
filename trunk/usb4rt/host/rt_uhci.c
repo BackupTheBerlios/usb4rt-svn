@@ -26,9 +26,10 @@
 
 #include "rt_uhci.h"
 #include "rt_uhci_hub.h"
-#include "../core/rt_usb_debug.h"
+#include "rt_usb_debug.h"
+#include "usb4rt_config.h"
 
-#define DRIVER_VERSION "v0.2.1"
+#define DRIVER_VERSION USB4RT_PACKAGE_VERSION
 #define DRIVER_AUTHOR "Joerg Langenberg - joergel@gmx.net"
 #define DRIVER_DESC "Realtime Driver for Universal Host Controller"
 
