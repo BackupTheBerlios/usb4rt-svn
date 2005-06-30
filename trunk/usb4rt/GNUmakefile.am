@@ -1,5 +1,0 @@
-OPTDIRS =
-
-SUBDIRS = core host prog
-
-EXTRA_DIST = autogen.sh
