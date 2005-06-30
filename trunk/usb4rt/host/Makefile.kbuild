@@ -1,0 +1,10 @@
+EXTRA_CFLAGS += \
+	-I$(rtai_dir)/include \
+	-I$(top_srcdir)/core \
+	-I$(top_builddir)/core \
+	-I$(srcdir) \
+	$(rtusb_extradef)
+
+obj-m += $(build_target).o
+
+rt_uhci_hcd-objs := $(build_objs)
