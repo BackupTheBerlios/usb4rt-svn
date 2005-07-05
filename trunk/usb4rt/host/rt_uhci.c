@@ -33,8 +33,6 @@
 #define DRIVER_AUTHOR "Joerg Langenberg - joergel@gmx.net"
 #define DRIVER_DESC "Realtime Driver for Universal Host Controller"
 
-#define BANDWIDTH_RECLAMATION
-
 /* init module-parameter */
 /*
 int list=0;
@@ -313,7 +311,7 @@ static void destroy_qh( qh_t *p_qh )
  * @return 0 bei Erfolg
  * @return -ENODEV, wenn p_hdc nicht auf ein gueltiges struct hc_device zeigt.
  * @return -ENOMEM, wenn kein Speicher vorhanden oder Frame-List-Pointer ungueltig.
- * @return -EBUSY, Frameliste existiert bereits für diesen Controller.
+ * @return -EBUSY, Frameliste existiert bereits fuer diesen Controller.
  */
 static int init_framelist( struct uhc_device *p_uhcd )
 {
@@ -350,8 +348,8 @@ static int init_framelist( struct uhc_device *p_uhcd )
 }
 
 /**
- * Gibt den Speicher der Frame-Liste wieder frei.
- * @param hcd_nr Nummer des Host-Controllers
+ * Release the memory of the framelist.
+ * @param hcd_nr number of the host-controller
  */
 static void destroy_flame_list( struct uhc_device *p_uhcd )
 {
@@ -399,7 +397,7 @@ static int append_qh_on_fl( qh_t *p_qh, struct frame_list *p_fl, int nr)
 
 /**
  * Initialisiert die grundlegende Datenstruktur fuer einen Universal Host Controller.
- * Wenn ein Fehler aufteten sollte, werden alle erzeugten Datenstrukturen wieder gelöscht.
+ * Wenn ein Fehler aufteten sollte, werden alle erzeugten Datenstrukturen wieder geloescht.
  * @param hcd_nr Nummer des Host-Controllers
  * @return 0, wenn erfolgreich
  * @return -ENODEV, if p_uhcd invalid
@@ -455,7 +453,7 @@ static int init_skel( struct uhc_device *p_uhcd )
   p_uhcd->p_qh_fullspeed->element = cpu_to_le32( LINK_TERM );
 
   /* initialize terminate-qh */
-#ifdef BANDWIDTH_RECLAMATION
+#ifdef CONFIG_USB4RT_BANDW_RECLAM
   p_uhcd->p_qh_term->link    = cpu_to_le32( p_uhcd->p_qh_fullspeed->dma_handle | LINK_TO_QH | LINK_NO_TERM );
 #else
   p_uhcd->p_qh_term->link    = cpu_to_le32( LINK_TERM );
@@ -691,10 +689,10 @@ int uhc_start( struct uhc_device *p_uhcd )
 }
 
 /**
- * Stoppt einen Universal Host Controller.
- * @param hcd_nr Nummer des Host-Controllers
- * @return 0, wenn erfolgreich
- * @return -ENODEV, wenn p_uhcd ungueltig
+ * stops an universal-host-controller.
+ * @param hcd_nr number of the host-controller
+ * @return 0, if successful
+ * @return -ENODEV, if p_uhcd invalid
  */
 int uhc_stop( struct uhc_device *p_uhcd )
 {
@@ -702,7 +700,7 @@ int uhc_stop( struct uhc_device *p_uhcd )
     return -ENODEV;
   }
 
-  DBG("RT-UHC-Driver: Stoppe Host Controller\n");
+  DBG("RT-UHC-Driver: Stopping host-controller\n");
 
   unsigned short tmp;
   tmp = inw(p_uhcd->p_io->start + USBCMD);
@@ -712,17 +710,17 @@ int uhc_stop( struct uhc_device *p_uhcd )
     outw(USBSTS_HCH,p_uhcd->p_io->start + USBSTS);
   }
   if(uhc_global_reset(p_uhcd)) {
-    ERR("RT-UHC-Driver: [ERROR] %s - Resetting Host-Controller failed\n",__FUNCTION__);
+    ERR("RT-UHC-Driver: [ERROR] %s - Resetting host-controller failed\n",__FUNCTION__);
   }
   return (0);
 }
 
 /**
- * Initialisiert die Frameliste, die Datenstrukturen und den Root-Hub eines Universal Host Controllers.
- * Außerdem werden alle Parameter des Controllers gesetzt.
- * @param hcd_nr Nummer des Host-Controllers
- * @return 0, wenn erfolgreich
- * @return -ENODEV, wenn p_uhcd ungueltig oder der Host-Controller keine Ressourcen bekommen hat.
+ * Initializes the framelist, the data-structures and the root-hub of an universal-host-controller.
+ * Furthermore all params of the controller will be defined.
+ * @param hcd_nr Number of the host-controller
+ * @return 0, if successful
+ * @return -ENODEV, if p_uhcd invalid or the host-controller has'n become needed resources.
  */
 static int uhc_init( struct uhc_device *p_uhcd )
 {
@@ -734,7 +732,7 @@ static int uhc_init( struct uhc_device *p_uhcd )
   /* 1. initialize framelist */
   ret = init_framelist( p_uhcd );
   if( ret ){
-    ERR("RT-UHC-Driver: [ERROR] %s - Creating Framelist failed\n",__FUNCTION__);
+    ERR("RT-UHC-Driver: [ERROR] %s - Creating framelist failed\n",__FUNCTION__);
     return -1;
   }
   DBG("RT-UHC-Driver: Framelist    @ 0x%p, DMA: 0x%p (%d Byte) \n",
@@ -743,7 +741,7 @@ static int uhc_init( struct uhc_device *p_uhcd )
   /* 2. initialize skeleton */
   ret = init_skel( p_uhcd );
   if( ret ) {
-    ERR("RT-UHC-Driver: [ERROR] %s - Init Skeleton failed\n",__FUNCTION__);
+    ERR("RT-UHC-Driver: [ERROR] %s - Init skeleton failed\n",__FUNCTION__);
     return -2;
   }
   DBG("RT-UHC-Driver: Skeleton initialized\n");
@@ -751,33 +749,33 @@ static int uhc_init( struct uhc_device *p_uhcd )
   /* 3. initialize Root-Hub*/
   ret = rh_init( p_uhcd );
   if(ret) {
-    ERR("RT-UHC-Driver: [ERROR] %s - Init Root-Hub failed\n",__FUNCTION__);
+    ERR("RT-UHC-Driver: [ERROR] %s - Init root-hub failed\n",__FUNCTION__);
     return -3;
   }
 
   /* Setting Bus-Master */
-  DBG("RT-UHC-Driver: Setting Bus-Master\n");
+  DBG("RT-UHC-Driver: Setting bus-master\n");
   unsigned short tmp;
   pci_read_config_word(p_uhcd->p_pcidev,PCICMD,&tmp);
   tmp |= PCICMD_BME;
   pci_write_config_word(p_uhcd->p_pcidev,PCICMD,tmp);
 
   /* Writing Framellist */
-  DBG("RT-UHC-Driver: Write Framellist 0x%p \n",(void *)p_uhcd->p_fl->dma_handle);
+  DBG("RT-UHC-Driver: Write framellist 0x%p \n",(void *)p_uhcd->p_fl->dma_handle);
   outl( p_uhcd->p_fl->dma_handle, p_uhcd->p_io->start + FRBASEADD);
 
    /* Set Max-Packet to 64 */
-  DBG("RT-UHC-Driver: Setting Max-Packet to 64 \n");
+  DBG("RT-UHC-Driver: Setting max-packet-size to 64 \n");
   outw( inw( p_uhcd->p_io->start + USBCMD ) | USBCMD_MAXP , p_uhcd->p_io->start + USBCMD);
 
   /* Setting Framenummer to 0 */
-  DBG("RT-UHC-Driver: Set Framenummer to 0\n");
+  DBG("RT-UHC-Driver: Setting framenumber to 0\n");
   outw(0x0000,p_uhcd->p_io->start + FRNUM);
 
   uhc_disable_all_interrupts(p_uhcd);
 
   /* Setting Ports into Suspend-Mode */
-  DBG("RT-UHC-Driver: Set Ports into Suspend-Mode\n");
+  DBG("RT-UHC-Driver: Setting ports into suspend-mode\n");
   for(i=0;i<p_uhcd->p_hcd->rh_numports;i++){
     rh_port = p_uhcd->p_io->start + 0x10 + (i * 0x02);
     outw(0x1000,rh_port);
@@ -1059,11 +1057,11 @@ int rt_irq_handler(struct xnintr *p_xnintr)
   struct list_head *p_list = p_uhc_irq->irq_list.next;
   while(p_list != &p_uhc_irq->irq_list){
     p_uhcd = list_entry(p_list,struct uhc_device,irq_list);
-    printk("UHC @ 0x%p: Checking for Interrupts \n",p_uhcd);
+    DBG("UHC @ 0x%p: Checking for Interrupts \n",p_uhcd);
     if( !p_uhcd ||                    /* invalid pointer */
         !p_uhcd->p_io ||              /* no io-port */
         !p_uhcd->irq){                /* no interrupt-number */
-      printk("UHC @ 0x%p: p_uhcd invalid \n",p_uhcd);
+      DBG("UHC @ 0x%p: p_uhcd invalid \n",p_uhcd);
       goto irq_next_uhc;
     }
 
@@ -1075,10 +1073,10 @@ int rt_irq_handler(struct xnintr *p_xnintr)
     /* read controller-state */
     stat = inw(p_uhcd->p_io->start + USBSTS);
     if ( !(stat & ~USBSTS_HCH) ) {                /* no State-Bit set */
-      printk("UHC[%d]: No state-bit set\n",p_uhcd->uhcd_nr);
+      DBG("UHC[%d]: No state-bit set\n",p_uhcd->uhcd_nr);
       goto irq_next_uhc;                          /* searching */
     } else {                                      /* Interrupt-Controller found */
-      printk("UHC[%d]: Handling \n",p_uhcd->uhcd_nr);
+      DBG("UHC[%d]: Handling \n",p_uhcd->uhcd_nr);
       handle_controller( p_uhcd, stat);           /* handle this Controller */
       handled_uhc++;
       outw(stat, p_uhcd->p_io->start + USBSTS);   /* Clear it */
@@ -1193,26 +1191,26 @@ static int get_irq( struct uhc_device *p_uhcd )
   struct uhc_irq *p_uhc_irq = NULL;
 
   /* checking irq-table */
-  printk("Suche IRQ %d in der IRQ-Tabelle\n",wanted_irq);
+  DBG("searching IRQ %d in the IRQ-Table\n",wanted_irq);
   for(i=0; i < MAX_UHC_CONTROLLER; i++){
-    printk("uhc_irq_tab[%d].irq = %d\n",i,uhc_irq_tab[i].irq);
+    DBG("uhc_irq_tab[%d].irq = %d\n",i,uhc_irq_tab[i].irq);
     if(uhc_irq_tab[i].irq == wanted_irq){
       /* irq ist registered */
       p_uhc_irq = &uhc_irq_tab[i];
       uhc_irq_idx = i;
-      printk("Eintag gefunden, p_uhc_irq[%d] @ 0x%p, \n",uhc_irq_idx,p_uhc_irq);
+      DBG("Entry found, p_uhc_irq[%d] @ 0x%p, \n",uhc_irq_idx,p_uhc_irq);
       break;
     }
 
     if( uhc_irq_free == -1 &&
         uhc_irq_tab[i].irq == 0){ /* free entry */
-      printk("uhc_irq_tab[%d].irq = 0 -> free entry\n",i);
+      DBG("uhc_irq_tab[%d].irq = 0 -> free entry\n",i);
       uhc_irq_free = i;
     }
   }
 
   if( p_uhc_irq ){
-    PRNT("RT-UHC-Driver: RTAI-IRQ %d registered yet, add UHC to IRQ-List\n",wanted_irq);
+    INFO("RT-UHC-Driver: RTAI-IRQ %d registered yet, add UHC to IRQ-List\n",wanted_irq);
     p_uhcd->irq = wanted_irq;
     list_add_tail( &p_uhcd->irq_list, &p_uhc_irq->irq_list);
     return 0;
@@ -1225,16 +1223,16 @@ static int get_irq( struct uhc_device *p_uhcd )
   }
 
   p_uhc_irq = &uhc_irq_tab[uhc_irq_free];
-  printk("New Entry: uhc_irq_tab[%d] @ 0x%p\n",uhc_irq_free,p_uhc_irq);
+  DBG("New Entry: uhc_irq_tab[%d] @ 0x%p\n",uhc_irq_free,p_uhc_irq);
   p_uhc_irq->irq = wanted_irq;
   INIT_LIST_HEAD(&p_uhc_irq->irq_list);
   list_add_tail( &p_uhcd->irq_list, &p_uhc_irq->irq_list);
 
   /* request rtai-irq */
-  PRNT("RT-UHC-Driver: Request RTAI-IRQ %d ... ", wanted_irq);
+  INFO("RT-UHC-Driver: Request RTAI-IRQ %d ... ", wanted_irq);
   ret = rt_intr_create ( &p_uhc_irq->rt_intr, wanted_irq, (rt_isr_t) &rt_irq_handler );
   if(ret){
-    PRNT("[BUSY]\n");
+    INFO("[BUSY]\n");
 
     /* reset irq-values of p_uhcd*/
     p_uhcd->irq = 0;
@@ -1246,16 +1244,16 @@ static int get_irq( struct uhc_device *p_uhcd )
 
     return -EBUSY;
   }
-  PRNT("[OK]\n");
+  INFO("[OK]\n");
   p_uhcd->irq = wanted_irq;
 
   /* save head of the irq-list with this new interrupt-number */
   xnintr_attach ( &p_uhc_irq->rt_intr.intr_base, p_uhc_irq );
 
-  PRNT("RT-UHC-Driver: Enable  RTAI-IRQ %d ... ",wanted_irq );
+  INFO("RT-UHC-Driver: Enable  RTAI-IRQ %d ... ",wanted_irq );
   ret = rt_intr_enable ( &p_uhc_irq->rt_intr);
   if(ret){
-    PRNT("[BUSY]\n");
+    INFO("[BUSY]\n");
 
     /* delete rtai-interrupt */
     rt_intr_delete( &p_uhc_irq->rt_intr);
@@ -1270,7 +1268,7 @@ static int get_irq( struct uhc_device *p_uhcd )
 
     return -EBUSY;
   }
-  PRNT("[OK]\n");
+  INFO("[OK]\n");
   return 0;
 }
 
@@ -1324,15 +1322,15 @@ static void put_irq( struct uhc_device *p_uhcd )
 
   /* checking if irq-list empty */
   if( !list_empty(&p_uhc_irq->irq_list) ){
-    PRNT("RT-UHC-Driver: RTAI-IRQ %d still needed by another UHC\n",release_irq);
+    INFO("RT-UHC-Driver: RTAI-IRQ %d still needed by another UHC\n",release_irq);
     return;
   }
 
   /* irq-list is empty -> disable and delete rtai-irq */
-  PRNT("RT-UHC-Driver: Disable RTAI-IRQ %d\n",release_irq);
+  INFO("RT-UHC-Driver: Disable RTAI-IRQ %d\n",release_irq);
   rt_intr_disable ( &p_uhc_irq->rt_intr );
 
-  PRNT("RT-UHC-Driver: Delete  RTAI-IRQ %d\n",release_irq);
+  INFO("RT-UHC-Driver: Delete  RTAI-IRQ %d\n",release_irq);
   rt_intr_delete ( &p_uhc_irq->rt_intr );
 
   /* reset irq-values of struct uhc_irq*/
@@ -1695,11 +1693,11 @@ static int rt_schedule_ctrl_bulk_urb( struct rt_privurb *p_purb )
 
   if(list_empty(&p_sched_qh->qh_link_list)){  // Dieser URB ist erster
     p_prev_qh = p_sched_qh;
-  } else {          // andere URBs vorhanden, diesen hinten anhängen
+  } else {          // other URBs exists, append this one
     p_prev_qh = list_entry(p_sched_qh->qh_link_list.prev,qh_t,qh_link_list);
   }
 
-  // An UHC-Schedule-QH anhängen
+  // append on schedule-QH
   DBG_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: Add to QH-List\n",p_purb->p_urb);
   list_add_tail( &p_urb_qh->qh_link_list, &p_sched_qh->qh_link_list);
 
@@ -1893,7 +1891,7 @@ static int rt_uhci_send_bulk_urb( struct rt_privurb *p_purb )
   }
 
   if(out){
-   printk("Sending %d Bytes: [0]: 0x%02x, [1]: 0x%02x \n",
+   INFO("Sending %d Bytes: [0]: 0x%02x, [1]: 0x%02x \n",
       remaining,
       *(unsigned char *)p_urb->p_transfer_buffer,
       *(unsigned char *)(p_urb->p_transfer_buffer+1));
@@ -2291,7 +2289,7 @@ start_search:
 int nrt_uhci_register_urb( struct rt_urb *p_urb)
 {
   /*
-  In Core überprüft:
+  checked in core-module:
   p_urb
   p_urb->p_hcd
   p_urb->p_hcd->p_hcd_fkt
@@ -2406,7 +2404,7 @@ int nrt_uhci_register_urb( struct rt_urb *p_urb)
 int nrt_uhci_unregister_urb( struct rt_urb *p_urb)
 {
   /*
-  In Core überprüft:
+  checked in core-module:
   p_urb
   p_urb->p_hcd
   p_urb->p_hcd->p_hcd_fkt
@@ -2439,13 +2437,13 @@ int nrt_uhci_unregister_urb( struct rt_urb *p_urb)
     module_put(THIS_MODULE);
   }
 
-  /* Lösche QH */
+  /* deleting QH */
   destroy_qh(p_purb->p_qh);
 
-  /* Lösche TD-Tabelle */
+  /* deleting TD-table */
   destroy_td_table(p_purb);
 
-  /* Lösche urb_priv */
+  /* deleting urb_priv */
   kfree(p_purb);
   alloc_bytes -= 1 * sizeof(struct rt_privurb);
 
@@ -2456,7 +2454,7 @@ int nrt_uhci_unregister_urb( struct rt_urb *p_urb)
 int rt_uhci_submit_urb(struct rt_urb *p_urb , __u16 urb_submit_flags )
 {
   /*
-  In Core überprüft:
+  checked in core-module:
   p_urb
   p_urb->p_hcd
   p_urb->p_hcd->p_hcd_fkt
@@ -2485,7 +2483,7 @@ int rt_uhci_submit_urb(struct rt_urb *p_urb , __u16 urb_submit_flags )
     return -ENODEV;
   }
 
-  /* Pruefe, ob sich die konstanten Werte geändert haben */
+  /* Pruefe, ob sich die konstanten Werte geaendert haben */
   if(p_urb->p_hcd != p_purb->p_hcd ){
     ERR_MSG2(p_urb->p_hcd,p_urb->p_usbdev," %s - Invalid Host-Controller: 0x%p sent, 0x%p allowed\n",
         __FUNCTION__, p_urb->p_hcd, p_purb->p_hcd);
