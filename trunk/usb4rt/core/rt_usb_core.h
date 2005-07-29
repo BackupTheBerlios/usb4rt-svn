@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Joerg Langenberg                                *
- *   joergel@gmx.net                                                       *
+ *   Copyright (C) 2005 by Jörg Langenberg                                 *
+ *   joerg.langenberg@gmx.net                                              *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -50,7 +50,7 @@ struct hcd_funktions {
   int(* nrt_hcd_register_urb)  ( struct rt_urb *p_urb);
   int(* nrt_hcd_unregister_urb)( struct rt_urb *p_urb);
   int(*  rt_hcd_submit_urb)    ( struct rt_urb *p_urb, __u16 urb_submit_flags);
-  
+
   /* Core-Functions called by Host Controller Driver */
   struct usb_device *(* nrt_usb_config_dev)    ( struct hc_device *p_hcd, __u8 rh_port_nr, unsigned int lowspeed);
   void(* nrt_usb_search_devices)( struct hc_device *p_hcd );
@@ -116,7 +116,7 @@ int rt_usb_send_ctrl_msg(struct rt_urb *p_urb, __u8 request_type,__u8 request, _
 /*   Asynchronous Messages  */
 /*--------------------------*/
 int rt_usb_submit_urb( struct rt_urb *p_urb);
-int rt_usb_submit_ctrl_urb(	struct rt_urb *p_urb,__u8 request_type,__u8 request, __u16 wValue, __u16 wIndex, __u16 wLength , void *data);
+int rt_usb_submit_ctrl_urb( struct rt_urb *p_urb,__u8 request_type,__u8 request, __u16 wValue, __u16 wIndex, __u16 wLength , void *data);
 
 /*--------------------------*/
 /*   Host-Controller API    */

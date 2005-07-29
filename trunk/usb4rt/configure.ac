@@ -3,7 +3,12 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([usb4rt],[0.0.1],[],[])
+AC_INIT([usb4rt],[0.0.2],[],[])
+
+CONFIG_USB4RT_VERSION_MAJOR=0
+CONFIG_USB4RT_VERSION_MINOR=0
+CONFIG_USB4RT_REVISION_LEVEL=2
+
 AC_CONFIG_HEADERS([config/usb4rt_config_pre.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
 AC_CONFIG_MACRO_DIR([config/m4])
@@ -67,31 +72,114 @@ case "$host" in
     USB4RT_TARGET_ARCH=i386
     wanted_kernel_arch=CONFIG_X86
     ;;
-# arm-*)
-#   USB4RT_TARGET_ARCH=arm
-#   wanted_kernel_arch=CONFIG_ARM
-#   ;;
-# powerpc-*|ppc-*)
-#   USB4RT_TARGET_ARCH=ppc
-#   wanted_kernel_arch=CONFIG_PPC
-#   ;;
-# mips-*|mipsel-*)
-#   RTNET_TARGET_ARCH=mips
-#   wanted_kernel_arch=CONFIG_MIPS
-#   ;;
-# cris-*)
-#   RTNET_TARGET_ARCH=cris
-#dnl There is no non-ambiguous CONFIG_ETRAX|CRIS symbol
-#dnl so use the root device definition.
-#   wanted_kernel_arch=CONFIG_ETRAX_ROOT_DEVICE
-#   ;;
-  *)
-    AC_MSG_ERROR([*** Sorry - Unsupported architecture])
-    ;;
+ *) echo ""
+   echo "*******************************************"
+   echo "Still unsupported host: $host -- Sorry."
+   echo "*******************************************"
+   echo ""
+   exit 1;;
 esac
 
 #
-# add argument for rtai-fusion-path
+# Load the USB4RT configuration.
+#
+
+USB4RT_KCONFIG_FILE=$srcdir/config/defconfig
+kconfig_type=default
+
+AC_ARG_WITH(kconfig-file,
+    AS_HELP_STRING([--with-kconfig-file=<kconfig-file>], [KConfig parameter file]),
+    [
+  case "$withval" in
+  "" | y | ye | yes | n | no)
+      AC_MSG_ERROR([You must supply an argument to --with-kconfig-file.])
+    ;;
+  esac
+  USB4RT_KCONFIG_FILE="$withval"
+  kconfig_type=supplied
+    ])
+
+AC_MSG_CHECKING([for USB4RT Kconfig file])
+if test \! -f $USB4RT_KCONFIG_FILE; then
+    AC_MSG_ERROR([Kconfig-file $USB4RT_KCONFIG_FILE not found -- --with-kconfig-file sets Kconfig file])
+fi
+. $USB4RT_KCONFIG_FILE
+AC_MSG_RESULT([$USB4RT_KCONFIG_FILE ($kconfig_type)])
+
+#
+# ARG-Enable Common-Debug (default=enabled)
+#
+AC_MSG_CHECKING(for debug-messages [common])
+AC_ARG_ENABLE(dbg_common,
+  AS_HELP_STRING([--disable-dbg-common], [Disable common debug messages (default: enabled)]),
+  [case "$enableval" in
+  n | no) unset CONFIG_USB4RT_DBG_COMMON ;;
+  *) CONFIG_USB4RT_DBG_COMMON=y ;;
+  esac])
+AC_MSG_RESULT(${CONFIG_USB4RT_DBG_COMMON:-yes})
+test x$CONFIG_USB4RT_DBG_COMMON = xy && AC_DEFINE(CONFIG_USB4RT_DBG_COMMON,1,[Kconfig])
+AM_CONDITIONAL(CONFIG_USB4RT_DBG_COMMON,[test x$CONFIG_USB4RT_DBG_COMMON = xy])
+
+#
+# ARG-Enable Time-Debug (default=disabled)
+#
+AC_MSG_CHECKING(for debug-messages [timing])
+AC_ARG_ENABLE(dbg_time,
+  AS_HELP_STRING([--enable-dbg-time], [Enable time debug messages (default: disabled)]),
+  [case "$enableval" in
+  y | yes) CONFIG_USB4RT_DBG_TIME=y ;;
+  *) unset CONFIG_USB4RT_DBG_TIME ;;
+  esac])
+AC_MSG_RESULT(${CONFIG_USB4RT_DBG_TIME:-no})
+test x$CONFIG_USB4RT_DBG_TIME = xy && AC_DEFINE(CONFIG_USB4RT_DBG_TIME,1,[Kconfig])
+AM_CONDITIONAL(CONFIG_USB4RT_DBG_TIME,[test x$CONFIG_USB4RT_DBG_TIME = xy])
+
+#
+# ARG-Enable Transfer-Descriptor-Debug (default=disabled)
+#
+AC_MSG_CHECKING(for debug-messages [transfer-descriptor])
+AC_ARG_ENABLE(dbg_td,
+  AS_HELP_STRING([--enable-dbg-td], [Enable transfer-descriptor debug messages (default: disabled)]),
+  [case "$enableval" in
+  y | yes) CONFIG_USB4RT_DBG_TD=y ;;
+  *) unset CONFIG_USB4RT_DBG_TD ;;
+  esac])
+AC_MSG_RESULT(${CONFIG_USB4RT_DBG_TD:-no})
+test x$CONFIG_USB4RT_DBG_TD = xy && AC_DEFINE(CONFIG_USB4RT_DBG_TD,1,[Kconfig])
+AM_CONDITIONAL(CONFIG_USB4RT_DBG_TD,[test x$CONFIG_USB4RT_DBG_TD = xy])
+
+#
+# ARG-Enable Queue-Head-Debug (default=disabled)
+#
+AC_MSG_CHECKING(for debug-messages [queue-heads])
+AC_ARG_ENABLE(dbg_qh,
+  AS_HELP_STRING([--enable-dbg-qh], [Enable queue-head debug messages (default: disabled)]),
+  [case "$enableval" in
+  y | yes) CONFIG_USB4RT_DBG_QH=y ;;
+  *) unset CONFIG_USB4RT_DBG_QH ;;
+  esac])
+AC_MSG_RESULT(${CONFIG_USB4RT_DBG_QH:-no})
+test x$CONFIG_USB4RT_DBG_QH = xy && AC_DEFINE(CONFIG_USB4RT_DBG_QH,1,[Kconfig])
+AM_CONDITIONAL(CONFIG_USB4RT_DBG_QH,[test x$CONFIG_USB4RT_DBG_QH = xy])
+
+#
+# ARG-Enable Bandwidth-Reclamation (default=enabled)
+#
+AC_MSG_CHECKING(for debug-messages [timing])
+AC_ARG_ENABLE(bandw_reclam,
+  AS_HELP_STRING([--disable-bandw-reclam], [Disable bandwith-reclamation for Fullspeed Bulk- and Control-Transfer (default: enabled)]),
+  [case "$enableval" in
+  n | no) unset CONFIG_USB4RT_BANDW_RECLAM ;;
+  *) CONFIG_USB4RT_BANDW_RECLAM=y ;;
+  esac])
+AC_MSG_RESULT(${CONFIG_USB4RT_BANDW_RECLAM:-yes})
+test x$CONFIG_USB4RT_BANDW_RECLAM = xy && AC_DEFINE(CONFIG_USB4RT_BANDW_RECLAM,1,[Kconfig])
+AM_CONDITIONAL(CONFIG_USB4RT_BANDW_RECLAM,[test x$CONFIG_USB4RT_BANDW_RECLAM = xy])
+
+
+
+#
+# ARG-With rtai-fusion-path
 #
 AC_ARG_WITH(rtai,
   AS_HELP_STRING([--with-rtai=RTAI], [path to installation of fusion ]),
@@ -99,7 +187,7 @@ AC_ARG_WITH(rtai,
       "" | y | ye | yes | n | no)
         AC_MSG_ERROR([You must supply an argument to --with-rtai.]) ;;
     esac],
-    with_rtai="/usr/realtime/fusion")
+    with_rtai=[${CONFIG_USB4RT_FUSIONDIR}])
 
 #
 # try to find rtai-fusion
@@ -143,13 +231,9 @@ AC_MSG_CHECKING([for RTAI-fusion version])
 CONFIG_USB4RT_RTAI_PRE_VERSION="`${RTAI_CONFIG} --version`"
 
 case "$CONFIG_USB4RT_RTAI_PRE_VERSION" in
-  0.7.2-fusion | 0.7.3-fusion)
-    CONFIG_USB4RT_RTAI_VERSION=fusion-072
-    AC_DEFINE(CONFIG_FUSION_072, 1, [We build for fusion 0.7.2/0.7.3])
-    ;;
-  0.7.4-fusion | 0.7.5-fusion | 0.8*-fusion)
-    CONFIG_USB4RT_RTAI_VERSION=fusion-074
-    AC_DEFINE(CONFIG_FUSION_074, 1, [We build for fusion 0.7.4 or better])
+  0.8.3-fusion | 0.8.99-fusion | .9*-fusion)
+    CONFIG_USB4RT_RTAI_VERSION=fusion-083
+    AC_DEFINE(CONFIG_FUSION_083, 1, [We build for fusion 0.8.3 or better])
     ;;
   *)
     AC_MSG_ERROR([*** Unsupported RTAI-fusion version $CONFIG_USB4RT_RTAI_PRE_VERSION in $RTAI_DIR])
@@ -157,8 +241,7 @@ case "$CONFIG_USB4RT_RTAI_PRE_VERSION" in
 esac
 AC_MSG_RESULT([${CONFIG_USB4RT_RTAI_VERSION}])
 
-AM_CONDITIONAL(CONFIG_FUSION,[test "$CONFIG_USB4RT_RTAI_VERSION" = fusion-072 || \
-                              test "$CONFIG_USB4RT_RTAI_VERSION" = fusion-074])
+AM_CONDITIONAL(CONFIG_FUSION,[test "$CONFIG_USB4RT_RTAI_VERSION" = fusion-083])
 
 #
 #++++ RTAI-config-file ++++++++++++++++
@@ -180,7 +263,7 @@ AC_MSG_RESULT([${CONFIG_USB4RT_RTAI_CONFIG_FILE}])
 #++++ RTAI-config ++++++++++++++++
 #
 case "$CONFIG_USB4RT_RTAI_VERSION" in
-  fusion-07*)
+  fusion-083)
 
     # check for native RTAI skin, needed by USB4RT
     AC_MSG_CHECKING([for RTAI native skin])
@@ -206,7 +289,7 @@ case "$CONFIG_USB4RT_RTAI_VERSION" in
 # import settings from RTAI
 #
 case "${CONFIG_USB4RT_RTAI_VERSION}" in
-  fusion-07*)
+  fusion-083)
     RTAI_USER_CFLAGS="`${RTAI_CONFIG} --fusion-cflags`"
     RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --fusion-cflags`"
     CONFIG_USB4RT_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
@@ -234,15 +317,6 @@ case "${CONFIG_USB4RT_RTAI_ARCH}" in
   i386)
     AC_DEFINE(CONFIG_ARCH_I386, 1,[we are building for x86])
   ;;
-# ppc)
-#   AC_DEFINE(CONFIG_ARCH_PPC, 1, [we are building for powerpc])
-#   ;;
-# arm)
-#   AC_DEFINE(CONFIG_ARCH_ARM, 1, [we are building for arm])
-#   ;;
-# cris)
-#   AC_DEFINE(CONFIG_ARCH_CRIS, 1, [we are trying to build for cris])
-#   ;;
   *)
     AC_MSG_ERROR([*** unsupported architecture])
     ;;
@@ -400,7 +474,7 @@ CPPFLAGS="${ac_save_CPPFLAGS} ${RTAI_KMOD_CFLAGS}"
 # headers, depending on the RTAI version which has been
 # identified. (rpm)
 case "${CONFIG_USB4RT_RTAI_VERSION}" in
-  fusion-07*)
+  fusion-083)
     BS_CHECK_KHEADERS([rtai/sem.h rtai/mutex.h rtai/pipe.h],
       [],
       [AC_MSG_ERROR([*** header not found or working, please check RTAI installation])],
@@ -429,7 +503,9 @@ AC_ARG_WITH(module-dir,
     with_module_dir='${exec_prefix}/modules')
 
 USB4RT_MODULE_DIR="$with_module_dir"
+
 AC_MSG_RESULT([$USB4RT_MODULE_DIR])
+
 AC_SUBST(USB4RT_MODULE_DIR)
 
 #
@@ -442,6 +518,16 @@ for DIR in \
   ; do
       AC_CONFIG_LINKS(${DIR}/Makefile:${DIR}/Makefile.kbuild)
 done
+
+dnl
+dnl Build a Kconfig file corresponding to the current configuration
+dnl if none exists.
+dnl
+
+if test \! -r .rtai_config; then
+   set | grep -e '^CONFIG_USB4RT' -e '^CONFIG_MODULES' | \
+   sed -e 's,\(.*\)=\(.*\)$,\1=\"\2\",' > .usb4rt_config
+fi
 
 ##########################
 # Output files.

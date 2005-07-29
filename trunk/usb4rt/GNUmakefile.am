@@ -3,3 +3,4 @@ OPTDIRS =
 SUBDIRS = core host prog
 
 EXTRA_DIST = autogen.sh
+DISTCLEANFILES = .usb4rt_config

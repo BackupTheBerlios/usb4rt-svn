@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Joerg Langenberg                                *
- *   joergel@gmx.net                                                       *
+ *   Copyright (C) 2005 by JÃ¶rg Langenberg                                 *
+ *   joerg.langenberg@gmx.net                                              *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -27,7 +27,7 @@
 #include "rt_usb_hub.h"
 #include "usb4rt_config.h"
 
-#define DRIVER_VERSION 	USB4RT_PACKAGE_VERSION
+#define DRIVER_VERSION  USB4RT_PACKAGE_VERSION
 #define DRIVER_AUTHOR "Joerg Langenberg - joergel@gmx.net"
 #define DRIVER_DESC "Realtime USB-Core Module"
 
@@ -72,7 +72,7 @@ int nrt_usb_unregister_urb ( struct rt_urb *p_urb );
 /**
  * Ermittelt eine freie Host-Controller-Nummer.
  * Die belegten Nummern sind in der Variablen ctrl_mask gespeichert.
- * @return Nummer des nächsten freien Host-Controllers
+ * @return Nummer des nï¿½hsten freien Host-Controllers
  */
 static __u8 get_free_hcd_nr( void )
 {
@@ -87,7 +87,7 @@ static __u8 get_free_hcd_nr( void )
 
 /**
  * Gibt eine Host-Controller-Nummer wieder frei.
- * Das Bit wird in der Variablen ctrl_mask gelöscht.
+ * Das Bit wird in der Variablen ctrl_mask gelï¿½cht.
  * @param p_hcd Zeiger auf ein struct hc_device.
  * @return -
  */
@@ -106,12 +106,12 @@ static void put_free_hcd_nr( struct hc_device *p_hcd )
 /**************************/
 
 /**
- * Sucht nach an einem Host-Controller angeschlossenen Geräten.
- * Da die Geräte während des Ladens der Host-Controller-Driver (HCD) gesucht werden,
- * muss der HCD dem Core mitteilen, wann die Suche nach Geräten beginnen kann.
- * Zuvor müssen vom HCD alle notwendigen Vorbereitungen getroffen sein.
- * Ein am Host-Controller ermittelter HUB wird zusätzlich in einer HUB-Liste
- * eingefügt. Diese Hubs werden ebenfalls nach angeschlossenen Geräten untersucht.
+ * Sucht nach an einem Host-Controller angeschlossenen Gerï¿½en.
+ * Da die Gerï¿½e wï¿½rend des Ladens der Host-Controller-Driver (HCD) gesucht werden,
+ * muss der HCD dem Core mitteilen, wann die Suche nach Gerï¿½en beginnen kann.
+ * Zuvor mssen vom HCD alle notwendigen Vorbereitungen getroffen sein.
+ * Ein am Host-Controller ermittelter HUB wird zusï¿½zlich in einer HUB-Liste
+ * eingefgt. Diese Hubs werden ebenfalls nach angeschlossenen Gerï¿½en untersucht.
  * @param p_hcd Zeiger auf ein struct hc_device.
  * @return -
  */
@@ -254,9 +254,9 @@ void nrt_usb_search_devices( struct hc_device *p_hcd )
 }
 
 /**
- * Ermittelt die Sprache(n) der String-Deskriptoren eines USB-Gerätes.
+ * Ermittelt die Sprache(n) der String-Deskriptoren eines USB-Gerï¿½es.
  * @param p_urb Zeiger auf einen RT-URB
- * @param len Länge des Puffers im Byte
+ * @param len Lï¿½ge des Puffers im Byte
  * @param p_buffer Zeiger auf einen Puffer
  * @return 0, wenn ein Fehler auftrat
  * @return !0, 1.Language ID
@@ -316,13 +316,13 @@ static __u16 get_language( struct rt_urb *p_urb, __u16 len, __u8 *p_buffer)
 }
 
 /**
- * List einen String-Deskriptor aus einem USB-Gerät.
+ * List einen String-Deskriptor aus einem USB-Gerï¿½.
  * @param p_urb Zeiger auf einen RT-URB
  * @param string_id String-Deskriptor-ID
  * @param lang Language-ID
- * @param len Länge des Puffers in Byte
+ * @param len Lï¿½ge des Puffers in Byte
  * @param p_buffer Zeiger auf einen Puffer
- * @return Länge des String-Deskriptors
+ * @return Lï¿½ge des String-Deskriptors
  * @return 0, wenn Fehler auftrat
  */
 static __u16 get_string( struct rt_urb *p_urb , __u8 string_id, __u16 lang, __u16 len, __u8 *p_buffer)
@@ -376,7 +376,7 @@ static __u16 get_string( struct rt_urb *p_urb , __u8 string_id, __u16 lang, __u1
 }
 
 /**
- * Löscht das Feature USB_ENDPOINT_HALT eines USB-Gerätes.
+ * Lï¿½cht das Feature USB_ENDPOINT_HALT eines USB-Gerï¿½es.
  * @param p_urb Zeiger auf einen RT-URB
  * @return < 0, wenn ein Fehler auftrat
  * @return 0, wenn erfolgreich
@@ -410,8 +410,8 @@ int nrt_usb_clear_stall( struct rt_urb *p_urb )
 /*************************************/
 
 /**
- * Initialisiert ein USB-Gerät.
- * Der Speicherbereich wird mit Nullen überschrieben und einigen Variablen
+ * Initialisiert ein USB-Gerï¿½.
+ * Der Speicherbereich wird mit Nullen berschrieben und einigen Variablen
  * werden Initialwerte zugewiesen.
  * @param p_usbdev Zeiger auf ein USB-Device (struct usb_device)
  */
@@ -436,8 +436,8 @@ static void usb_init_device( struct usb_device *p_usbdev )
 }
 
 /**
- * Löscht und initialisiert ein USB-Gerät.
- * Vor dem Initialisieren des Gerätes werden hier noch Speicherbereiche wieder freigegeben.
+ * Lï¿½cht und initialisiert ein USB-Gerï¿½.
+ * Vor dem Initialisieren des Gerï¿½es werden hier noch Speicherbereiche wieder freigegeben.
  * @param p_usbdev Zeiger auf ein USB-Device (struct usb_device)
  */
 static void usb_clear_device( struct usb_device *p_usbdev )
@@ -498,7 +498,7 @@ static struct usb_device *usb_get_free_device(void)
  * Blockiert ein USB-Device.
  * @param p_usbdev Zeiger auf das zu blockierende USB-Device
  * @return Zeiger auf das blockierte USB-Device (struct usb_device)
- * @return NULL, wenn der Zeiger ungültig oder das Gerät schon blockiert ist.
+ * @return NULL, wenn der Zeiger ungltig oder das Gerï¿½ schon blockiert ist.
  */
 static struct usb_device *usb_lock_device( struct usb_device *p_usbdev )
 {
@@ -647,11 +647,11 @@ void usb_check_device( struct usb_device *p_usbdev )
 
 /**
  * Konfiguriert ein neu gefundenes USB-Device.
- * Das neue Gerät bekommt eine Adresse zugewiesen, alle Descriptoren werden
+ * Das neue Gerï¿½ bekommt eine Adresse zugewiesen, alle Descriptoren werden
  * ausgelesen und gespeichert.
- * @param p_hcd Zeiger auf den Host-Controller, an dem das Gerät gefunden wurde.
+ * @param p_hcd Zeiger auf den Host-Controller, an dem das Gerï¿½ gefunden wurde.
  * @param rh_port_nr Root-Hub-Portnummer (Eigentlich nur zu Debug-Zwecken)
- * @param lowspeed gibt an, wie das neue Gerät anzusprechen ist (Low- oder Fullspeed)
+ * @param lowspeed gibt an, wie das neue Gerï¿½ anzusprechen ist (Low- oder Fullspeed)
  * @return Zeiger auf das neue USB-Device (struct usb_device)
  * @return NULL, wenn ein Fehler auftrat
  */
@@ -988,12 +988,12 @@ struct usb_device *nrt_usb_config_dev( struct hc_device *p_hcd, __u8 rh_port_nr,
 
 /**
  * RT-USB-Core interne Funktion zum Versenden eines URBs.
- * Abhängig vom submit_flag blockiert diese Funktion bis die Nachricht übertragen wurde
- * oder kehrt sofort zurück, nachdem der Host-Controller die Daten empfangen hat.
+ * Abhï¿½gig vom submit_flag blockiert diese Funktion bis die Nachricht bertragen wurde
+ * oder kehrt sofort zurck, nachdem der Host-Controller die Daten empfangen hat.
  * @param p_urb Zeiger auf den zu versendenen URB
  * @param urb_submit_flags Flags, wie URB_CALLBACK, URB_WAIT_SEM und URB_WAIT_BUSY (Core-Intern).
- * @return -ENODEV, wenn im URB ein ungültiger Zeiger auf einen Host-Controller oder ein USB-Device gespeichert ist
- * @return -EINVAL, wenn im URB ein ungültiger Wert gespeichert ist (siehe Debug-Meldungen)
+ * @return -ENODEV, wenn im URB ein ungltiger Zeiger auf einen Host-Controller oder ein USB-Device gespeichert ist
+ * @return -EINVAL, wenn im URB ein ungltiger Wert gespeichert ist (siehe Debug-Meldungen)
  * @return 0, wenn erfolgreich
  */
 static int rt_intern_usb_submit_urb( struct rt_urb *p_urb, __u16 urb_submit_flags)
@@ -1023,13 +1023,12 @@ static int rt_intern_usb_submit_urb( struct rt_urb *p_urb, __u16 urb_submit_flag
     return -EINVAL;
   }
 
-#ifdef DEBUG
-  __u8 device   = usb_pipedevice(p_urb->pipe);
-#endif
-
   __u8 out      = usb_pipeout(p_urb->pipe) ? 1 : 0;
   __u8 endpoint = usb_pipeendpoint(p_urb->pipe);
   __u16 max_pl  = usb_maxpacket(p_urb->p_usbdev, p_urb->pipe);
+
+#ifdef DEBUG
+  __u8 device   = usb_pipedevice(p_urb->pipe);
 
   if(p_urb->transfer_flags & URB_SHORT_NOT_OK)
     DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB_SHORT_NOT_OK \n");
@@ -1047,6 +1046,7 @@ static int rt_intern_usb_submit_urb( struct rt_urb *p_urb, __u16 urb_submit_flag
   DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB 0x%p: USB-Device %d\n",p_urb,device);
   DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB 0x%p: Endpoint %d\n",p_urb,endpoint);
   DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB 0x%p: Type : ",p_urb);
+#endif
 
   switch(usb_pipetype(p_urb->pipe)){
 
@@ -1155,18 +1155,18 @@ static int rt_intern_usb_submit_urb( struct rt_urb *p_urb, __u16 urb_submit_flag
 
 /**
  * RT-USB-Core interne Funktion zum Versenden eines Control-URBs.
- * Abhängig vom submit_flag blockiert diese Funktion bis die Nachricht übertragen wurde
- * oder kehrt sofort zurück, nachdem der Host-Controller die Daten empfangen hat.
+ * Abhï¿½gig vom submit_flag blockiert diese Funktion bis die Nachricht bertragen wurde
+ * oder kehrt sofort zurck, nachdem der Host-Controller die Daten empfangen hat.
  * @param p_urb Zeiger auf den zu versendenen URB
  * @param endpoint Endpoint-Nummer
  * @param request_type Request-Typ (z.B.  USB_DIR_IN | USB_TYPE_STANDARD | USB_RECIP_DEVICE ), 8 Bit
  * @param request Request (z.B. USB_REQ_GET_DESCRIPTOR ), 8 Bit
  * @param wValue Wert, 16 Bit
  * @param wIndex Index, 16 Bit
- * @param wLength Länge der Puffer-Daten, 16 Bit
- * @param data Zeiger auf die Daten, die übertragen werden sollen
- * @return -ENODEV, wenn im URB ein ungültiger Zeiger auf einen Host-Controller oder ein USB-Device gespeichert ist
- * @return -EINVAL, wenn Zeiger auf den URB ungültig oder ein ungültiger Wert gespeichert ist (siehe Debug-Meldungen)
+ * @param wLength Lï¿½ge der Puffer-Daten, 16 Bit
+ * @param data Zeiger auf die Daten, die bertragen werden sollen
+ * @return -ENODEV, wenn im URB ein ungltiger Zeiger auf einen Host-Controller oder ein USB-Device gespeichert ist
+ * @return -EINVAL, wenn Zeiger auf den URB ungltig oder ein ungltiger Wert gespeichert ist (siehe Debug-Meldungen)
  */
 int nrt_intern_usb_control_msg( struct rt_urb *p_urb, __u8 endpoint, __u8 request_type, __u8 request, __u16 wValue,
                                        __u16 wIndex, __u16 wLength, void *data)
@@ -1285,7 +1285,7 @@ int nrt_hcd_unregister_driver( struct hc_device *p_hcd)
     p_list = p_next;
   }
 
-  /* Lösche USB-Devices */
+  /* Lï¿½che USB-Devices */
   int i;
   for(i=0;i<MAX_USB_DEV;i++){
     if(usb_dev[i].p_hcd == p_hcd){
@@ -1301,14 +1301,14 @@ int nrt_hcd_unregister_driver( struct hc_device *p_hcd)
 /******************************/
 
 /**
- * Sucht in der Liste der USB-Geräte ein bestimmtes Gerät.
- * Wenn ein zutreffendes Gerät gefunden wurde, wird dieses gleich blockiert und somit
- * vor anderen Zugriffen geschützt.
- * @param vendor Vendor-ID des zu suchenden Gerätes.
- * @param product Product-ID des zu suchenden Gerätes.
- * @param p_old_device Zeiger auf ein USB-Gerät, ab dem gesucht werden soll.
- * @return Zeiger auf ein USB-Device, auf das die Beschreibung paßt.
- * @return NULL, wenn kein solches Gerät gefunden wurde.
+ * Sucht in der Liste der USB-Gerï¿½e ein bestimmtes Gerï¿½.
+ * Wenn ein zutreffendes Gerï¿½ gefunden wurde, wird dieses gleich blockiert und somit
+ * vor anderen Zugriffen geschtzt.
+ * @param vendor Vendor-ID des zu suchenden Gerï¿½es.
+ * @param product Product-ID des zu suchenden Gerï¿½es.
+ * @param p_old_device Zeiger auf ein USB-Gerï¿½, ab dem gesucht werden soll.
+ * @return Zeiger auf ein USB-Device, auf das die Beschreibung paï¿½.
+ * @return NULL, wenn kein solches Gerï¿½ gefunden wurde.
  */
 struct usb_device *rt_usb_get_device(__u16 vendor, __u16 product , struct usb_device *p_old_device)
 {
@@ -1352,8 +1352,8 @@ struct usb_device *rt_usb_get_device(__u16 vendor, __u16 product , struct usb_de
 }
 
 /**
- * Gibt ein zuvor mit der Funktion rt_usb_get_device blockiertes USB-Geräte wieder frei.
- * @param p_usbdev Zeiger auf ein USB-Gerät, das freigegeben werden soll.
+ * Gibt ein zuvor mit der Funktion rt_usb_get_device blockiertes USB-Gerï¿½e wieder frei.
+ * @param p_usbdev Zeiger auf ein USB-Gerï¿½, das freigegeben werden soll.
  */
 void rt_usb_put_device( struct usb_device *p_usbdev )
 {
@@ -1393,8 +1393,8 @@ struct rt_urb *nrt_usb_alloc_urb( void )
 }
 
 /**
- * Löscht einen mit der Funktion nrt_usb_alloc_urb erstellten URB.
- * @param p_urb Zeiger auf den zu löschenden URB
+ * Lï¿½cht einen mit der Funktion nrt_usb_alloc_urb erstellten URB.
+ * @param p_urb Zeiger auf den zu lï¿½chenden URB
  */
 void nrt_usb_free_urb( struct rt_urb *p_urb )
 {
@@ -1412,8 +1412,8 @@ void nrt_usb_free_urb( struct rt_urb *p_urb )
 
 /**
  * Generiert einen Control-URB.
- * Im Gegensatz zu der Funktion nrt_usb_alloc_urb wird hier zusätzlich noch der Speicherbereich
- * für den Control-Request angefordern und der Zeiger in p_urb->p_setup_packet abgelegt.
+ * Im Gegensatz zu der Funktion nrt_usb_alloc_urb wird hier zusï¿½zlich noch der Speicherbereich
+ * fr den Control-Request angefordern und der Zeiger in p_urb->p_setup_packet abgelegt.
  * @return NULL, wenn kein Speicher mehr vorhanden.
  * @return Zeiger auf den erstellten Control-URB
  */
@@ -1443,8 +1443,8 @@ struct rt_urb *nrt_usb_alloc_ctrl_urb( void )
 }
 
 /**
- * Löscht einen mit der Funktion nrt_usb_alloc_ctrl_urb erstellten Control-URB.
- * @param p_urb Zeiger auf den zu löschenden Control-URB
+ * Lï¿½cht einen mit der Funktion nrt_usb_alloc_ctrl_urb erstellten Control-URB.
+ * @param p_urb Zeiger auf den zu lï¿½chenden Control-URB
  */
 void nrt_usb_free_ctrl_urb( struct rt_urb *p_urb )
 {
@@ -1469,7 +1469,7 @@ void nrt_usb_free_ctrl_urb( struct rt_urb *p_urb )
 /**
  * Erstellt einen nicht blockierenden Control-URB.
  * Zuerst wird ein URB mit Hilfe der Funktion nrt_usb_alloc_ctrl_urb erstellt.
- * Abschließend werden alle nötigen Daten im URB gespeichert.
+ * Abschlieï¿½nd werden alle nï¿½igen Daten im URB gespeichert.
  * @return NULL, wenn kein Speicher mehr vorhanden.
  * @return Zeiger auf den erstellten Control-URB
  */
@@ -1486,8 +1486,8 @@ struct rt_urb *nrt_usb_create_ctrl_callback_urb( rt_usb_complete_t rt_callback_f
 }
 
 /**
- * Löscht einen mit der Funktion nrt_usb_create_ctrl_callback_urb erstellten Control-URB.
- * @param p_urb Zeiger auf den zu löschenden Control-URB
+ * Lï¿½cht einen mit der Funktion nrt_usb_create_ctrl_callback_urb erstellten Control-URB.
+ * @param p_urb Zeiger auf den zu lï¿½chenden Control-URB
  */
 void nrt_usb_destroy_ctrl_callback_urb( struct rt_urb *p_urb )
 {
@@ -1497,7 +1497,7 @@ void nrt_usb_destroy_ctrl_callback_urb( struct rt_urb *p_urb )
 /**
  * Erstellt einen nicht blockierenden URB.
  * Zuerst wird ein URB mit Hilfe der Funktion nrt_usb_alloc_urb erstellt.
- * Abschließend werden alle nötigen Daten im URB gespeichert.
+ * Abschlieï¿½nd werden alle nï¿½igen Daten im URB gespeichert.
  * @return NULL, wenn kein Speicher mehr vorhanden.
  * @return Zeiger auf den erstellten URB
  */
@@ -1514,8 +1514,8 @@ struct rt_urb *nrt_usb_create_callback_urb( rt_usb_complete_t rt_callback_fkt )
 }
 
 /**
- * Löscht einen mit der Funktion nrt_usb_create_callback_urb erstellten URB.
- * @param p_urb Zeiger auf den zu löschenden URB
+ * Lï¿½cht einen mit der Funktion nrt_usb_create_callback_urb erstellten URB.
+ * @param p_urb Zeiger auf den zu lï¿½chenden URB
  */
 void nrt_usb_destroy_callback_urb( struct rt_urb *p_urb )
 {
@@ -1525,7 +1525,7 @@ void nrt_usb_destroy_callback_urb( struct rt_urb *p_urb )
 /**
  * Erstellt einen blockierenden Control-URB.
  * Zuerst wird ein URB mit Hilfe der Funktion nrt_usb_alloc_ctrl_urb erstellt.
- * Abschließend werden alle nötigen Daten im URB gespeichert und die RT-Semaphore
+ * Abschlieï¿½nd werden alle nï¿½igen Daten im URB gespeichert und die RT-Semaphore
  * bei RTAI registriert.
  * @return NULL, wenn kein Speicher mehr vorhanden oder Fehler beim Registrieren der RT-Semaphore.
  * @return Zeiger auf den erstellten Control-URB
@@ -1556,8 +1556,8 @@ struct rt_urb *nrt_usb_create_ctrl_semaphore_urb( unsigned char *name , RTIME rt
 }
 
 /**
- * Löscht einen mit der Funktion nrt_usb_create_ctrl_semaphore_urb erstellten Control-URB.
- * @param p_urb Zeiger auf den zu löschenden Control-URB
+ * Lï¿½cht einen mit der Funktion nrt_usb_create_ctrl_semaphore_urb erstellten Control-URB.
+ * @param p_urb Zeiger auf den zu lï¿½chenden Control-URB
  */
 void nrt_usb_destroy_ctrl_semaphore_urb( struct rt_urb *p_urb )
 {
@@ -1569,7 +1569,7 @@ void nrt_usb_destroy_ctrl_semaphore_urb( struct rt_urb *p_urb )
 /**
  * Erstellt einen blockierenden URB.
  * Zuerst wird ein URB mit Hilfe der Funktion nrt_usb_alloc_urb erstellt.
- * Abschließend werden alle nötigen Daten im URB gespeichert und die RT-Semaphore
+ * Abschlieï¿½nd werden alle nï¿½igen Daten im URB gespeichert und die RT-Semaphore
  * bei RTAI registriert.
  * @return NULL, wenn kein Speicher mehr vorhanden oder Fehler beim Registrieren der RT-Semaphore.
  * @return Zeiger auf den erstellten URB
@@ -1600,8 +1600,8 @@ struct rt_urb *nrt_usb_create_semaphore_urb( unsigned char *name , RTIME rt_sem_
 }
 
 /**
- * Löscht einen mit der Funktion nrt_usb_destroy_semaphore_urb erstellten URB.
- * @param p_urb Zeiger auf den zu löschenden URB
+ * Lï¿½cht einen mit der Funktion nrt_usb_destroy_semaphore_urb erstellten URB.
+ * @param p_urb Zeiger auf den zu lï¿½chenden URB
  */
 void nrt_usb_destroy_semaphore_urb( struct rt_urb *p_urb )
 {
@@ -1611,13 +1611,13 @@ void nrt_usb_destroy_semaphore_urb( struct rt_urb *p_urb )
 }
 
 /**
- * Übergibt einen URB an den RT-USB-Core.
- * Die Callback-Relevanten Daten des URBs werden überprüft und der URB an die Funktion
- * rt_intern_usb_submit_urb übergeben. Die Funktion blockiert nicht, sondern kehrt unmittelbar
- * nach der Übergabe des URBs an den Host-Controller wieder zurück. Wenn die Nachricht
+ * ï¿½ergibt einen URB an den RT-USB-Core.
+ * Die Callback-Relevanten Daten des URBs werden berprft und der URB an die Funktion
+ * rt_intern_usb_submit_urb bergeben. Die Funktion blockiert nicht, sondern kehrt unmittelbar
+ * nach der ï¿½ergabe des URBs an den Host-Controller wieder zurck. Wenn die Nachricht
  * erfolgreich versendet wurde oder ein Fehler auftrat, wird die Callback-Funktion aufgerufen.
  * @param p_urb Zeiger auf den zu versendenen URB
- * @return -EINVAL Ungültiger URB-Zeiger,keine Callback-Funktion angegeben oder Fehler in rt_intern_usb_submit_urb
+ * @return -EINVAL Ungltiger URB-Zeiger,keine Callback-Funktion angegeben oder Fehler in rt_intern_usb_submit_urb
  * @return 0, wenn erfolgreich
  */
 int rt_usb_submit_urb( struct rt_urb *p_urb )
@@ -1638,10 +1638,10 @@ int rt_usb_submit_urb( struct rt_urb *p_urb )
 }
 
 /**
- * Übergibt einen Control-URB an den RT-USB-Core.
- * Die Callback-Relevanten Daten des URBs werden überprüft, der Control-Request ausgefüllt und
- * der URB an die Funktion rt_intern_usb_submit_urb übergeben. Die Funktion blockiert nicht,
- * sondern kehrt unmittelbar nach der Übergabe des URBs an den Host-Controller wieder zurück.
+ * ï¿½ergibt einen Control-URB an den RT-USB-Core.
+ * Die Callback-Relevanten Daten des URBs werden berprft, der Control-Request ausgefllt und
+ * der URB an die Funktion rt_intern_usb_submit_urb bergeben. Die Funktion blockiert nicht,
+ * sondern kehrt unmittelbar nach der ï¿½ergabe des URBs an den Host-Controller wieder zurck.
  * Wenn die Nachricht erfolgreich versendet wurde oder ein Fehler auftrat, wird die
  * Callback-Funktion aufgerufen.
  * @param p_urb Zeiger auf den zu versendenen Control-URB
@@ -1649,9 +1649,9 @@ int rt_usb_submit_urb( struct rt_urb *p_urb )
  * @param request Request (z.B. USB_REQ_GET_DESCRIPTOR ), 8 Bit
  * @param wValue Wert, 16 Bit
  * @param wIndex Index, 16 Bit
- * @param wLength Länge der Puffer-Daten, 16 Bit
- * @param data Zeiger auf die Daten, die übertragen werden sollen
- * @return -EINVAL, wenn ungültiger URB-Zeiger, ungültiger Zeiger auf ein Control-Request, keine Callback-Funktion angegeben oder Fehler in rt_intern_usb_submit_urb
+ * @param wLength Lï¿½ge der Puffer-Daten, 16 Bit
+ * @param data Zeiger auf die Daten, die bertragen werden sollen
+ * @return -EINVAL, wenn ungltiger URB-Zeiger, ungltiger Zeiger auf ein Control-Request, keine Callback-Funktion angegeben oder Fehler in rt_intern_usb_submit_urb
  * @return 0, wenn erfolgreich
  */
 int rt_usb_submit_ctrl_urb( struct rt_urb *p_urb,__u8 request_type,__u8 request, __u16 wValue, __u16 wIndex, __u16 wLength , void *data)
@@ -1685,11 +1685,11 @@ int rt_usb_submit_ctrl_urb( struct rt_urb *p_urb,__u8 request_type,__u8 request,
 }
 
 /**
- * Übergibt einen URB an den RT-USB-Core.
- * Der URB wird an die Funktion rt_intern_usb_submit_urb übergeben.
+ * ï¿½ergibt einen URB an den RT-USB-Core.
+ * Der URB wird an die Funktion rt_intern_usb_submit_urb bergeben.
  * Die Funktion BLOCKIERT solange, bis die Nachricht erfolgreich versendet wurde oder ein Fehler auftrat.
  * @param p_urb Zeiger auf den zu versendenen URB
- * @return -EINVAL, wenn ungültiger URB-Zeiger oder Fehler in rt_intern_usb_submit_urb
+ * @return -EINVAL, wenn ungltiger URB-Zeiger oder Fehler in rt_intern_usb_submit_urb
  * @return 0, wenn erfolgreich
  */
 int rt_usb_send_urb_msg( struct rt_urb *p_urb )
@@ -1709,17 +1709,17 @@ int rt_usb_send_urb_msg( struct rt_urb *p_urb )
 }
 
 /**
- * Übergibt einen Control-URB an den RT-USB-Core.
- * Der Control-Request ausgefüllt und der URB an die Funktion rt_intern_usb_submit_urb übergeben.
+ * ï¿½ergibt einen Control-URB an den RT-USB-Core.
+ * Der Control-Request ausgefllt und der URB an die Funktion rt_intern_usb_submit_urb bergeben.
  * Die Funktion BLOCKIERT solange, bis die Nachricht erfolgreich versendet wurde oder ein Fehler auftrat.
  * @param p_urb Zeiger auf den zu versendenen Control-URB
  * @param request_type Request-Typ (z.B.  USB_DIR_IN | USB_TYPE_STANDARD | USB_RECIP_DEVICE ), 8 Bit
  * @param request Request (z.B. USB_REQ_GET_DESCRIPTOR ), 8 Bit
  * @param wValue Wert, 16 Bit
  * @param wIndex Index, 16 Bit
- * @param wLength Länge der Puffer-Daten, 16 Bit
- * @param data Zeiger auf die Daten, die übertragen werden sollen
- * @return -EINVAL, wenn ungültiger Zeiger auf einen URB oder auf einen Control-Request
+ * @param wLength Lï¿½ge der Puffer-Daten, 16 Bit
+ * @param data Zeiger auf die Daten, die bertragen werden sollen
+ * @return -EINVAL, wenn ungltiger Zeiger auf einen URB oder auf einen Control-Request
  * @return 0, wenn erfolgreich
  */
 int rt_usb_send_ctrl_msg(struct rt_urb *p_urb, __u8 request_type,__u8 request, __u16 wValue, __u16 wIndex, __u16 wLength , void *data)

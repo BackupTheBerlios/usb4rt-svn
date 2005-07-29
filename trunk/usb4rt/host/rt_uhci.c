@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Joerg Langenberg                                *
- *   joergel@gmx.net                                                       *
+ *   Copyright (C) 2005 by Jörg Langenberg                                 *
+ *   joerg.langenberg@gmx.net                                              *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -1230,7 +1230,7 @@ static int get_irq( struct uhc_device *p_uhcd )
 
   /* request rtai-irq */
   INFO("RT-UHC-Driver: Request RTAI-IRQ %d ... ", wanted_irq);
-  ret = rt_intr_create ( &p_uhc_irq->rt_intr, wanted_irq, (rt_isr_t) &rt_irq_handler );
+  ret = rt_intr_create (&p_uhc_irq->rt_intr, wanted_irq, (rt_isr_t) &rt_irq_handler, NULL);
   if(ret){
     INFO("[BUSY]\n");
 

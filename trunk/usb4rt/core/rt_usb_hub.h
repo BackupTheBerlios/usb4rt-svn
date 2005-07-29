@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Joerg Langenberg                                *
- *   joergel@gmx.net                                                       *
+ *   Copyright (C) 2005 by Jörg Langenberg                                 *
+ *   joerg.langenberg@gmx.net                                              *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -24,50 +24,50 @@
 #include "rt_usb_core.h"
 
  // some port features
-#define PORT_CONNECTION 				0x00
-#define PORT_ENABLE 						0x01
-#define PORT_SUSPEND 						0x02
-#define PORT_OVER_CURRENT 			0x03
-#define PORT_RESET 							0x04
-#define PORT_POWER 							0x08
-#define PORT_LOW_SPEED 					0x09
-#define PORT_HIGH_SPEED					0x0a
-#define PORT_TEST 							0x0b
-#define PORT_INDICATOR					0x0c
+#define PORT_CONNECTION         0x00
+#define PORT_ENABLE             0x01
+#define PORT_SUSPEND            0x02
+#define PORT_OVER_CURRENT       0x03
+#define PORT_RESET              0x04
+#define PORT_POWER              0x08
+#define PORT_LOW_SPEED          0x09
+#define PORT_HIGH_SPEED         0x0a
+#define PORT_TEST               0x0b
+#define PORT_INDICATOR          0x0c
 
-#define C_PORT_CONNECTION 			0x01
-#define C_PORT_ENABLE 					0x02
-#define C_PORT_SUSPEND 					0x04
-#define C_PORT_OVER_CURRENT 		0x13
-#define C_PORT_RESET 						0x14
+#define C_PORT_CONNECTION       0x01
+#define C_PORT_ENABLE           0x02
+#define C_PORT_SUSPEND          0x04
+#define C_PORT_OVER_CURRENT     0x13
+#define C_PORT_RESET            0x14
 
 typedef struct port_charge {
-  unsigned short c_port_connection:1; 	// C_PORT_CONNECTION
-	unsigned short c_port_enable:1; 			// C_PORT_ENABLE
-	unsigned short c_port_suspend:1;  		// C_PORT_SUSPEND
-	unsigned short c_port_over_current:1; // C_PORT_OVER_CURRENT
-	unsigned short c_port_reset:1;  			// C_PORT_RESET
-	unsigned short reserved:11;   				// RESERVED
+  unsigned short c_port_connection:1;   // C_PORT_CONNECTION
+  unsigned short c_port_enable:1;       // C_PORT_ENABLE
+  unsigned short c_port_suspend:1;      // C_PORT_SUSPEND
+  unsigned short c_port_over_current:1; // C_PORT_OVER_CURRENT
+  unsigned short c_port_reset:1;        // C_PORT_RESET
+  unsigned short reserved:11;           // RESERVED
 }port_change_t;
 
 typedef struct port_status {
-	unsigned short port_connection:1; 		// PORT_CONNECTION
-	unsigned short port_enable:1;   			// PORT_ENABLE
-	unsigned short port_suspend:1;  			// PORT_SUSPEND
-	unsigned short port_over_current:1; 	// PORT_OVER_CURRENT
-	unsigned short port_reset:1;    			// PORT_RESET
-	unsigned short reserved:3;    				// RESERVED
-	unsigned short port_power:1;    			// PORT_POWER
-	unsigned short port_lowspeed:1; 			// PORT_LOW_SPEED
-	unsigned short port_highspeed:1;  		// PORT_HIGH_SPEED
-	unsigned short port_test:1;   				// PORT_TEST
-	unsigned short port_indicator:1;  		// PORT_INDICATOR
-	unsigned short reserved2:3;   				// RESERVED
+  unsigned short port_connection:1;     // PORT_CONNECTION
+  unsigned short port_enable:1;         // PORT_ENABLE
+  unsigned short port_suspend:1;        // PORT_SUSPEND
+  unsigned short port_over_current:1;   // PORT_OVER_CURRENT
+  unsigned short port_reset:1;          // PORT_RESET
+  unsigned short reserved:3;            // RESERVED
+  unsigned short port_power:1;          // PORT_POWER
+  unsigned short port_lowspeed:1;       // PORT_LOW_SPEED
+  unsigned short port_highspeed:1;      // PORT_HIGH_SPEED
+  unsigned short port_test:1;           // PORT_TEST
+  unsigned short port_indicator:1;      // PORT_INDICATOR
+  unsigned short reserved2:3;           // RESERVED
 } __attribute__ ((packed)) portstatus_t;
 
 typedef struct portstat {
-	portstatus_t  stat;
-	port_change_t change;
+  portstatus_t  stat;
+  port_change_t change;
 } __attribute__ ((packed)) portstat_t;
 
 int usb_poll_hub( struct rt_urb *p_urb );
