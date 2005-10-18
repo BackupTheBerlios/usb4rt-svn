@@ -231,7 +231,7 @@ AC_MSG_CHECKING([for RTAI-fusion version])
 CONFIG_USB4RT_RTAI_PRE_VERSION="`${RTAI_CONFIG} --version`"
 
 case "$CONFIG_USB4RT_RTAI_PRE_VERSION" in
-  0.8.3-fusion | 0.8.99-fusion | .9*-fusion)
+  0.8.3-fusion | 0.8.99-fusion | 0.9*-fusion)
     CONFIG_USB4RT_RTAI_VERSION=fusion-083
     AC_DEFINE(CONFIG_FUSION_083, 1, [We build for fusion 0.8.3 or better])
     ;;

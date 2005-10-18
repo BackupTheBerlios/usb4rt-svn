@@ -20010,7 +20010,7 @@ echo $ECHO_N "checking for RTAI-fusion version... $ECHO_C" >&6
 CONFIG_USB4RT_RTAI_PRE_VERSION="`${RTAI_CONFIG} --version`"
 
 case "$CONFIG_USB4RT_RTAI_PRE_VERSION" in
-  0.8.3-fusion | 0.8.99-fusion | .9*-fusion)
+  0.8.3-fusion | 0.8.99-fusion | 0.9*-fusion)
     CONFIG_USB4RT_RTAI_VERSION=fusion-083
 
 cat >>confdefs.h <<\_ACEOF
