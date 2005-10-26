@@ -1,6 +1,13 @@
 OPTDIRS =
 
-SUBDIRS = core host prog
+SUBDIRS = \
+	core \
+	host \
+	prog \
+	config
 
-EXTRA_DIST = autogen.sh
+EXTRA_DIST = \
+	makefile \
+	Kconfig
+
 DISTCLEANFILES = .usb4rt_config

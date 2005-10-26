@@ -3,9 +3,6 @@
 /* we are building for x86 */
 #undef CONFIG_ARCH_I386
 
-/* We build for fusion 0.8.3 or better */
-#undef CONFIG_FUSION_083
-
 /* Kconfig */
 #undef CONFIG_USB4RT_BANDW_RECLAM
 
@@ -29,6 +26,9 @@
 
 /* Host system alias */
 #undef CONFIG_USB4RT_HOST_STRING
+
+/* We build for Xenoami 2.0 or better */
+#undef CONFIG_XENO_20
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H

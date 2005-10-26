@@ -1,0 +1,52 @@
+
+menu "General"
+
+config USB4RT_BANDW_RECLAM
+bool "Bandwidth Reclamation"
+default y
+help
+...TODO...
+
+config USB4RT_XENOMAIDIR
+string "Xenomai Install Directory"
+default "/usr/realtime/fusion"
+help
+...TODO...
+
+config USB4RT_INSTALLDIR
+string "USB4RT installation Directory"
+default "/usr/local/usb4rt"
+help
+...TODO...
+
+endmenu
+
+
+menu "Debug"
+
+config USB4RT_DBG_COMMON
+bool "Common debug messages"
+default y
+help
+...TODO...
+
+config USB4RT_DBG_TIME
+bool "Time debug"
+default y
+help
+...TODO...
+
+config USB4RT_DBG_TD
+bool "Transfer Descriptor debugging"
+default n
+help
+...TODO...
+
+config USB4RT_DBG_QH
+bool "Queue-Head debugging"
+default n
+help
+...TODO...
+
+endmenu
+

@@ -3,11 +3,11 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([usb4rt],[0.0.2],[],[])
+AC_INIT([usb4rt],[0.0.3],[],[])
 
 CONFIG_USB4RT_VERSION_MAJOR=0
 CONFIG_USB4RT_VERSION_MINOR=0
-CONFIG_USB4RT_REVISION_LEVEL=2
+CONFIG_USB4RT_REVISION_LEVEL=3
 
 AC_CONFIG_HEADERS([config/usb4rt_config_pre.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
@@ -45,44 +45,29 @@ AC_PROG_LIBTOOL
 AM_PROG_AS
 AC_SUBST(LD)
 
-##########################
-# Checks for libraries.
-##########################
-
-##########################
-# Checks for header files.
-##########################
-
-##########################
-# Checks for typedefs, structures, and compiler characteristics.
-##########################
 AC_C_INLINE
-
-##########################
-# Checks for library functions.
-##########################
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
 
-#
-# checking arch
-#
+dnl ============================================================================
+dnl  checking arch
+dnl ============================================================================
+
+AC_MSG_CHECKING([for USB4RT target architecture])
 case "$host" in
   i*86*-*)
     USB4RT_TARGET_ARCH=i386
     wanted_kernel_arch=CONFIG_X86
     ;;
- *) echo ""
-   echo "*******************************************"
-   echo "Still unsupported host: $host -- Sorry."
-   echo "*******************************************"
-   echo ""
-   exit 1;;
+ *) 
+    AC_MSG_ERROR([ *** Sorry, unsupported architecture])
+    ;;
 esac
+AC_MSG_RESULT([${USB4RT_TARGET_ARCH}])
 
-#
-# Load the USB4RT configuration.
-#
+dnl ============================================================================
+dnl  Load the USB4RT configuration.
+dnl ============================================================================
 
 USB4RT_KCONFIG_FILE=$srcdir/config/defconfig
 kconfig_type=default
@@ -106,9 +91,10 @@ fi
 . $USB4RT_KCONFIG_FILE
 AC_MSG_RESULT([$USB4RT_KCONFIG_FILE ($kconfig_type)])
 
-#
-# ARG-Enable Common-Debug (default=enabled)
-#
+dnl ============================================================================
+dnl  ARG-Enable Common-Debug (default=enabled)
+dnl ============================================================================
+
 AC_MSG_CHECKING(for debug-messages [common])
 AC_ARG_ENABLE(dbg_common,
   AS_HELP_STRING([--disable-dbg-common], [Disable common debug messages (default: enabled)]),
@@ -120,9 +106,10 @@ AC_MSG_RESULT(${CONFIG_USB4RT_DBG_COMMON:-yes})
 test x$CONFIG_USB4RT_DBG_COMMON = xy && AC_DEFINE(CONFIG_USB4RT_DBG_COMMON,1,[Kconfig])
 AM_CONDITIONAL(CONFIG_USB4RT_DBG_COMMON,[test x$CONFIG_USB4RT_DBG_COMMON = xy])
 
-#
-# ARG-Enable Time-Debug (default=disabled)
-#
+dnl ============================================================================
+dnl  ARG-Enable Time-Debug (default=disabled)
+dnl ============================================================================
+
 AC_MSG_CHECKING(for debug-messages [timing])
 AC_ARG_ENABLE(dbg_time,
   AS_HELP_STRING([--enable-dbg-time], [Enable time debug messages (default: disabled)]),
@@ -134,9 +121,10 @@ AC_MSG_RESULT(${CONFIG_USB4RT_DBG_TIME:-no})
 test x$CONFIG_USB4RT_DBG_TIME = xy && AC_DEFINE(CONFIG_USB4RT_DBG_TIME,1,[Kconfig])
 AM_CONDITIONAL(CONFIG_USB4RT_DBG_TIME,[test x$CONFIG_USB4RT_DBG_TIME = xy])
 
-#
-# ARG-Enable Transfer-Descriptor-Debug (default=disabled)
-#
+dnl ============================================================================
+dnl  ARG-Enable Transfer-Descriptor-Debug (default=disabled)
+dnl ============================================================================
+
 AC_MSG_CHECKING(for debug-messages [transfer-descriptor])
 AC_ARG_ENABLE(dbg_td,
   AS_HELP_STRING([--enable-dbg-td], [Enable transfer-descriptor debug messages (default: disabled)]),
@@ -148,9 +136,10 @@ AC_MSG_RESULT(${CONFIG_USB4RT_DBG_TD:-no})
 test x$CONFIG_USB4RT_DBG_TD = xy && AC_DEFINE(CONFIG_USB4RT_DBG_TD,1,[Kconfig])
 AM_CONDITIONAL(CONFIG_USB4RT_DBG_TD,[test x$CONFIG_USB4RT_DBG_TD = xy])
 
-#
-# ARG-Enable Queue-Head-Debug (default=disabled)
-#
+dnl ============================================================================
+dnl  ARG-Enable Queue-Head-Debug (default=disabled)
+dnl ============================================================================
+
 AC_MSG_CHECKING(for debug-messages [queue-heads])
 AC_ARG_ENABLE(dbg_qh,
   AS_HELP_STRING([--enable-dbg-qh], [Enable queue-head debug messages (default: disabled)]),
@@ -162,9 +151,10 @@ AC_MSG_RESULT(${CONFIG_USB4RT_DBG_QH:-no})
 test x$CONFIG_USB4RT_DBG_QH = xy && AC_DEFINE(CONFIG_USB4RT_DBG_QH,1,[Kconfig])
 AM_CONDITIONAL(CONFIG_USB4RT_DBG_QH,[test x$CONFIG_USB4RT_DBG_QH = xy])
 
-#
-# ARG-Enable Bandwidth-Reclamation (default=enabled)
-#
+dnl ============================================================================
+dnl  ARG-Enable Bandwidth-Reclamation (default=enabled)
+dnl ============================================================================
+
 AC_MSG_CHECKING(for debug-messages [timing])
 AC_ARG_ENABLE(bandw_reclam,
   AS_HELP_STRING([--disable-bandw-reclam], [Disable bandwith-reclamation for Fullspeed Bulk- and Control-Transfer (default: enabled)]),
@@ -176,45 +166,46 @@ AC_MSG_RESULT(${CONFIG_USB4RT_BANDW_RECLAM:-yes})
 test x$CONFIG_USB4RT_BANDW_RECLAM = xy && AC_DEFINE(CONFIG_USB4RT_BANDW_RECLAM,1,[Kconfig])
 AM_CONDITIONAL(CONFIG_USB4RT_BANDW_RECLAM,[test x$CONFIG_USB4RT_BANDW_RECLAM = xy])
 
+dnl ============================================================================
+dnl  xenomai-path
+dnl ============================================================================
 
-
-#
-# ARG-With rtai-fusion-path
-#
-AC_ARG_WITH(rtai,
-  AS_HELP_STRING([--with-rtai=RTAI], [path to installation of fusion ]),
+AC_ARG_WITH(xeno-dir,
+  AS_HELP_STRING([--with-xeno-dir=<XENOMAI>], [path to installation directory of xenomai ]),
     [case "${withval}" in
-      "" | y | ye | yes | n | no)
-        AC_MSG_ERROR([You must supply an argument to --with-rtai.]) ;;
-    esac],
-    with_rtai=[${CONFIG_USB4RT_FUSIONDIR}])
+	"" | y | ye | yes | n | no)
+    	    AC_MSG_ERROR([You must supply an argument to --with-xeno-dir.]) 
+	    ;;
+    esac
+    CONFIG_USB4RT_XENOMAIDIR="$withval"
+    ])
 
-#
-# try to find rtai-fusion
-# the presence of rtai-config is a good indication for rtai >= 3
-#
-AC_MSG_CHECKING([for RTAI fusion installation])
-RTAI_CONFIG="${with_rtai}/bin/rtai-config"
-if test -x "${RTAI_CONFIG}"; then
-  RTAI_DIR="`cd ${with_rtai} && pwd`" # let the shell normalize the path
-  AC_MSG_RESULT([${RTAI_DIR}])
+dnl ============================================================================
+dnl  try to find xenomai
+dnl ============================================================================
+
+AC_MSG_CHECKING([for Xenomai installation])
+XENO_CONFIG="${CONFIG_USB4RT_XENOMAIDIR}/bin/xeno-config"
+if test -x "${XENO_CONFIG}"; then
+  XENO_DIR="`cd ${CONFIG_USB4RT_XENOMAIDIR} && pwd`" # let the shell normalize the path
+  AC_MSG_RESULT([${XENO_DIR}])
 else
-  AC_MSG_RESULT([no])
+  AC_MSG_RESULT([no Xenomai found in $CONFIG_USB4RT_XENOMAIDIR])
 fi
 
-#
-# check if rtai-fusion is installed with DESTDIR
-# e.g.: 'make DESTDIR=/foo install'
-#
-AC_MSG_CHECKING([for RTAI DESTDIR])
-USB4RT_RTAI_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"     # let the shell normalize the path
+dnl ============================================================================
+dnl  get xenomai prefix
+dnl ============================================================================
 
-if test "${USB4RT_RTAI_PREFIX}" \!= "${RTAI_DIR}"; then
-  USB4RT_RTAI_DESTDIR="`cd \`echo ${RTAI_DIR} | sed -e s,${USB4RT_RTAI_PREFIX}$,,\` && pwd`"
-  export DESTDIR="${USB4RT_RTAI_DESTDIR}"
+AC_MSG_CHECKING([for Xenomai DESTDIR])
+USB4RT_XENO_PREFIX="`cd \`${XENO_CONFIG} --prefix\` && pwd`"     # let the shell normalize the path
 
-  USB4RT_RTAI_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"   # let the shell normalize the path
-  if test "${USB4RT_RTAI_PREFIX}" = "${RTAI_DIR}"; then
+if test "${USB4RT_XENO_PREFIX}" \!= "${XENO_DIR}"; then
+  USB4RT_XENO_DESTDIR="`cd \`echo ${XENO_DIR} | sed -e s,${USB4RT_XENO_PREFIX}$,,\` && pwd`"
+  export DESTDIR="${USB4RT_XENO_DESTDIR}"
+
+  USB4RT_XENO_PREFIX="`cd \`${XENO_CONFIG} --prefix\` && pwd`"   # let the shell normalize the path
+  if test "${USB4RT_XENO_PREFIX}" = "${XENO_DIR}"; then
     AC_MSG_RESULT([${DESTDIR}])
   else
     AC_MSG_ERROR([*** Cannot identify DESTDIR])
@@ -223,97 +214,76 @@ else
   AC_MSG_RESULT([none])
 fi
 
-#
-#++++ RTAI-Version ++++++++++++++++
-#
+AC_SUBST(USB4RT_XENO_PREFIX)
 
-AC_MSG_CHECKING([for RTAI-fusion version])
-CONFIG_USB4RT_RTAI_PRE_VERSION="`${RTAI_CONFIG} --version`"
+dnl ============================================================================
+dnl  checking Xenomai version
+dnl ============================================================================
 
-case "$CONFIG_USB4RT_RTAI_PRE_VERSION" in
-  0.8.3-fusion | 0.8.99-fusion | 0.9*-fusion)
-    CONFIG_USB4RT_RTAI_VERSION=fusion-083
-    AC_DEFINE(CONFIG_FUSION_083, 1, [We build for fusion 0.8.3 or better])
+AC_MSG_CHECKING([for Xenomai version])
+CONFIG_USB4RT_XENO_VERSION_PRE="`${XENO_CONFIG} --version`"
+
+case "$CONFIG_USB4RT_XENO_VERSION_PRE" in
+  2.0 | 2.0.*)
+    CONFIG_USB4RT_XENO_VERSION=xeno-20
+    AC_DEFINE(CONFIG_XENO_20, 1, [We build for Xenoami 2.0 or better])
     ;;
   *)
-    AC_MSG_ERROR([*** Unsupported RTAI-fusion version $CONFIG_USB4RT_RTAI_PRE_VERSION in $RTAI_DIR])
+    AC_MSG_ERROR([*** Unsupported Xenomai version $CONFIG_USB4RT_XENO_VERSION_PRE in $XENO_DIR])
   ;;
 esac
-AC_MSG_RESULT([${CONFIG_USB4RT_RTAI_VERSION}])
+AC_MSG_RESULT([${CONFIG_USB4RT_XENO_VERSION}])
+AM_CONDITIONAL(CONFIG_USB4RT_XENO_VERSION,[test "$CONFIG_USB4RT_XENO_VERSION" = xeno-20])
 
-AM_CONDITIONAL(CONFIG_FUSION,[test "$CONFIG_USB4RT_RTAI_VERSION" = fusion-083])
+dnl ============================================================================
+dnl  checking xenomai config file
+dnl ============================================================================
 
-#
-#++++ RTAI-config-file ++++++++++++++++
-#
-
-AC_MSG_CHECKING([for RTAI-fusion config file])
-CONFIG_USB4RT_RTAI_CONFIG_FILE="`${RTAI_CONFIG} --config`"
-if test \! -f $CONFIG_USB4RT_RTAI_CONFIG_FILE; then
-  AC_MSG_ERROR([*** RTAI-fusion configuration file not found])
+AC_MSG_CHECKING([for Xenomai config file])
+CONFIG_USB4RT_XENO_CONFIG_FILE="`${XENO_CONFIG} --config`"
+if test \! -f $CONFIG_USB4RT_XENO_CONFIG_FILE; then
+  AC_MSG_ERROR([*** Xenoami configuration file not found])
 fi
-AC_MSG_RESULT([${CONFIG_USB4RT_RTAI_CONFIG_FILE}])
+AC_MSG_RESULT([${CONFIG_USB4RT_XENO_CONFIG_FILE}])
 
-#
-# source (load) the rtai-fusion configuration
-#
-. ${CONFIG_USB4RT_RTAI_CONFIG_FILE}
 
-#
-#++++ RTAI-config ++++++++++++++++
-#
-case "$CONFIG_USB4RT_RTAI_VERSION" in
-  fusion-083)
+# source (load) the Xenomai configuration
+. ${CONFIG_USB4RT_XENO_CONFIG_FILE}
 
-    # check for native RTAI skin, needed by USB4RT
-    AC_MSG_CHECKING([for RTAI native skin])
-    case "${CONFIG_RTAI_SKIN_NATIVE}" in
-      y) AC_MSG_RESULT([${CONFIG_RTAI_SKIN_NATIVE}]) ;;
-      *) AC_MSG_ERROR([*** Please enable native RTAI skin]) ;;
+dnl ============================================================================
+dnl  checking xenomai skins
+dnl ============================================================================
+
+AC_MSG_CHECKING([for Xenomai native skin])
+    case "${CONFIG_XENO_SKIN_NATIVE}" in
+	y) AC_MSG_RESULT([${CONFIG_XENO_SKIN_NATIVE}]) ;;
+        *) AC_MSG_ERROR([*** Please enable native skin]) ;;
     esac
 
-    # check for semas, needed by USB4RT
-    AC_MSG_CHECKING([for RTAI Semaphores])
-    case "${CONFIG_RTAI_OPT_NATIVE_SEM}" in
-      y) AC_MSG_RESULT([${CONFIG_RTAI_OPT_NATIVE_SEM}]) ;;
-      *) AC_MSG_ERROR([*** Please enable semaphores in RTAI]) ;;
-    esac
-      ;;
+dnl ============================================================================
+dnl  checking xenomai skins
+dnl ============================================================================
 
-    *) # ---> oops <----
-    AC_MSG_ERROR([*** internal error])
-      ;;
-    esac
+XENO_USER_CFLAGS="`${XENO_CONFIG} --fusion-cflags`"
+XENO_KMOD_CFLAGS="`${XENO_CONFIG} --fusion-cflags`"
+CONFIG_USB4RT_XENO_ARCH="`${XENO_CONFIG} --arch`"
+XENO_LIBRARIES="`${XENO_CONFIG} --library-dir`"
 
-#
-# import settings from RTAI
-#
-case "${CONFIG_USB4RT_RTAI_VERSION}" in
-  fusion-083)
-    RTAI_USER_CFLAGS="`${RTAI_CONFIG} --fusion-cflags`"
-    RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --fusion-cflags`"
-    CONFIG_USB4RT_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
-    RTAI_LIBRARIES="`${RTAI_CONFIG} --library-dir`"
-    ;;
-  *)
-    AC_MSG_ERROR([*** internal error])
-    ;;
-esac
+dnl ============================================================================
+dnl   architecture tests....
+dnl ============================================================================
 
-#
-# architecture tests....
-#
-AC_MSG_CHECKING([for RTAI target arch])
-AC_MSG_RESULT([${CONFIG_USB4RT_RTAI_ARCH}])
+AC_MSG_CHECKING([for Xenomai target arch])
+AC_MSG_RESULT([${CONFIG_USB4RT_XENO_ARCH}])
 
 AC_MSG_CHECKING([for USB4RT target arch])
 AC_MSG_RESULT([${USB4RT_TARGET_ARCH}])
 
-if test x"${USB4RT_TARGET_ARCH}" != x"${CONFIG_USB4RT_RTAI_ARCH}"; then
-    AC_MSG_ERROR([*** RTAI and USB4RT target architectures are not the same])
+if test x"${USB4RT_TARGET_ARCH}" != x"${CONFIG_USB4RT_XENO_ARCH}"; then
+    AC_MSG_ERROR([*** Xenomai and USB4RT target architectures are not the same])
 fi
 
-case "${CONFIG_USB4RT_RTAI_ARCH}" in
+case "${CONFIG_USB4RT_XENO_ARCH}" in
   i386)
     AC_DEFINE(CONFIG_ARCH_I386, 1,[we are building for x86])
   ;;
@@ -323,51 +293,66 @@ case "${CONFIG_USB4RT_RTAI_ARCH}" in
 esac
 AC_SUBST(USB4RT_TARGET_ARCH)
 
-#
-# get linux kernel tree and version
-#
-RTAI_LINUX_DIR="`${RTAI_CONFIG} --linux-dir`"
-RTAI_LINUX_VERSION="`${RTAI_CONFIG} --linux-version`"
-AC_SUBST(RTAI_LINUX_DIR)
+dnl ============================================================================
+dnl  get linux kernel tree and version
+dnl ============================================================================
 
-#
-# check linux kernel makefile and .config
-#
+XENO_LINUX_DIR="`${XENO_CONFIG} --linux-dir`"
+XENO_LINUX_VERSION="`${XENO_CONFIG} --linux-version`"
+
+
 AC_MSG_CHECKING([for Linux source tree])
-if test \! -r ${RTAI_LINUX_DIR}/Makefile; then
+if test \! -r ${XENO_LINUX_DIR}/Makefile; then
    echo
-   AC_MSG_ERROR([*** No Linux kernel tree in ${RTAI_LINUX_DIR}])
+   AC_MSG_ERROR([*** No Linux kernel tree in ${XENO_LINUX_DIR}])
 fi
 
-if test \! -r ${RTAI_LINUX_DIR}/.config; then
+if test \! -r ${XENO_LINUX_DIR}/.config; then
    echo
-   AC_MSG_ERROR([*** $RTAI_LINUX_DIR is not configured])
+   AC_MSG_ERROR([*** $XENO_LINUX_DIR is not configured])
 fi
 
-#
-# source (load) the kernel configuration
-#
-. ${RTAI_LINUX_DIR}/.config
-AC_MSG_RESULT([$RTAI_LINUX_DIR (kernel ${RTAI_LINUX_VERSION}${CONFIG_SMP:+-SMP})])
+AC_SUBST(XENO_LINUX_DIR)
 
-#
-# some checks
-#
+dnl ============================================================================
+dnl  check linux version
+dnl ============================================================================
+
+case "${XENO_LINUX_VERSION}" in
+  2.6.*)
+    ;;
+  *)
+    AC_MSG_ERROR([*** Unsupported kernel version $XENO_LINUX_VERSION])
+    ;;
+esac
+
+AC_SUBST(USB4RT_MODULE_EXT)
+AM_CONDITIONAL(CONFIG_KBUILD,[test "$CONFIG_KBUILD" = y])
+
+
+dnl ============================================================================
+dnl  some linux config checks
+dnl ============================================================================
+
+. ${XENO_LINUX_DIR}/.config
+AC_MSG_RESULT([$XENO_LINUX_DIR (kernel ${XENO_LINUX_VERSION}${CONFIG_SMP:+-SMP})])
+
 if test x${CONFIG_MODULES} = x; then
-  AC_MSG_ERROR([*** Please set CONFIG_MODULES for $RTAI_LINUX_DIR and rebuild your kernel])
+  AC_MSG_ERROR([*** Please set CONFIG_MODULES for $XENO_LINUX_DIR and rebuild your kernel])
 fi
 
 if test x${CONFIG_MODVERSIONS} = xy; then
-  AC_MSG_ERROR([*** Please unset CONFIG_MODVERSIONS for $RTAI_LINUX_DIR and rebuild your kernel])
+  AC_MSG_ERROR([*** Please unset CONFIG_MODVERSIONS for $XENO_LINUX_DIR and rebuild your kernel])
 fi
 
 if test x${CONFIG_RTAI_ADEOS} = xy -a x${CONFIG_ADEOS_CORE} = x; then
-   AC_MSG_ERROR([*** Please activate the Adeos support (General menu) in $RTAI_LINUX_DIR and rebuild your kernel])
+   AC_MSG_ERROR([*** Please activate the Adeos support (General menu) in $XENO_LINUX_DIR and rebuild your kernel])
 fi
 
-#
-# crosscompiling
-#
+dnl ============================================================================
+dnl  crosscompiling
+dnl ============================================================================
+
 AC_MSG_CHECKING([for CROSS_COMPILE])
 if test "${CROSS_COMPILE}" = ""; then
   CROSS_COMPILE="`echo ${CC} | sed s/gcc//`"
@@ -387,22 +372,11 @@ else
 fi
 AC_SUBST(CROSS_COMPILE)
 
-#
-# check linux version and set specific parameters
-#
-unset CONFIG_KBUILD
-case "${RTAI_LINUX_VERSION}" in
-  2.6.*)
-    USB4RT_MODULE_EXT=.ko
-    CONFIG_KBUILD=y
-    ;;
-  *)
-    AC_MSG_ERROR([*** Unsupported kernel version $RTAI_LINUX_VERSION])
-    ;;
-esac
-AC_SUBST(USB4RT_MODULE_EXT)
-AM_CONDITIONAL(CONFIG_KBUILD,[test "$CONFIG_KBUILD" = y])
+dnl ============================================================================
+dnl  build for 2.6 kernel
+dnl ============================================================================
 
+USB4RT_MODULE_EXT=.ko
 USB4RT_KBUILD_ENV='src2obj = $(patsubst %.$(1),%.o,$(filter %.$(1),$(call notdir,$(2))))'
 USB4RT_KBUILD_CMD=" \
   @for src in \$(filter-out FORCE, \$^); do            \
@@ -410,12 +384,12 @@ USB4RT_KBUILD_CMD=" \
       \$(LN_S) \$\$src;                                \
     fi;                                                \
   done;                                                \
-  \$(MAKE) -C $RTAI_LINUX_DIR                          \
+  \$(MAKE) -C $XENO_LINUX_DIR                          \
   CROSS_COMPILE=\$(CROSS_COMPILE)                      \
     ARCH=\$(USB4RT_TARGET_ARCH)                         \
     M=\"\`pwd\`\"                                      \
     V=\$(V)                                            \
-    rtai_dir=\"${USB4RT_RTAI_PREFIX}\"                  \
+    xeno_dir=\"${USB4RT_XENO_PREFIX}\"                  \
     top_srcdir=\"\`cd \$(top_srcdir) && pwd\`\"        \
     top_builddir=\"\`cd \$(top_builddir) && pwd\`\"    \
     srcdir=\"\`cd \$(srcdir) && pwd\`\"                \
@@ -423,7 +397,7 @@ USB4RT_KBUILD_CMD=" \
     build_target='\$(basename \$@)'                    \
     modules                                            \
     "
-USB4RT_KBUILD_CLEAN="                                   \
+USB4RT_KBUILD_CLEAN="                                  \
   @rm -f *.ko *.mod.c .*.cmd *.o;                      \
   for src in \$^; do                                   \
     if test -h \`basename \$\$src\`; then              \
@@ -438,11 +412,11 @@ USB4RT_KBUILD_CLEAN="                                   \
 #
 # Hack to suppress undefined symbol warnings during MODPOST stage ===
 #
-if test -e $RTAI_LINUX_DIR/Module.symvers; then
-  mv $RTAI_LINUX_DIR/Module.symvers $RTAI_LINUX_DIR/Module.symvers.let_modpost_be_quiet
+if test -e $XENO_LINUX_DIR/Module.symvers; then
+  mv $XENO_LINUX_DIR/Module.symvers $XENO_LINUX_DIR/Module.symvers.let_modpost_be_quiet
 fi
-if test -e $RTAI_LINUX_DIR/vmlinux; then
-  mv $RTAI_LINUX_DIR/vmlinux $RTAI_LINUX_DIR/vmlinux.let_modpost_be_quiet
+if test -e $XENO_LINUX_DIR/vmlinux; then
+  mv $XENO_LINUX_DIR/vmlinux $XENO_LINUX_DIR/vmlinux.let_modpost_be_quiet
 fi
 
 
@@ -455,14 +429,14 @@ AC_SUBST(USB4RT_KBUILD_CMD)
 AC_SUBST(USB4RT_KBUILD_CLEAN)
 
 bs_kmodext=$USB4RT_MODULE_EXT
-bs_kcompile="make -C $RTAI_LINUX_DIR ARCH=$USB4RT_TARGET_ARCH CROSS_COMPILE=$CROSS_COMPILE V=1 M=`pwd` SUBDIRS=`pwd` modules"
+bs_kcompile="make -C $XENO_LINUX_DIR ARCH=$USB4RT_TARGET_ARCH CROSS_COMPILE=$CROSS_COMPILE V=1 M=`pwd` SUBDIRS=`pwd` modules"
 
 #
-# RTAI header checks
+# Xenomai header checks
 #
 
 ac_save_CPPFLAGS="${CPPFLAGS}"
-CPPFLAGS="${ac_save_CPPFLAGS} ${RTAI_KMOD_CFLAGS}"
+CPPFLAGS="${ac_save_CPPFLAGS} ${XENO_KMOD_CFLAGS}"
 
 # Working around some Autoconf ugliness here: names of variables
 # stored into the cache are canonicalized, turning /'s into _'s. So if
@@ -471,22 +445,15 @@ CPPFLAGS="${ac_save_CPPFLAGS} ${RTAI_KMOD_CFLAGS}"
 # second one will never get checked in the fs, but simply
 # uncached. This applies to rtai_sem.h and rtai/sem.h for instance.
 # To prevent this, we must only check a single set of non-conflicting
-# headers, depending on the RTAI version which has been
+# headers, depending on the Xenomai version which has been
 # identified. (rpm)
-case "${CONFIG_USB4RT_RTAI_VERSION}" in
-  fusion-083)
-    BS_CHECK_KHEADERS([rtai/sem.h rtai/mutex.h rtai/pipe.h],
+
+BS_CHECK_KHEADERS([rtai/sem.h rtai/mutex.h rtai/pipe.h],
       [],
-      [AC_MSG_ERROR([*** header not found or working, please check RTAI installation])],
+      [AC_MSG_ERROR([*** header not found or working, please check Xenomai installation])],
       [
         #include <linux/kernel.h>
       ])
-    ;;
-  *)
-    AC_MSG_ERROR([*** internal error])
-    ;;
-esac
-
 CPPFLAGS="${ac_save_CFLAGS}"
 
 #
@@ -524,7 +491,7 @@ dnl Build a Kconfig file corresponding to the current configuration
 dnl if none exists.
 dnl
 
-if test \! -r .rtai_config; then
+if test \! -r .usb4rt_config; then
    set | grep -e '^CONFIG_USB4RT' -e '^CONFIG_MODULES' | \
    sed -e 's,\(.*\)=\(.*\)$,\1=\"\2\",' > .usb4rt_config
 fi
@@ -535,7 +502,10 @@ fi
 AC_CONFIG_FILES([GNUmakefile \
                  core/GNUmakefile \
                  host/GNUmakefile \
-                 prog/GNUmakefile
+                 prog/GNUmakefile \
+		 config/GNUmakefile \
+		 config/kconfig/GNUmakefile \
+		 config/kconfig/lxdialog/GNUmakefile
                 ])
 AC_OUTPUT
 
