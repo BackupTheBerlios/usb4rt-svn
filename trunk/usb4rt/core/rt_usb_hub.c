@@ -20,8 +20,8 @@
 
 #include <linux/delay.h>
 
-#include "rt_usb_hub.h"
-#include "rt_usb_debug.h"
+#include <core/rt_usb_hub.h>
+#include <core/rt_usb_debug.h>
 
 extern struct usb_device usb_dev[MAX_USB_DEV];
 extern unsigned int alloc_bytes;
@@ -33,13 +33,15 @@ extern int nrt_intern_usb_control_msg( struct rt_urb *p_urb, __u8 endpoint, __u8
 
 int usb_init_hub( struct rt_urb *p_urb )
 {
+  int i;
+  hub_descriptor_t *p_hub_desc = NULL;
+
+
   if(!p_urb || ! p_urb->p_usbdev){
     return -1;
   }
 
-  int i;
-
-  hub_descriptor_t *p_hub_desc = kmalloc( sizeof(hub_descriptor_t),GFP_KERNEL);
+  p_hub_desc = kmalloc( sizeof(hub_descriptor_t),GFP_KERNEL);
   if(!p_hub_desc){
     return -ENOMEM;
   }
@@ -75,16 +77,17 @@ int usb_init_hub( struct rt_urb *p_urb )
 
 struct usb_device *usb_poll_hub_port( struct rt_urb *p_urb, __u8 hub_port_nr )
 {
+  struct usb_device *p_new_dev  = NULL;
+  portstat_t p_pstat;
+  struct rt_urb *p_urb_save     = NULL;
+  struct usb_device *p_usbdev_save = NULL;
+
   if(! p_urb || !p_urb->p_usbdev || !p_urb->p_usbdev->p_hcd){
     if (!p_urb)                           ERR("[ERROR] %s - Invalid URB-Pointer \n", __FUNCTION__);
     if (!p_urb->p_usbdev)                 ERR("[ERROR] %s - Invalid USB-Device-Pointer \n", __FUNCTION__);
     if (!p_urb->p_usbdev->p_hcd)          ERR("[ERROR] %s - Invalid Host-Controller-Pointer \n", __FUNCTION__);
     return NULL;
   }
-
-  struct usb_device *p_new_dev = NULL;
-  portstat_t p_pstat;
-
 
   if (hub_get_portstat( p_urb, hub_port_nr, &p_pstat)){
     ERR_MSG2(p_urb->p_hcd,p_urb->p_usbdev," %s - Get Portstat for Port[%d] failed \n",__FUNCTION__, hub_port_nr);
@@ -104,8 +107,8 @@ struct usb_device *usb_poll_hub_port( struct rt_urb *p_urb, __u8 hub_port_nr )
       udelay(10);
 
       // unregister hub_urb
-      struct rt_urb *p_urb_save = p_urb;
-      struct usb_device *p_usbdev_save = p_urb->p_usbdev;
+      p_urb_save    = p_urb;
+      p_usbdev_save = p_urb->p_usbdev;
       nrt_usb_unregister_urb(p_urb);
 
       p_new_dev = nrt_usb_config_dev( p_urb->p_hcd, p_urb->p_usbdev->rh_port, p_pstat.stat.port_lowspeed);
@@ -130,11 +133,12 @@ struct usb_device *usb_poll_hub_port( struct rt_urb *p_urb, __u8 hub_port_nr )
 
 int hub_set_port_feature( struct rt_urb *p_urb, __u16 port_nr, __u8 feature)
 {
+  int ret = 0;
+
   if(!p_urb){
     return -ENODEV;
   }
 
-  int ret = 0;
   DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev,"%02d : Set Feature 0x%02x\n", port_nr, feature);
 
   ret = nrt_intern_usb_control_msg( p_urb,

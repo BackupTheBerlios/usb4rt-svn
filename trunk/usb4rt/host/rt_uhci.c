@@ -24,12 +24,12 @@
 #include <linux/interrupt.h>
 #include <asm/io.h>
 
-#include "rt_uhci.h"
-#include "rt_uhci_hub.h"
-#include "rt_usb_debug.h"
-#include "usb4rt_config.h"
+#include <host/rt_uhci.h>
+#include <host/rt_uhci_hub.h>
+#include <core/rt_usb_debug.h>
+#include <core/usb4rt_config.h>
 
-#define DRIVER_VERSION USB4RT_PACKAGE_VERSION
+#define DRIVER_VERSION "USB4RT_PACKAGE_VERSION"
 #define DRIVER_AUTHOR "Joerg Langenberg - joergel@gmx.net"
 #define DRIVER_DESC "Realtime Driver for Universal Host Controller"
 
@@ -84,13 +84,15 @@ static u32 pci_io_addr[] = {
 
 static void dump_td_table( struct rt_privurb *p_purb, int all )
 {
+  u32 link,status,token,buffer;
+  struct list_head *p_list;
+  td_t *p_td = NULL;
+
   if(!p_purb || !p_purb->p_td_table){
     return;
   }
 
-  u32 link,status,token,buffer;
-  struct list_head *p_list = p_purb->active_td_list.next;
-  td_t *p_td = NULL;
+  p_list = p_purb->active_td_list.next;
 
   PRNT("========== DUMP TD-TABLE @ 0x%p ( %d TDs, %d Byte) =========== \n",p_purb->p_td_table,p_purb->anz_tds,p_purb->table_size);
   PRNT("   URB         @ 0x%p \n", p_purb->p_urb);
@@ -156,6 +158,8 @@ static int create_td_table( struct rt_privurb *p_purb )
   td_t *p_list;
   dma_addr_t td_dma;
   int td_size = sizeof(td_t);
+  int i;
+
   p_purb->table_size = td_size * p_purb->anz_tds;
 
   p_td_table = (td_t *)dma_alloc_coherent(&p_purb->p_uhcd->p_pcidev->dev,
@@ -166,7 +170,6 @@ static int create_td_table( struct rt_privurb *p_purb )
     return -ENOMEM;
   }
 
-  int i;
   TD_MSG1( p_purb->p_hcd," TD-Table for URB 0x%p created @ 0x%p, DMA: 0x%p (%d Byte)\n",
            p_purb->p_urb, p_td_table, (void *)td_dma, p_purb->table_size);
 
@@ -315,15 +318,16 @@ static void destroy_qh( qh_t *p_qh )
  */
 static int init_framelist( struct uhc_device *p_uhcd )
 {
+  int i;
+  struct frame_list *p_fl;
+  dma_addr_t fl_dma;
+
   if(!p_uhcd->p_pcidev){
     return -ENODEV;
   }
   if(p_uhcd->p_fl){
     return -EBUSY;
   }
-
-  struct frame_list *p_fl;
-  dma_addr_t fl_dma;
 
   p_fl = (struct frame_list *)dma_alloc_coherent( &p_uhcd->p_pcidev->dev,
                                                   sizeof(struct frame_list),
@@ -338,7 +342,6 @@ static int init_framelist( struct uhc_device *p_uhcd )
   p_uhcd->p_fl = p_fl;
   p_uhcd->p_fl->dma_handle = fl_dma;
 
-  int i;
   for(i=0; i<1024;i++){
     p_uhcd->p_fl->frame_dma[i] = LINK_TERM;
     p_uhcd->p_fl->frame_cpu[i] = NULL;
@@ -588,13 +591,14 @@ static void dump_uhcd( struct uhc_device *p_uhcd )
  */
 int uhc_clear_stat( struct uhc_device *p_uhcd )
 {
+  unsigned short stat;
+
   if(!p_uhcd || !p_uhcd->p_io){
     return -ENODEV;
   }
 
   DBG("RT-UHC-Driver: Clear Status\n");
 
-  unsigned short stat;
   stat = inw(p_uhcd->p_io->start + USBSTS);
   outw(stat,p_uhcd->p_io->start + USBSTS);
   return 0;
@@ -661,12 +665,13 @@ int uhc_global_reset( struct uhc_device *p_uhcd )
  */
 int uhc_start( struct uhc_device *p_uhcd )
 {
+  int timeout = 1000;
+
   if(!p_uhcd || !p_uhcd->p_io || !p_uhcd->p_pcidev){
     return -ENODEV;
   }
 
   DBG("RT-UHC-Driver: Starte Host Controller\n");
-  int timeout = 1000;
 
   /* Host Controller Reset */
   outw(USBCMD_HCRESET, p_uhcd->p_io->start + USBCMD);
@@ -696,13 +701,14 @@ int uhc_start( struct uhc_device *p_uhcd )
  */
 int uhc_stop( struct uhc_device *p_uhcd )
 {
+  unsigned short tmp;
+
   if(!p_uhcd || !p_uhcd->p_io){
     return -ENODEV;
   }
 
   DBG("RT-UHC-Driver: Stopping host-controller\n");
 
-  unsigned short tmp;
   tmp = inw(p_uhcd->p_io->start + USBCMD);
   tmp &= ~USBCMD_RS;
   outw(tmp,p_uhcd->p_io->start + USBCMD);
@@ -724,10 +730,12 @@ int uhc_stop( struct uhc_device *p_uhcd )
  */
 static int uhc_init( struct uhc_device *p_uhcd )
 {
+  int ret,i,rh_port;
+  unsigned short tmp;
+
   if(!p_uhcd || !p_uhcd->p_io || !p_uhcd->irq){
     return -ENODEV;
   }
-  int ret,i,rh_port;
 
   /* 1. initialize framelist */
   ret = init_framelist( p_uhcd );
@@ -755,7 +763,6 @@ static int uhc_init( struct uhc_device *p_uhcd )
 
   /* Setting Bus-Master */
   DBG("RT-UHC-Driver: Setting bus-master\n");
-  unsigned short tmp;
   pci_read_config_word(p_uhcd->p_pcidev,PCICMD,&tmp);
   tmp |= PCICMD_BME;
   pci_write_config_word(p_uhcd->p_pcidev,PCICMD,tmp);
@@ -787,13 +794,13 @@ static int uhc_init( struct uhc_device *p_uhcd )
 static void uhc_clear( struct uhc_device *p_uhcd )
 {
   __u8 nr = p_uhcd->uhcd_nr;
+
   memset(p_uhcd,0,sizeof(struct uhc_device));
   p_uhcd->uhcd_nr = nr;
 
   INIT_LIST_HEAD(&p_uhcd->irq_list);
   INIT_LIST_HEAD(&p_uhcd->reg_urb_list);
   INIT_LIST_HEAD(&p_uhcd->handle_urb_list);
-
 }
 
 /******************************************************************/
@@ -802,7 +809,7 @@ static void uhc_clear( struct uhc_device *p_uhcd )
 
 void dump_urb( struct rt_urb *p_urb );
 static void unmap_dma( struct rt_privurb *p_purb );
-static inline void rt_complete_urb( struct rt_privurb *p_purb );
+static void rt_complete_urb( struct rt_privurb *p_purb );
 static void rt_unschedule_ctrl_bulk_urb( struct rt_privurb *p_purb );
 static void rt_unschedule_int_urb( struct rt_privurb *p_purb );
 static void rt_unschedule_isoc_urb( struct rt_privurb *p_purb );
@@ -813,6 +820,9 @@ static void handle_first_irq(struct rt_privurb *p_purb)
   td_t *p_td = NULL;
   unsigned int bytes = 0;
   struct list_head *p_list = p_purb->active_td_list.next;
+  unsigned long transfer_time;
+  unsigned long offset;
+  __u32 status;
 
   while( p_list != &p_purb->active_td_list ){
     p_td = list_entry( p_list, td_t, active_td_list);
@@ -830,7 +840,12 @@ static void handle_first_irq(struct rt_privurb *p_purb)
       p_list = p_list->next;
       if(p_list != &p_purb->active_td_list){
         p_td = list_entry( p_list->next, td_t, active_td_list);
-        set_status_ioc(p_td);                /* Set IOC */
+
+        //set_status_ioc(p_td);                /* Set IOC */
+        status = le32_to_cpu(p_td->status);
+        status |= TD_STAT_IOC;
+        p_td->status = cpu_to_le32(status);
+
       }
 
       return;
@@ -844,8 +859,8 @@ static void handle_first_irq(struct rt_privurb *p_purb)
     p_list = p_list->next;
   }
   /* URB completed in the first frame */
-  unsigned long transfer_time = FS_NS_PER_BYTE * bytes;
-  unsigned long offset = FS_NS_PER_preSOF + transfer_time + 1000000 + FS_NS_PER_SOF;
+  transfer_time = FS_NS_PER_BYTE * bytes;
+  offset = FS_NS_PER_preSOF + transfer_time + 1000000 + FS_NS_PER_SOF;
   p_purb->p_urb->timestamp_first_data = frame_start - ( offset >> 1);
   INFO_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: IRQ 1: Timestamp: %llu \n",p_purb->p_urb,
         p_purb->p_urb->timestamp_first_data );
@@ -859,16 +874,20 @@ static void handle_second_irq(struct rt_privurb *p_purb)
   unsigned int bytes = 0;
   td_t *p_td = &p_purb->p_td_table[p_purb->compl_tds_at_first_irq];
   struct list_head *p_list = &p_td->active_td_list;
+  unsigned int bytes_per_frame;
+  unsigned int ns_per_frame;
+  unsigned int ns_per_byte;
+  unsigned int bit_per_s;
 
   while( p_list != &p_purb->active_td_list ){
     p_td = list_entry( p_list, td_t, active_td_list);
 
     if( get_status_active(p_td) ){
 
-      unsigned int bytes_per_frame = bytes - p_purb->byte_at_first_irq;
-      unsigned int ns_per_frame = (unsigned long)( frame_start - p_purb->time_at_first_irq );
-      unsigned int ns_per_byte = ns_per_frame / bytes_per_frame;
-      unsigned int bit_per_s = (bytes_per_frame * 8) * 1000 ;
+      bytes_per_frame = bytes - p_purb->byte_at_first_irq;
+      ns_per_frame = (unsigned long)( frame_start - p_purb->time_at_first_irq );
+      ns_per_byte = ns_per_frame / bytes_per_frame;
+      bit_per_s = (bytes_per_frame * 8) * 1000 ;
       offset = p_purb->byte_at_first_irq * ns_per_byte;
       p_purb->p_urb->timestamp_first_data = p_purb->time_at_first_irq - offset;
       p_purb->get_time_of_first_bit = 0;
@@ -901,6 +920,10 @@ static void handle_second_irq(struct rt_privurb *p_purb)
 
 static inline void handle_urb(__u16 stat, struct uhc_device *p_uhcd, struct rt_privurb *p_purb)
 {
+  int toggle;
+  td_t *p_td = NULL;
+  struct list_head *p_list = p_purb->active_td_list.next;
+
   if(p_purb->urb_wait_flags == URB_WAIT_BUSY){
     DBG_MSG2(p_purb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: BUSY WAIT\n",p_purb->p_urb);
     // handled in rt_uhci_send_busywait_urb
@@ -931,8 +954,8 @@ static inline void handle_urb(__u16 stat, struct uhc_device *p_uhcd, struct rt_p
   // Check for Errors
   if (stat & USBSTS_ERROR) {  //Interrupt due to error
 
-    td_t *p_td = NULL;
-    struct list_head *p_list = p_purb->active_td_list.next;
+    p_td = NULL;
+    p_list = p_purb->active_td_list.next;
 
     while( p_list != &p_purb->active_td_list ){
 
@@ -948,7 +971,7 @@ static inline void handle_urb(__u16 stat, struct uhc_device *p_uhcd, struct rt_p
         DBG("\n");
         dump_td_table(p_purb,0);
 
-        int toggle = ( td_status(p_td) & TD_TOKEN_TOGGLE ? 1 : 0 );
+        toggle = ( td_status(p_td) & TD_TOKEN_TOGGLE ? 1 : 0 );
         usb_set_data_toggle( p_purb->p_urb->p_usbdev,p_purb->p_urb->pipe, toggle);
 
         p_purb->p_urb->status = -1;
@@ -983,6 +1006,9 @@ handle:
 
 static inline void handle_controller( struct uhc_device *p_uhcd, __u16 stat )
 {
+  struct rt_privurb *p_purb;
+  struct list_head *p_list, *p_next;
+
   if (stat & USBSTS_ERROR) {  //Interrupt due to error
     DBG_MSG1(p_uhcd->p_hcd," ===> Incoming IRQ %d, ERROR \n",p_uhcd->irq);
   }
@@ -1015,8 +1041,6 @@ static inline void handle_controller( struct uhc_device *p_uhcd, __u16 stat )
     dump_uhcd(p_uhcd);
   }
 
-  struct rt_privurb *p_purb;
-  struct list_head *p_list, *p_next;
   p_list = p_uhcd->reg_urb_list.next;
 
   while(p_list != &p_uhcd->reg_urb_list){
@@ -1042,6 +1066,11 @@ static inline void handle_controller( struct uhc_device *p_uhcd, __u16 stat )
 int rt_irq_handler(struct xnintr *p_xnintr)
 {
   struct uhc_irq *p_uhc_irq = (struct uhc_irq *)p_xnintr->cookie;
+  int fs=0;
+  int handled_uhc = 0;
+  __u16 stat = 0x0000;
+  struct uhc_device *p_uhcd = NULL;
+  struct list_head  *p_list = NULL;
 
   if(!p_uhc_irq || list_empty(&p_uhc_irq->irq_list) ){
     return RT_INTR_CHAINED;           /* shared interrupt, not mine */
@@ -1049,12 +1078,8 @@ int rt_irq_handler(struct xnintr *p_xnintr)
 
   DBG(" =================== BEGIN RTAI-INTERRUPT HANDLER =============================\n");
 
-  int fs=0;
-  int handled_uhc = 0;
-  __u16 stat = 0x0000;
-  struct uhc_device *p_uhcd = NULL;
 
-  struct list_head *p_list = p_uhc_irq->irq_list.next;
+  p_list = p_uhc_irq->irq_list.next;
   while(p_list != &p_uhc_irq->irq_list){
     p_uhcd = list_entry(p_list,struct uhc_device,irq_list);
     DBG("UHC @ 0x%p: Checking for Interrupts \n",p_uhcd);
@@ -1100,12 +1125,12 @@ irq_next_uhc:
 /******************************************************************/
 
 static int get_ioport_info(struct pci_dev *p_pcidev, unsigned long *io_start, unsigned long *io_size){
+  int i;
+  unsigned long io_flags = 0;
+
   if(!p_pcidev || !io_start || !io_size){
     return -EINVAL;
   }
-
-  int i;
-  unsigned long io_flags = 0;
 
   /* searching for the first io-port */
   for(i=0; pci_io_addr[i]; i++){
@@ -1128,6 +1153,8 @@ static int get_ioport_info(struct pci_dev *p_pcidev, unsigned long *io_start, un
  */
 static int request_ioport( struct uhc_device *p_uhcd, unsigned long io_start, unsigned long io_size )
 {
+  char uhc_name[20];
+
   if(!p_uhcd || !io_start || !io_size){
     return -EINVAL;
   }
@@ -1137,7 +1164,6 @@ static int request_ioport( struct uhc_device *p_uhcd, unsigned long io_start, un
   PRNT("RT-UHC-Driver: Request IO-Port @ 0x%08lx (%lu Byte) for UHC[%d] ... ",
         io_start, io_size, p_uhcd->uhcd_nr);
 
-  char uhc_name[20];
   sprintf(uhc_name,"rt_uhcd[%02d]",p_uhcd->uhcd_nr);
   p_uhcd->p_io = NULL;
   p_uhcd->p_io = request_region(io_start,io_size,uhc_name);
@@ -1159,11 +1185,13 @@ static int request_ioport( struct uhc_device *p_uhcd, unsigned long io_start, un
  */
 static void release_ioport( struct uhc_device *p_uhcd )
 {
+  unsigned long size;
+
   if(!p_uhcd->p_io){
     return ;
   }
 
-  unsigned long size = p_uhcd->p_io->end - p_uhcd->p_io->start + 1;
+  size = p_uhcd->p_io->end - p_uhcd->p_io->start + 1;
   PRNT("RT-UHC-Driver: Release IO-Port 0x%08lx (%lu Byte)\n",p_uhcd->p_io->start,size);
   release_region(p_uhcd->p_io->start,size);
   p_uhcd->p_io = NULL;
@@ -1179,16 +1207,17 @@ static void release_ioport( struct uhc_device *p_uhcd )
  */
 static int get_irq( struct uhc_device *p_uhcd )
 {
+  int i,ret;
+  int uhc_irq_idx = -1;
+  int uhc_irq_free = -1;
+  int wanted_irq;
+  struct uhc_irq *p_uhc_irq = NULL;
+
   if(!p_uhcd->p_pcidev || !p_uhcd->p_pcidev->irq){
     return -ENODEV;
   }
 
-  int i,ret;
-  int uhc_irq_idx = -1;
-  int uhc_irq_free = -1;
-  int wanted_irq = p_uhcd->p_pcidev->irq;
-
-  struct uhc_irq *p_uhc_irq = NULL;
+  wanted_irq = p_uhcd->p_pcidev->irq;
 
   /* checking irq-table */
   DBG("searching IRQ %d in the IRQ-Table\n",wanted_irq);
@@ -1278,15 +1307,18 @@ static int get_irq( struct uhc_device *p_uhcd )
  */
 static void put_irq( struct uhc_device *p_uhcd )
 {
+  int i;
+  int uhc_irq_idx = -1;
+  int release_irq;
+  struct uhc_irq    *p_uhc_irq    = NULL;
+  struct uhc_device *p_uhcd_dummy = NULL;
+  struct list_head  *p_list       = NULL;
+
   if(!p_uhcd->p_pcidev || !p_uhcd->irq ){
     return;
   }
 
-  int i;
-  int uhc_irq_idx = -1;
-  int release_irq = p_uhcd->irq;
-
-  struct uhc_irq *p_uhc_irq = NULL;
+  release_irq = p_uhcd->irq;
 
   /* checking irq-table */
   for(i=0; i < MAX_UHC_CONTROLLER; i++){
@@ -1303,8 +1335,7 @@ static void put_irq( struct uhc_device *p_uhcd )
   }
 
   /* searching for p_uhcd in irq-list */
-  struct uhc_device *p_uhcd_dummy = NULL;
-  struct list_head *p_list = p_uhc_irq->irq_list.next;
+  p_list = p_uhc_irq->irq_list.next;
 
   while(p_list != &p_uhc_irq->irq_list){
     p_uhcd_dummy = list_entry(p_list, struct uhc_device, irq_list);
@@ -1373,12 +1404,14 @@ void dump_urb( struct rt_urb *p_urb )
 
 static int map_dma( struct rt_privurb *p_purb )
 {
+  struct rt_urb *p_urb = NULL;
+
   if(!p_purb){
     ERR("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
     return -ENODEV;
   }
 
-  struct rt_urb *p_urb = p_purb->p_urb;
+  p_urb = p_purb->p_urb;
 
   if(usb_pipecontrol(p_urb->pipe)){
     if( !(p_urb->transfer_flags & URB_NO_SETUP_DMA_MAP) ){
@@ -1424,12 +1457,14 @@ static int map_dma( struct rt_privurb *p_purb )
 
 static void unmap_dma( struct rt_privurb *p_purb )
 {
+  struct rt_urb *p_urb = NULL;
+
   if(!p_purb){
     ERR("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
     return;
   }
 
-  struct rt_urb *p_urb = p_purb->p_urb;
+  p_urb = p_purb->p_urb;
 
   /* Unmappe evtl Transfer-Buffer */
   if( p_purb->p_urb->transfer_buffer_length ){
@@ -1467,6 +1502,14 @@ static void unmap_dma( struct rt_privurb *p_purb )
 
 static int wait_for_urb( struct rt_privurb *p_purb )
 {
+  td_t *p_td = NULL;
+  RTIME ns_per_retry = 80; // 80ns (12MHz @ Full-Speed)
+  unsigned int retrys_per_td = 6250000; // 500ms (500ms/80ns)
+  unsigned int retrys;
+  RTIME start, stop, urb_start, urb_end;
+
+  struct list_head *p_list = NULL;
+
   if(!p_purb){
     ERR("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
     return -ENODEV;
@@ -1476,13 +1519,7 @@ static int wait_for_urb( struct rt_privurb *p_purb )
     return 0; // No TDs to do
   }
 
-  td_t *p_td = NULL;
-  RTIME ns_per_retry = 80; // 80ns (12MHz @ Full-Speed)
-  unsigned int retrys_per_td = 6250000; // 500ms (500ms/80ns)
-  unsigned int retrys;
-  RTIME start, stop, urb_start, urb_end;
-
-  struct list_head *p_list = p_purb->active_td_list.next;
+  p_list    = p_purb->active_td_list.next;
   urb_start = p_purb->p_urb->schedule_time;
 
   while(p_list !=  &p_purb->active_td_list){
@@ -1542,16 +1579,17 @@ static void clear_rt_privurb( struct rt_privurb *p_purb )
 
 static int rt_uhci_bytes_send( struct rt_privurb *p_purb )
 {
+  td_t *p_td = NULL;
+  int act_len, max_len;
+  int data_len = 0;
+  struct list_head *p_list = NULL;
+
   if(!p_purb){
     ERR("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
     return -ENODEV;
   }
 
-  td_t *p_td = NULL;
-  int act_len, max_len;
-  int data_len = 0;
-  struct list_head *p_list = p_purb->active_td_list.next;
-
+  p_list = p_purb->active_td_list.next;
   while(p_list != &p_purb->active_td_list){
     p_td = list_entry(p_list,td_t,active_td_list);
 
@@ -1577,6 +1615,9 @@ static int rt_uhci_bytes_send( struct rt_privurb *p_purb )
 
 static void rt_free_urb_tds( struct rt_privurb *p_purb )
 {
+  td_t *p_td, *p_prev;
+  struct list_head *p_list, *p_next;
+
   if(!p_purb){
     ERR("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
     return;
@@ -1587,8 +1628,6 @@ static void rt_free_urb_tds( struct rt_privurb *p_purb )
     return;
   }
 
-  td_t *p_td, *p_prev;
-  struct list_head *p_list, *p_next;
   p_list = p_purb->active_td_list.next;
   while(p_list != &p_purb->active_td_list){
     p_td = list_entry( p_list, td_t, active_td_list);
@@ -1608,14 +1647,16 @@ static void rt_free_urb_tds( struct rt_privurb *p_purb )
 
 static void rt_unschedule_ctrl_bulk_urb( struct rt_privurb *p_purb )
 {
+  qh_t *p_urb_qh = NULL;
+  qh_t *p_prev_qh;
+//  qh_t *p_next_qh;
+
   if(!p_purb){
     ERR("[ERROR] %s - Invalid Pointer to Private URB \n",__FUNCTION__);
     return;
   }
 
-  qh_t *p_urb_qh = p_purb->p_qh;
-  qh_t *p_prev_qh;
-//  qh_t *p_next_qh;
+  p_urb_qh = p_purb->p_qh;
 
   if( list_empty(&p_urb_qh->qh_link_list) ){
     ERR("[ERROR] %s - URB 0x%p: Not in QH-Link-List\n",__FUNCTION__,p_purb->p_urb);
@@ -1677,13 +1718,15 @@ static void rt_unschedule_isoc_urb( struct rt_privurb *p_purb )
 
 static int rt_schedule_ctrl_bulk_urb( struct rt_privurb *p_purb )
 {
+  qh_t *p_urb_qh = NULL;
+  qh_t *p_prev_qh;
+  qh_t *p_sched_qh;
+
   if(!p_purb){
     return -ENODEV;
   }
 
-  qh_t *p_urb_qh = p_purb->p_qh;
-  qh_t *p_prev_qh;
-  qh_t *p_sched_qh;
+  p_urb_qh = p_purb->p_qh;
 
   if( p_purb->p_urb->p_usbdev->speed == USB_SPEED_LOW){
     p_sched_qh = p_purb->p_uhcd->p_qh_lowspeed;
@@ -1750,6 +1793,22 @@ static int rt_schedule_isoc_urb( struct rt_privurb *p_purb )
 
 static int rt_uhci_send_ctrl_urb( struct rt_privurb *p_purb )
 {
+  struct rt_urb *p_urb = NULL;
+  __u8 toggle   = 1;
+  int out       = 0;
+  int max_pl    = 0;
+  int remaining = 0;
+  __u32 buff    = 0;
+  int length    = 0;
+
+  td_t *p_last = NULL;
+  td_t *p_list = NULL;
+  td_t *p_end  = NULL;
+
+#ifdef DEBUG
+  struct usb_ctrlrequest *p_ctrl = NULL;
+#endif
+
   if(!p_purb || !p_purb->p_urb){
     ERR("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
     return -ENODEV;
@@ -1761,24 +1820,21 @@ static int rt_uhci_send_ctrl_urb( struct rt_privurb *p_purb )
     return -EINVAL;
   }
 
-  struct rt_urb *p_urb = p_purb->p_urb;
+  p_urb = p_purb->p_urb;
 
 #ifdef DEBUG
-  struct usb_ctrlrequest *p_ctrl = p_purb->p_urb->p_setup_packet;
+  p_ctrl = p_purb->p_urb->p_setup_packet;
   DBG_MSG2(p_urb->p_hcd,p_urb->p_usbdev," URB 0x%p: Sending CTRL-MESSAGE: RT: 0x%02x, RQ: 0x%02x, Val: 0x%04x, Idx: 0x%04x, %d Byte \n",
            p_urb,p_ctrl->bRequestType, p_ctrl->bRequest, p_ctrl->wValue, p_ctrl->wIndex, p_ctrl->wLength);
 #endif
 
-  __u8 toggle   = 1;
-  int out       = usb_pipeout(p_urb->pipe);
-  int max_pl    = p_purb->max_packet_size;
-  int remaining = p_urb->transfer_buffer_length;
-  __u32 buff = (__u32) p_urb->transfer_dma;
-  int length = 0;
+  out       = usb_pipeout(p_urb->pipe);
+  max_pl    = p_purb->max_packet_size;
+  remaining = p_urb->transfer_buffer_length;
+  buff      = (__u32) p_urb->transfer_dma;
 
-  td_t *p_last = NULL;
-  td_t *p_list = p_purb->p_td_table;
-  td_t *p_end  = &p_purb->p_td_table[p_purb->anz_tds -1];
+  p_list    = p_purb->p_td_table;
+  p_end     = &p_purb->p_td_table[p_purb->anz_tds -1];
 
   p_purb->p_qh->element = cpu_to_le32(p_list->dma_handle | LINK_NO_TERM | LINK_TO_TD | LINK_VF );
 
@@ -1858,25 +1914,38 @@ static int rt_uhci_send_ctrl_urb( struct rt_privurb *p_purb )
 
 static int rt_uhci_send_bulk_urb( struct rt_privurb *p_purb )
 {
+  struct rt_urb *p_urb = p_purb->p_urb;
+
+  __u8 toggle   = 0;
+  int out       = 0;
+  int max_pl    = 0;
+  int remaining = 0;
+  __u32 buff    = 0;
+  int length    = 0;
+
+  td_t *p_last = NULL;
+  td_t *p_list = NULL;
+  td_t *p_end  = NULL;
+
+  int ioc_after_first_td = 0;
+  int ioc_after_last_td = 0;
+
+
   if(!p_purb || !p_purb->p_urb){
     ERR("[ERROR] %s - Invalid Private-URB-Pointer \n",__FUNCTION__);
     return -ENODEV;
   }
-  struct rt_urb *p_urb = p_purb->p_urb;
 
-  __u8 toggle   = usb_get_data_toggle(p_urb->p_usbdev,p_urb->pipe);
-  int out       = usb_pipeout(p_urb->pipe);
-  int max_pl    = p_purb->max_packet_size;
-  int remaining = p_urb->transfer_buffer_length;
-  __u32 buff    = ( __u32 ) p_urb->transfer_dma;
-  int length    = 0;
+  p_urb     = p_purb->p_urb;
+  toggle    = usb_get_data_toggle(p_urb->p_usbdev,p_urb->pipe);
+  out       = usb_pipeout(p_urb->pipe);
+  max_pl    = p_purb->max_packet_size;
+  remaining = p_urb->transfer_buffer_length;
+  buff      = ( __u32 ) p_urb->transfer_dma;
 
-  td_t *p_last = NULL;
-  td_t *p_list = p_purb->p_td_table;
-  td_t *p_end  = &p_purb->p_td_table[p_purb->anz_tds -1];
+  p_list    = p_purb->p_td_table;
+  p_end     = &p_purb->p_td_table[p_purb->anz_tds -1];
 
-  int ioc_after_first_td = 0;
-  int ioc_after_last_td = 0;
   p_purb->compl_tds_at_first_irq = 0;
   p_purb->byte_at_first_irq = 0;
   p_purb->time_at_first_irq = 0;
@@ -1959,7 +2028,7 @@ static int rt_uhci_send_isoc_urb( struct rt_privurb *p_purb )
   return 0;
 }
 
-static inline void rt_complete_urb( struct rt_privurb *p_purb )
+static void rt_complete_urb( struct rt_privurb *p_purb )
 {
   p_purb->status = PURB_IN_HANDLE;
   DBG_MSG2(p_purb->p_urb->p_hcd,p_purb->p_urb->p_usbdev," URB 0x%p: PURB_IN_HANDLE \n",p_purb->p_urb);
@@ -2209,6 +2278,11 @@ void nrt_uhci_remove_controller( struct uhc_device *p_uhcd )
 int nrt_uhci_search_controller( struct uhc_device *p_uhcd )
 {
   struct pci_dev *p_pcidev_new = NULL;
+  int i;
+  unsigned long io_start = 0;
+  unsigned long io_size  = 0;
+  int ret                = 0;
+  struct hc_device *p_hcd = NULL;
 
 start_search:
     uhc_clear(p_uhcd);
@@ -2222,7 +2296,6 @@ start_search:
   p_pcidev_old = p_pcidev_new;
 
   /* device found but the device-id is undesired */
-  int i;
   for(i=0; i<MAX_DEVICE_PARMS; i++){
     if( deviceid[i] && deviceid[i] != p_pcidev_new->device){
       goto start_search;
@@ -2237,9 +2310,7 @@ start_search:
   }
 
   /* device found but the io-port is invalid */
-  unsigned long io_start = 0;
-  unsigned long io_size  = 0;
-  int ret = get_ioport_info( p_pcidev_new, &io_start, &io_size);
+  ret = get_ioport_info( p_pcidev_new, &io_start, &io_size);
   if(ret){
     PRNT("Couldn't get informations of the IO-Port \n");
     goto start_search;
@@ -2256,7 +2327,7 @@ start_search:
        p_pcidev_new->vendor,p_pcidev_new->device,p_pcidev_new->irq,io_start,io_size);
 
   /* generate hc_device for the rt-core-module */
-  struct hc_device *p_hcd = kmalloc( sizeof(struct hc_device),GFP_KERNEL);
+  p_hcd = kmalloc( sizeof(struct hc_device),GFP_KERNEL);
   if(!p_hcd){
     uhc_clear(p_uhcd);
     return -ENOMEM;
@@ -2298,7 +2369,11 @@ int nrt_uhci_register_urb( struct rt_urb *p_urb)
   */
 
   int i;
+  int ret;
   struct uhc_device *p_uhcd = NULL;
+  struct rt_privurb *p_purb = NULL;
+  struct list_head  *p_list = NULL;
+
   for(i=0;i< MAX_UHC_CONTROLLER;i++){
     if( uhc_dev[i].p_hcd == p_urb->p_hcd){
       p_uhcd = &uhc_dev[i];
@@ -2322,8 +2397,8 @@ int nrt_uhci_register_urb( struct rt_urb *p_urb)
   }
 
   /* Pruefe, ob URB schon registriert */
-  struct rt_privurb *p_purb = NULL;
-  struct list_head *p_list = p_uhcd->reg_urb_list.next;;
+  p_purb = NULL;
+  p_list = p_uhcd->reg_urb_list.next;;
 
   while(p_list != &p_uhcd->reg_urb_list){
     p_purb = list_entry(p_list, struct rt_privurb, reg_urb_list);
@@ -2373,7 +2448,7 @@ int nrt_uhci_register_urb( struct rt_urb *p_urb)
 //  DBG_MSG1(p_urb->p_hcd," Create %d TDs. Max_Packet = %d, Max_Buffer = %d\n",
 //      p_purb->anz_tds, p_purb->max_packet_size, p_purb->max_buffer_len);
 
-  int ret = create_td_table( p_purb );
+  ret = create_td_table( p_purb );
   if(ret){
     kfree(p_purb);
     alloc_bytes -= sizeof(struct rt_privurb);
@@ -2410,13 +2485,16 @@ int nrt_uhci_unregister_urb( struct rt_urb *p_urb)
   p_urb->p_hcd->p_hcd_fkt
   */
 
-  struct rt_privurb *p_purb = p_urb->p_private;
+  struct uhc_device *p_uhcd = NULL;
+  struct rt_privurb *p_purb = NULL;
+
+  p_purb = p_urb->p_private;
   if(!p_purb){
     ERR("[ERROR] %s - Invalid Pointer to Private URB-Data \n",__FUNCTION__);
     return -ENODEV;
   }
 
-  struct uhc_device *p_uhcd = p_purb->p_uhcd;
+  p_uhcd = p_purb->p_uhcd;
   if(!p_uhcd){
     ERR("[ERROR] %s - Invalid Pointer to UHC \n",__FUNCTION__);
     return -ENODEV;
@@ -2461,13 +2539,16 @@ int rt_uhci_submit_urb(struct rt_urb *p_urb , __u16 urb_submit_flags )
   ...
   */
 
-  struct rt_privurb *p_purb = p_urb->p_private;
+  struct rt_privurb *p_purb = NULL;
+  struct uhc_device *p_uhcd = NULL;
+
+  p_purb = p_urb->p_private;
   if(!p_purb){
     ERR("[ERROR] %s - Invalid Pointer to Private URB-Data \n",__FUNCTION__);
     return -ENODEV;
   }
 
-  struct uhc_device *p_uhcd = p_purb->p_uhcd;
+  p_uhcd = p_purb->p_uhcd;
   if(!p_uhcd){
     ERR("[ERROR] %s - Invalid Pointer to UHC \n",__FUNCTION__);
     return -ENODEV;
@@ -2553,9 +2634,11 @@ int rt_uhci_submit_urb(struct rt_urb *p_urb , __u16 urb_submit_flags )
 
 int __init mod_start(void)
 {
-  PRNT(KERN_INFO "********** " DRIVER_DESC " " DRIVER_VERSION " ***********\n");
-
   int i,ret;
+  struct uhc_device *p_uhcd;
+  RTIME start, end;
+
+  PRNT(KERN_INFO "********** " DRIVER_DESC " " DRIVER_VERSION " ***********\n");
 
   /* Controller Functions */
   hcd_fkt.nrt_hcd_register_urb        = nrt_uhci_register_urb;
@@ -2572,7 +2655,6 @@ int __init mod_start(void)
   }
 
   anz_uhc_ctrl = 0;
-  struct uhc_device *p_uhcd;
 
   PRNT("RT-UHC-Driver: Searching for Universal-Host-Controller \n");
 
@@ -2638,7 +2720,6 @@ int __init mod_start(void)
     return -ENODEV;
   }
 
-  RTIME start, end;
   start = rt_timer_read();
   end = rt_timer_read();
   rt_timer_overhead = end - start;

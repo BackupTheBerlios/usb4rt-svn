@@ -1,9 +1,8 @@
 EXTRA_CFLAGS += \
-	-I$(rtai_dir)/include \
-	-I$(top_srcdir)/core \
-	-I$(top_builddir)/core \
-	-I$(srcdir) \
-	$(rtusb_extradef)
+	-I$(xeno_dir)/include \
+	-I$(top_srcdir) \
+	-I$(top_builddir) \
+	-I$(srcdir)
 
 obj-m += $(build_target).o
 

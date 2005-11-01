@@ -18,8 +18,8 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include "rt_usb_core.h"
-#include "rt_usb_debug.h"
+#include <core/rt_usb_core.h>
+#include <core/rt_usb_debug.h>
 
 extern struct usb_device usb_dev[MAX_USB_DEV];
 

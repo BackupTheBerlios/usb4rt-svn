@@ -22,10 +22,10 @@
 #include <linux/delay.h>
 #include <asm/io.h>
 
-#include "rt_uhci_hub.h"
-#include "../core/rt_usb_hub.h"
-#include "../core/rt_usb.h"
-#include "../core/rt_usb_debug.h"
+#include <host/rt_uhci_hub.h>
+#include <core/rt_usb_hub.h>
+#include <core/rt_usb.h>
+#include <core/rt_usb_debug.h>
 
 extern struct uhc_device uhc_dev[MAX_UHC_CONTROLLER];
 
@@ -84,8 +84,10 @@ static void rh_port_reset( int port)
 
 static void rh_port_reset_long( int port)
 {
-  unsigned short value = inw(port);
+  unsigned short value = 0;
   int i;
+
+  value = inw(port);
   value |= PORTSC_PR;
   outw( value, port);
   for(i=0; i<20; i++)
@@ -96,12 +98,14 @@ static void rh_port_reset_long( int port)
 
 int rh_init( struct uhc_device *p_uhcd )
 {
+  unsigned long io_size = 0;
+  unsigned int port,portstatus;
+
   if(!p_uhcd->p_io){
     return -ENODEV;
   }
 
-  unsigned long io_size = p_uhcd->p_io->end - p_uhcd->p_io->start + 1;
-  unsigned int port,portstatus;
+  io_size = p_uhcd->p_io->end - p_uhcd->p_io->start + 1;
 
   for (port = 0; port < (io_size - 0x10) / 2; port++) {
     portstatus = inw( p_uhcd->p_io->start + 0x10 + (port * 2));
@@ -121,6 +125,14 @@ int rh_init( struct uhc_device *p_uhcd )
 
 struct usb_device *nrt_uhci_poll_root_hub_port( struct hc_device *p_hcd , __u8 rh_port_nr)
 {
+  struct usb_device *p_usbdev = NULL;
+  int i               = 0;
+  static int do_over  = 0;
+  int usec_offset     = 0;
+  int rh_port         = 0;
+
+  unsigned short value = 0;
+
   struct uhc_device *p_uhcd = p_hcd->p_private;
 
   if(!p_uhcd || !p_uhcd->p_io){
@@ -128,13 +140,8 @@ struct usb_device *nrt_uhci_poll_root_hub_port( struct hc_device *p_hcd , __u8 r
     return NULL;
   }
 
-  struct usb_device *p_usbdev = NULL;
-  int i = 0;
-  static int do_over=0;
-  int usec_offset = 0;
-  int rh_port = p_uhcd->p_io->start + 0x10 + (rh_port_nr * 0x02);
-
-  unsigned short value = inw(rh_port);
+  rh_port = p_uhcd->p_io->start + 0x10 + (rh_port_nr * 0x02);
+  value   = inw(rh_port);
 
   if(value & PORTSC_CSC || do_over == rh_port) {
 

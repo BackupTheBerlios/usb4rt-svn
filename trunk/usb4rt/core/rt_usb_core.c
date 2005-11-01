@@ -22,12 +22,12 @@
 #include <linux/module.h>
 #include <linux/delay.h>
 
-#include "rt_usb_core.h"
-#include "rt_usb_debug.h"
-#include "rt_usb_hub.h"
-#include "usb4rt_config.h"
+#include <core/rt_usb_core.h>
+#include <core/rt_usb_debug.h>
+#include <core/rt_usb_hub.h>
+#include <core/usb4rt_config.h>
 
-#define DRIVER_VERSION  USB4RT_PACKAGE_VERSION
+#define DRIVER_VERSION  "USB4RT_PACKAGE_VERSION"
 #define DRIVER_AUTHOR "Joerg Langenberg - joergel@gmx.net"
 #define DRIVER_DESC "Realtime USB-Core Module"
 
@@ -117,13 +117,18 @@ static void put_free_hcd_nr( struct hc_device *p_hcd )
  */
 void nrt_usb_search_devices( struct hc_device *p_hcd )
 {
-  if(!p_hcd || !p_hcd->p_hcd_fkt || !p_hcd->p_hcd_fkt->nrt_hcd_poll_root_hub_port){
-    return;
-  }
-
   struct usb_device *p_new_usbdev;
   struct hub_device *p_hub;
   __u8 i;
+  __u8 hub_port_nr;
+  struct rt_urb *p_urb;
+  struct hub_device *p_hub_new;
+  struct list_head *p_list;
+
+
+  if(!p_hcd || !p_hcd->p_hcd_fkt || !p_hcd->p_hcd_fkt->nrt_hcd_poll_root_hub_port){
+    return;
+  }
 
   DBG_MSG1(p_hcd," Searching for USB-Devices\n");
 
@@ -162,10 +167,8 @@ void nrt_usb_search_devices( struct hc_device *p_hcd )
   }
 
   // now search for Devices on the new found Hubs
-  __u8 hub_port_nr;
-  struct rt_urb *p_urb = NULL;
-  struct hub_device *p_hub_new;
-  struct list_head *p_list = hub_list.next;
+  p_urb = NULL;
+  p_list = hub_list.next;
 
   while(p_list != &hub_list){
     p_hub = list_entry(p_list, struct hub_device, hub_list);
@@ -383,11 +386,12 @@ static __u16 get_string( struct rt_urb *p_urb , __u8 string_id, __u16 lang, __u1
  */
 int nrt_usb_clear_stall( struct rt_urb *p_urb )
 {
+  int ret;
+
   if(!p_urb->p_hcd || !p_urb->p_usbdev){
     return -ENODEV;
   }
 
-  int ret;
   ret = nrt_intern_usb_control_msg( p_urb,
                                     usb_pipeendpoint( p_urb->pipe ),
                                     USB_DIR_OUT | USB_TYPE_STANDARD | USB_RECIP_ENDPOINT,
@@ -442,13 +446,14 @@ static void usb_init_device( struct usb_device *p_usbdev )
  */
 static void usb_clear_device( struct usb_device *p_usbdev )
 {
+  int len = 0;
+  struct hc_device *p_hcd = NULL;
+
   if( !p_usbdev){
     return;
   }
 
-  int len = 0;
-
-  struct hc_device *p_hcd = p_usbdev->p_hcd;
+  p_hcd = p_usbdev->p_hcd;
   if(p_hcd){
 
     if(p_usbdev->p_hub_desc){
@@ -484,6 +489,7 @@ static void usb_clear_device( struct usb_device *p_usbdev )
 static struct usb_device *usb_get_free_device(void)
 {
   __u8 free_nr = 1;
+
   while( free_nr < MAX_USB_DEV && usb_dev[free_nr].p_hcd != NULL ){
     free_nr++;
   }
@@ -502,12 +508,12 @@ static struct usb_device *usb_get_free_device(void)
  */
 static struct usb_device *usb_lock_device( struct usb_device *p_usbdev )
 {
+  unsigned long flags;
+  struct usb_device *p_dev = NULL;
+
   if (!p_usbdev){
     return NULL;
   }
-
-  unsigned long flags;
-  struct usb_device *p_dev = NULL;
 
   rthal_spin_lock_irqsave( &p_usbdev->lock, flags );
 
@@ -527,16 +533,17 @@ static struct usb_device *usb_lock_device( struct usb_device *p_usbdev )
  */
 static void usb_unlock_device( struct usb_device *p_usbdev )
 {
+  unsigned long flags;
+
   if (!p_usbdev){
     return;
   }
-
-  unsigned long flags;
   rthal_spin_lock_irqsave( &p_usbdev->lock, flags );
 
   p_usbdev->in_use = 0;
 
   rthal_spin_unlock_irqrestore( &p_usbdev->lock, flags );
+
   return;
 }
 
@@ -546,43 +553,56 @@ static void usb_unlock_device( struct usb_device *p_usbdev )
  */
 void usb_check_device( struct usb_device *p_usbdev )
 {
+  struct usb_interface_descriptor *p_ifd;
+  struct usb_endpoint_descriptor  *p_epd;
+  struct usb_descriptor_header    *p_head;
+  struct usb_config_descriptor    *p_desc;
+/*
+  hid_descriptor_t                *p_hid;
+*/
+
+  int bytes;
+  void *buffer;
+  __u16 epa;
+  __u8 out;
+
   if(!p_usbdev || !p_usbdev->p_hcd){
     return;
   }
 
-  struct usb_config_descriptor *p_desc = p_usbdev->p_cfg_desc;
+  p_desc = p_usbdev->p_cfg_desc;
   if(!p_desc){
     ERR_MSG2(p_usbdev->p_hcd,p_usbdev, " No valid pointer to struct usb_config_descriptor !!!\n");
     return;
   }
 
-  struct usb_interface_descriptor *p_ifd;
-  struct usb_endpoint_descriptor  *p_epd;
-  hid_descriptor_t       *p_hid;
-  struct usb_descriptor_header    *p_head;
-
-  int bytes = p_desc->wTotalLength;
-  void *buffer = (void *)(p_desc);  /* first Interface */
+  bytes = p_desc->wTotalLength;
+  buffer = (void *)(p_desc);  /* first Interface */
 
   while( bytes > 0 ){
     p_head = (struct usb_descriptor_header *)buffer;
     switch(p_head->bDescriptorType ){
-      case USB_DT_CONFIG:
+
+      case USB_DT_CONFIG: {
         p_desc = (struct usb_config_descriptor *)buffer;
         buffer += p_desc->bLength;
         bytes -= p_desc->bLength;
         //dump_configuration_descriptor(addr);
         break;
-      case USB_DT_INTERFACE:
+      }
+
+      case USB_DT_INTERFACE: {
         p_ifd = (struct usb_interface_descriptor *)buffer;
         buffer += p_ifd->bLength;
         bytes -= p_ifd->bLength;
         //dump_interface_descriptor(addr,p_ifd);
         break;
-      case USB_DT_ENDPOINT:
+      }
+
+      case USB_DT_ENDPOINT: {
         p_epd = (struct usb_endpoint_descriptor *)buffer;
-        __u16 epa = p_epd->bEndpointAddress & USB_ENDPOINT_NUMBER_MASK;
-        __u8 out = p_epd->bEndpointAddress & USB_ENDPOINT_DIR_MASK ? 0 : 1 ;
+        epa = p_epd->bEndpointAddress & USB_ENDPOINT_NUMBER_MASK;
+        out = p_epd->bEndpointAddress & USB_ENDPOINT_DIR_MASK ? 0 : 1 ;
         buffer += p_epd->bLength;
         bytes -= p_epd->bLength;
         //dump_endpoint_descriptor(addr,p_epd);
@@ -626,15 +646,22 @@ void usb_check_device( struct usb_device *p_usbdev )
             break;
         }
         break;
-      case USB_DT_HID:
+      }
+
+/*
+      case USB_DT_HID: {
         p_hid = (hid_descriptor_t *)buffer;
         buffer += p_hid->bLength;
         bytes -= p_hid->bLength;
         //dump_hid_descriptor(addr,p_hid);
         break;
-      default:
+      }
+*/
+
+      default: {
         buffer += p_head->bLength;
         bytes -= p_head->bLength;
+      }
     }
   }
 
@@ -647,11 +674,11 @@ void usb_check_device( struct usb_device *p_usbdev )
 
 /**
  * Konfiguriert ein neu gefundenes USB-Device.
- * Das neue Ger� bekommt eine Adresse zugewiesen, alle Descriptoren werden
+ * Das neue Geraet bekommt eine Adresse zugewiesen, alle Descriptoren werden
  * ausgelesen und gespeichert.
- * @param p_hcd Zeiger auf den Host-Controller, an dem das Ger� gefunden wurde.
+ * @param p_hcd Zeiger auf den Host-Controller, an dem das Geraet gefunden wurde.
  * @param rh_port_nr Root-Hub-Portnummer (Eigentlich nur zu Debug-Zwecken)
- * @param lowspeed gibt an, wie das neue Ger� anzusprechen ist (Low- oder Fullspeed)
+ * @param lowspeed gibt an, wie das neue Geraet anzusprechen ist (Low- oder Fullspeed)
  * @return Zeiger auf das neue USB-Device (struct usb_device)
  * @return NULL, wenn ein Fehler auftrat
  */
@@ -661,11 +688,18 @@ struct usb_device *nrt_usb_config_dev( struct hc_device *p_hcd, __u8 rh_port_nr,
   struct usb_config_descriptor    *p_conf_desc;
   struct usb_interface_descriptor *p_if_desc;
   struct usb_endpoint_descriptor  *p_ep_desc;
+  struct usb_device               *p_usbdev;
+  struct rt_urb                   *p_urb = NULL;
 
-  __u8 language = 0;
-  __u16 len = 0;
-  int ret = 0;
-  struct rt_urb *p_urb = NULL;
+  __u16 lang      = 0x0000;
+  __u16 ret_len   = 0x0000;
+  __u8 language   = 0;
+  __u16 len       = 0;
+
+  int ret         = 0;
+  int string_len  = 255;
+
+  unsigned char string[string_len];
   unsigned char buffer[m_buff_size];
 
   DBG_MSG2(p_hcd, &usb_dev[0]," LOCK USB-Device \n");
@@ -720,7 +754,7 @@ struct usb_device *nrt_usb_config_dev( struct hc_device *p_hcd, __u8 rh_port_nr,
     return NULL;
   }
 
-  struct usb_device *p_usbdev = usb_get_free_device();
+  p_usbdev = usb_get_free_device();
   if(!p_usbdev){
     ERR_MSG1(p_hcd," MAX %d USB-Devices\n",MAX_USB_DEV);
     nrt_usb_unregister_urb(p_urb);
@@ -925,11 +959,8 @@ struct usb_device *nrt_usb_config_dev( struct hc_device *p_hcd, __u8 rh_port_nr,
   DBG_MSG2(p_hcd,p_usbdev," Class %02x, Subclass %02x, Protocol %02x\n",
            p_usbdev->class, p_usbdev->subclass, p_usbdev->protocol);
 
-  int string_len = 255;
-  unsigned char string[string_len];
-
-  __u16 lang = 0x0000;
-  __u16 ret_len  = 0x0000;
+  lang = 0x0000;
+  ret_len  = 0x0000;
   if( language ){
     lang = get_language(p_urb, string_len, string);
   }
@@ -1003,6 +1034,14 @@ static int rt_intern_usb_submit_urb( struct rt_urb *p_urb, __u16 urb_submit_flag
   p_urb
   */
 
+  __u8 out      = 0;
+  __u8 endpoint = 0;
+  __u16 max_pl  = 0;
+
+#ifdef DEBUG
+  __u8 device   = 0;
+#endif
+
   if(!p_urb->p_usbdev){
     ERR("[ERROR] %s - Invalid USB-Device in URB 0x%p\n",__FUNCTION__,p_urb);
     return -EINVAL;
@@ -1023,9 +1062,9 @@ static int rt_intern_usb_submit_urb( struct rt_urb *p_urb, __u16 urb_submit_flag
     return -EINVAL;
   }
 
-  __u8 out      = usb_pipeout(p_urb->pipe) ? 1 : 0;
-  __u8 endpoint = usb_pipeendpoint(p_urb->pipe);
-  __u16 max_pl  = usb_maxpacket(p_urb->p_usbdev, p_urb->pipe);
+  out      = usb_pipeout(p_urb->pipe) ? 1 : 0;
+  endpoint = usb_pipeendpoint(p_urb->pipe);
+  max_pl   = usb_maxpacket(p_urb->p_usbdev, p_urb->pipe);
 
 #ifdef DEBUG
   __u8 device   = usb_pipedevice(p_urb->pipe);
@@ -1253,6 +1292,11 @@ int nrt_hcd_register_driver( struct hc_device *p_hcd )
  */
 int nrt_hcd_unregister_driver( struct hc_device *p_hcd)
 {
+  struct list_head  *p_list;
+  struct list_head  *p_next;
+  struct hub_device *p_hub;
+  int i;
+
   if(!p_hcd){
     return -EINVAL;
   }
@@ -1269,8 +1313,7 @@ int nrt_hcd_unregister_driver( struct hc_device *p_hcd)
   usb_anz_ctrl--;
 
   /* entferne Hubs */
-  struct list_head *p_list, *p_next;
-  struct hub_device *p_hub = NULL;
+  p_hub = NULL;
   p_list = hub_list.next;
 
   while(p_list != &hub_list){
@@ -1285,8 +1328,7 @@ int nrt_hcd_unregister_driver( struct hc_device *p_hcd)
     p_list = p_next;
   }
 
-  /* L�che USB-Devices */
-  int i;
+  /* Loesche USB-Devices */
   for(i=0;i<MAX_USB_DEV;i++){
     if(usb_dev[i].p_hcd == p_hcd){
       PRNT("RT-USBCORE: Remove USB-Device %d \n",i);
@@ -1419,12 +1461,15 @@ void nrt_usb_free_urb( struct rt_urb *p_urb )
  */
 struct rt_urb *nrt_usb_alloc_ctrl_urb( void )
 {
-  struct rt_urb *p_urb = nrt_usb_alloc_urb();
+  struct rt_urb           *p_urb  = NULL;
+  struct usb_ctrlrequest  *p_ctrl = NULL;
+
+  p_urb = nrt_usb_alloc_urb();
   if(!p_urb){
     return NULL;
   }
 
-  struct usb_ctrlrequest *p_ctrl = kmalloc( sizeof(struct usb_ctrlrequest), GFP_KERNEL);
+  p_ctrl = kmalloc( sizeof(struct usb_ctrlrequest), GFP_KERNEL);
   if(!p_ctrl){
     ERR("RT-USBCORE: [ERROR] No memory for USB-Control-Request \n");
     nrt_usb_free_urb(p_urb);
@@ -1486,8 +1531,8 @@ struct rt_urb *nrt_usb_create_ctrl_callback_urb( rt_usb_complete_t rt_callback_f
 }
 
 /**
- * L�cht einen mit der Funktion nrt_usb_create_ctrl_callback_urb erstellten Control-URB.
- * @param p_urb Zeiger auf den zu l�chenden Control-URB
+ * Loescht einen mit der Funktion nrt_usb_create_ctrl_callback_urb erstellten Control-URB.
+ * @param p_urb Zeiger auf den zu loeschenden Control-URB
  */
 void nrt_usb_destroy_ctrl_callback_urb( struct rt_urb *p_urb )
 {
@@ -1497,7 +1542,7 @@ void nrt_usb_destroy_ctrl_callback_urb( struct rt_urb *p_urb )
 /**
  * Erstellt einen nicht blockierenden URB.
  * Zuerst wird ein URB mit Hilfe der Funktion nrt_usb_alloc_urb erstellt.
- * Abschlie�nd werden alle n�igen Daten im URB gespeichert.
+ * Abschliessend werden alle noetigen Daten im URB gespeichert.
  * @return NULL, wenn kein Speicher mehr vorhanden.
  * @return Zeiger auf den erstellten URB
  */
@@ -1514,8 +1559,8 @@ struct rt_urb *nrt_usb_create_callback_urb( rt_usb_complete_t rt_callback_fkt )
 }
 
 /**
- * L�cht einen mit der Funktion nrt_usb_create_callback_urb erstellten URB.
- * @param p_urb Zeiger auf den zu l�chenden URB
+ * Loescht einen mit der Funktion nrt_usb_create_callback_urb erstellten URB.
+ * @param p_urb Zeiger auf den zu loeschenden URB
  */
 void nrt_usb_destroy_callback_urb( struct rt_urb *p_urb )
 {
@@ -1525,13 +1570,14 @@ void nrt_usb_destroy_callback_urb( struct rt_urb *p_urb )
 /**
  * Erstellt einen blockierenden Control-URB.
  * Zuerst wird ein URB mit Hilfe der Funktion nrt_usb_alloc_ctrl_urb erstellt.
- * Abschlie�nd werden alle n�igen Daten im URB gespeichert und die RT-Semaphore
- * bei RTAI registriert.
+ * Abschliessend werden alle noetigen Daten im URB gespeichert und die RT-Semaphore
+ * bei Xenomai registriert.
  * @return NULL, wenn kein Speicher mehr vorhanden oder Fehler beim Registrieren der RT-Semaphore.
  * @return Zeiger auf den erstellten Control-URB
  */
 struct rt_urb *nrt_usb_create_ctrl_semaphore_urb( unsigned char *name , RTIME rt_sem_timeout )
 {
+  int ret;
   struct rt_urb *p_urb = nrt_usb_alloc_ctrl_urb();
   if(!p_urb){
     return NULL;
@@ -1541,14 +1587,13 @@ struct rt_urb *nrt_usb_create_ctrl_semaphore_urb( unsigned char *name , RTIME rt
   p_urb->rt_sem_timeout = rt_sem_timeout;
 
   DBG("RT-USBCORE: URB 0x%p: Init RT-Semaphore (%s)\n",p_urb,name);
-  int ret = rt_sem_create( &p_urb->rt_sem, name, 0, S_PRIO );
+  ret = rt_sem_create( &p_urb->rt_sem, name, 0, S_PRIO );
   if(ret){
     if(ret == -EEXIST) ERR("RT-USBCORE: [ERROR] RT-SEM: The name is already in use by some registered object \n");
     if(ret == -EINVAL) ERR("RT-USBCORE: [ERROR] RT-SEM: The icount is non-zero and mode specifies a pulse semaphore \n");
     if(ret == -EPERM ) ERR("RT-USBCORE: [ERROR] RT-SEM: This service was called from an asynchronous context \n");
 
     nrt_usb_free_ctrl_urb(p_urb);
-
     return NULL;
   }
 
@@ -1556,8 +1601,8 @@ struct rt_urb *nrt_usb_create_ctrl_semaphore_urb( unsigned char *name , RTIME rt
 }
 
 /**
- * L�cht einen mit der Funktion nrt_usb_create_ctrl_semaphore_urb erstellten Control-URB.
- * @param p_urb Zeiger auf den zu l�chenden Control-URB
+ * Loescht einen mit der Funktion nrt_usb_create_ctrl_semaphore_urb erstellten Control-URB.
+ * @param p_urb Zeiger auf den zu loeschenden Control-URB
  */
 void nrt_usb_destroy_ctrl_semaphore_urb( struct rt_urb *p_urb )
 {
@@ -1569,13 +1614,14 @@ void nrt_usb_destroy_ctrl_semaphore_urb( struct rt_urb *p_urb )
 /**
  * Erstellt einen blockierenden URB.
  * Zuerst wird ein URB mit Hilfe der Funktion nrt_usb_alloc_urb erstellt.
- * Abschlie�nd werden alle n�igen Daten im URB gespeichert und die RT-Semaphore
- * bei RTAI registriert.
+ * Abschliessend werden alle noetigen Daten im URB gespeichert und die RT-Semaphore
+ * bei Xenomai registriert.
  * @return NULL, wenn kein Speicher mehr vorhanden oder Fehler beim Registrieren der RT-Semaphore.
  * @return Zeiger auf den erstellten URB
  */
 struct rt_urb *nrt_usb_create_semaphore_urb( unsigned char *name , RTIME rt_sem_timeout )
 {
+  int ret;
   struct rt_urb *p_urb = nrt_usb_alloc_urb();
   if(!p_urb){
     return NULL;
@@ -1585,7 +1631,7 @@ struct rt_urb *nrt_usb_create_semaphore_urb( unsigned char *name , RTIME rt_sem_
   p_urb->rt_sem_timeout = rt_sem_timeout;
 
   DBG("RT-USBCORE: URB 0x%p: Init RT-Semaphore (%s)\n",p_urb,name);
-  int ret = rt_sem_create( &p_urb->rt_sem, name, 0, S_PRIO );
+  ret = rt_sem_create( &p_urb->rt_sem, name, 0, S_PRIO );
   if(ret){
     if(ret == -EEXIST) ERR("RT-USBCORE: [ERROR] RT-SEM: The name is already in use by some registered object \n");
     if(ret == -EINVAL) ERR("RT-USBCORE: [ERROR] RT-SEM: The icount is non-zero and mode specifies a pulse semaphore \n");
@@ -1600,8 +1646,8 @@ struct rt_urb *nrt_usb_create_semaphore_urb( unsigned char *name , RTIME rt_sem_
 }
 
 /**
- * L�cht einen mit der Funktion nrt_usb_destroy_semaphore_urb erstellten URB.
- * @param p_urb Zeiger auf den zu l�chenden URB
+ * Loescht einen mit der Funktion nrt_usb_destroy_semaphore_urb erstellten URB.
+ * @param p_urb Zeiger auf den zu loeschenden URB
  */
 void nrt_usb_destroy_semaphore_urb( struct rt_urb *p_urb )
 {
@@ -1611,10 +1657,10 @@ void nrt_usb_destroy_semaphore_urb( struct rt_urb *p_urb )
 }
 
 /**
- * �ergibt einen URB an den RT-USB-Core.
+ * Uebergibt einen URB an den RT-USB-Core.
  * Die Callback-Relevanten Daten des URBs werden berprft und der URB an die Funktion
  * rt_intern_usb_submit_urb bergeben. Die Funktion blockiert nicht, sondern kehrt unmittelbar
- * nach der �ergabe des URBs an den Host-Controller wieder zurck. Wenn die Nachricht
+ * nach der Uebergabe des URBs an den Host-Controller wieder zurck. Wenn die Nachricht
  * erfolgreich versendet wurde oder ein Fehler auftrat, wird die Callback-Funktion aufgerufen.
  * @param p_urb Zeiger auf den zu versendenen URB
  * @return -EINVAL Ungltiger URB-Zeiger,keine Callback-Funktion angegeben oder Fehler in rt_intern_usb_submit_urb
@@ -1638,10 +1684,10 @@ int rt_usb_submit_urb( struct rt_urb *p_urb )
 }
 
 /**
- * �ergibt einen Control-URB an den RT-USB-Core.
+ * Uebergibt einen Control-URB an den RT-USB-Core.
  * Die Callback-Relevanten Daten des URBs werden berprft, der Control-Request ausgefllt und
  * der URB an die Funktion rt_intern_usb_submit_urb bergeben. Die Funktion blockiert nicht,
- * sondern kehrt unmittelbar nach der �ergabe des URBs an den Host-Controller wieder zurck.
+ * sondern kehrt unmittelbar nach der Uebergabe des URBs an den Host-Controller wieder zurck.
  * Wenn die Nachricht erfolgreich versendet wurde oder ein Fehler auftrat, wird die
  * Callback-Funktion aufgerufen.
  * @param p_urb Zeiger auf den zu versendenen Control-URB
@@ -1649,7 +1695,7 @@ int rt_usb_submit_urb( struct rt_urb *p_urb )
  * @param request Request (z.B. USB_REQ_GET_DESCRIPTOR ), 8 Bit
  * @param wValue Wert, 16 Bit
  * @param wIndex Index, 16 Bit
- * @param wLength L�ge der Puffer-Daten, 16 Bit
+ * @param wLength Laenge der Puffer-Daten, 16 Bit
  * @param data Zeiger auf die Daten, die bertragen werden sollen
  * @return -EINVAL, wenn ungltiger URB-Zeiger, ungltiger Zeiger auf ein Control-Request, keine Callback-Funktion angegeben oder Fehler in rt_intern_usb_submit_urb
  * @return 0, wenn erfolgreich
@@ -1685,7 +1731,7 @@ int rt_usb_submit_ctrl_urb( struct rt_urb *p_urb,__u8 request_type,__u8 request,
 }
 
 /**
- * �ergibt einen URB an den RT-USB-Core.
+ * Uebergibt einen URB an den RT-USB-Core.
  * Der URB wird an die Funktion rt_intern_usb_submit_urb bergeben.
  * Die Funktion BLOCKIERT solange, bis die Nachricht erfolgreich versendet wurde oder ein Fehler auftrat.
  * @param p_urb Zeiger auf den zu versendenen URB
@@ -1694,22 +1740,22 @@ int rt_usb_submit_ctrl_urb( struct rt_urb *p_urb,__u8 request_type,__u8 request,
  */
 int rt_usb_send_urb_msg( struct rt_urb *p_urb )
 {
+  int ret;
+
   if(!p_urb){
     ERR("[ERROR] Invalid URB-Pointer: 0x%p \n ",p_urb);
     return -EINVAL;
   }
 
   p_urb->core_in_time = rt_timer_read();
-
-  int ret = rt_intern_usb_submit_urb( p_urb, URB_WAIT_SEM);
-
+  ret = rt_intern_usb_submit_urb( p_urb, URB_WAIT_SEM);
   p_urb->core_exit_time = rt_timer_read();
 
   return ret;
 }
 
 /**
- * �ergibt einen Control-URB an den RT-USB-Core.
+ * Uebergibt einen Control-URB an den RT-USB-Core.
  * Der Control-Request ausgefllt und der URB an die Funktion rt_intern_usb_submit_urb bergeben.
  * Die Funktion BLOCKIERT solange, bis die Nachricht erfolgreich versendet wurde oder ein Fehler auftrat.
  * @param p_urb Zeiger auf den zu versendenen Control-URB
@@ -1717,13 +1763,15 @@ int rt_usb_send_urb_msg( struct rt_urb *p_urb )
  * @param request Request (z.B. USB_REQ_GET_DESCRIPTOR ), 8 Bit
  * @param wValue Wert, 16 Bit
  * @param wIndex Index, 16 Bit
- * @param wLength L�ge der Puffer-Daten, 16 Bit
+ * @param wLength Laenge der Puffer-Daten, 16 Bit
  * @param data Zeiger auf die Daten, die bertragen werden sollen
  * @return -EINVAL, wenn ungltiger Zeiger auf einen URB oder auf einen Control-Request
  * @return 0, wenn erfolgreich
  */
 int rt_usb_send_ctrl_msg(struct rt_urb *p_urb, __u8 request_type,__u8 request, __u16 wValue, __u16 wIndex, __u16 wLength , void *data)
 {
+  int ret;
+
   if(!p_urb){
     ERR("[ERROR] Invalid URB-Pointer: 0x%p \n ",p_urb);
     return -EINVAL;
@@ -1744,7 +1792,7 @@ int rt_usb_send_ctrl_msg(struct rt_urb *p_urb, __u8 request_type,__u8 request, _
   p_urb->transfer_buffer_length       = wLength;
   p_urb->p_transfer_buffer            = data;
 
-  int ret = rt_intern_usb_submit_urb( p_urb, URB_WAIT_SEM );
+  ret = rt_intern_usb_submit_urb( p_urb, URB_WAIT_SEM );
 
   p_urb->core_exit_time = rt_timer_read();
 
@@ -1889,8 +1937,9 @@ void destroy_ctrl_urbs( void )
 int __init mod_start(void)
 {
   int i;
-  PRNT(KERN_INFO "********** " DRIVER_DESC " " DRIVER_VERSION " ***********\n");
+  int ret;
 
+  PRNT(KERN_INFO "********** " DRIVER_DESC " " DRIVER_VERSION " ***********\n");
 
   PRNT("RT-USBCORE: Max %d Controller \n",MAX_CONTROLLER);
   PRNT("RT-USBCORE: Max %d USB-Devices \n",MAX_USB_DEV);
@@ -1902,7 +1951,7 @@ int __init mod_start(void)
     usb_dev[i].address = i;
   }
 
-  int ret = init_ctrl_urbs();
+  ret = init_ctrl_urbs();
   if(ret){
     return ret;
   }
@@ -1926,13 +1975,15 @@ int __init mod_start(void)
 
 void mod_exit(void)
 {
-  int i=0;
+  int i = 0;
+  struct list_head  *p_list = NULL;
+  struct list_head  *p_next = NULL;
+  struct hub_device *p_hub  = NULL;
 
   destroy_ctrl_urbs();
 
   /* Free Hub-List */
-  struct list_head *p_list, *p_next;
-  struct hub_device *p_hub = NULL;
+  p_hub = NULL;
   p_list = hub_list.next;
 
   while(p_list != &hub_list){

@@ -41,7 +41,7 @@ DIST_COMMON = $(nobase_include_HEADERS) $(srcdir)/GNUmakefile.am \
 	$(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/bs.m4 \
-	$(top_srcdir)/configure.ac
+	$(top_srcdir)/config/version $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -162,7 +162,9 @@ USB4RT_MODULE_EXT = @USB4RT_MODULE_EXT@
 USB4RT_TARGET_ARCH = @USB4RT_TARGET_ARCH@
 USB4RT_XENO_PREFIX = @USB4RT_XENO_PREFIX@
 VERSION = @VERSION@
+XENO_KMOD_CFLAGS = @XENO_KMOD_CFLAGS@
 XENO_LINUX_DIR = @XENO_LINUX_DIR@
+XENO_USER_CFLAGS = @XENO_USER_CFLAGS@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
@@ -211,7 +213,8 @@ modext = @USB4RT_MODULE_EXT@
 EXTRA_LIBRARIES = libkernel_rtai_rtusbcore.a
 nobase_include_HEADERS = rt_usb.h rt_usb_core.h rt_usb_hub.h rt_usb_debug.h
 libkernel_rtai_rtusbcore_a_CPPFLAGS = \
-	@RTAI_KMOD_CFLAGS@
+	-I$(top_srcdir) \
+	@XENO_KMOD_CFLAGS@
 
 libkernel_rtai_rtusbcore_a_SOURCES = \
 	rt_usb_core.c rt_usb_debug.c rt_usb_hub.c

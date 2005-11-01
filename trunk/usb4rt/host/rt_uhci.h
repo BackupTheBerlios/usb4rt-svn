@@ -21,8 +21,8 @@
 #define RT_UHCI_H
 
 #include <linux/pci.h>
-#include <rtai/intr.h>
-#include "../core/rt_usb_core.h"
+#include <native/intr.h>
+#include <core/rt_usb_core.h>
 
 #define MAX_UHC_CONTROLLER      4
 

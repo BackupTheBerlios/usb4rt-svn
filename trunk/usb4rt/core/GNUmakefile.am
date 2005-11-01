@@ -8,7 +8,8 @@ EXTRA_LIBRARIES = libkernel_rtai_rtusbcore.a
 nobase_include_HEADERS = rt_usb.h rt_usb_core.h rt_usb_hub.h rt_usb_debug.h
 
 libkernel_rtai_rtusbcore_a_CPPFLAGS = \
-	@RTAI_KMOD_CFLAGS@
+	-I$(top_srcdir) \
+	@XENO_KMOD_CFLAGS@
 
 libkernel_rtai_rtusbcore_a_SOURCES = \
 	rt_usb_core.c rt_usb_debug.c rt_usb_hub.c

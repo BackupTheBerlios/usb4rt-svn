@@ -23,8 +23,8 @@
 
 #include <linux/types.h>
 #include <linux/usb_ch9.h>
-#include <rtai/sem.h>
-#include <rtai/timer.h>
+#include <native/sem.h>
+#include <native/timer.h>
 #include <nucleus/asm/hal.h>
 
 /*--------------------------*/

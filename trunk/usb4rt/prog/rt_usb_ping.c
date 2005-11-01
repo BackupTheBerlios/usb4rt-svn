@@ -20,9 +20,9 @@
 
 #include <linux/module.h>
 #include <linux/kernel.h>
-#include <rtai/task.h>
-#include <rtai/timer.h>
-#include <rtai/sem.h>
+#include <native/task.h>
+#include <native/timer.h>
+#include <native/sem.h>
 
 #include "../core/rt_usb.h"
 //                        --s-ms-us-ns
@@ -141,6 +141,10 @@ void rt_callback_fkt(struct rt_urb *p_urb)
 void periodic_fkt( void *p_data )
 {
   int ret,i;
+  RTIME tick_period;
+#ifdef NEXT_URB_IN_CALLBACK
+  int old_retry;
+#endif
 
   struct urb_struct *p_urbs = (struct urb_struct *)p_data;
 
@@ -150,7 +154,6 @@ void periodic_fkt( void *p_data )
     return;
   }
 
-  RTIME tick_period;
   ret = rt_timer_start( TM_ONESHOT );
   if(ret){
     if(ret == -EBUSY){
@@ -253,7 +256,7 @@ void periodic_fkt( void *p_data )
   }
 
   printk("OK \n");
-  int old_retry = retry;
+  old_retry = retry;
   printk("Waiting for URB[%d] \n",retry);
   while ( !all_urbs_finished ) {
 
@@ -297,7 +300,12 @@ struct rt_urb *create_urb(  struct usb_device *p_dev,
                             unsigned char *rt_sem_name,
                             RTIME rt_sem_timeout){
 
-  struct rt_urb *p_urb = kmalloc(sizeof(struct rt_urb),GFP_ATOMIC);
+  struct rt_urb           *p_urb    = NULL;
+  struct usb_ctrlrequest  *p_ctrl   = NULL;
+  unsigned char           *p_buffer = NULL;
+  int ret;
+
+  p_urb = kmalloc(sizeof(struct rt_urb),GFP_ATOMIC);
   if(!p_urb){
     printk("RT-USB-PING: [ERROR] No Memory for URB \n");
     return NULL;
@@ -305,7 +313,7 @@ struct rt_urb *create_urb(  struct usb_device *p_dev,
   alloc_bytes += sizeof(struct rt_urb);
   memset( p_urb, 0, sizeof(struct rt_urb) );
 
-  struct usb_ctrlrequest *p_ctrl = kmalloc(sizeof(struct usb_ctrlrequest),GFP_ATOMIC);
+  p_ctrl = kmalloc(sizeof(struct usb_ctrlrequest),GFP_ATOMIC);
   if(!p_ctrl){
     printk("RT-USB-PING: [ERROR] No Memory for Ctrl-Request \n");
     kfree(p_urb);
@@ -315,7 +323,7 @@ struct rt_urb *create_urb(  struct usb_device *p_dev,
   alloc_bytes += sizeof(struct usb_ctrlrequest);
   memset( p_ctrl, 0, sizeof(struct usb_ctrlrequest) );
 
-  unsigned char *p_buffer = kmalloc(MAX_BUFFER_SIZE,GFP_ATOMIC);
+  p_buffer = kmalloc(MAX_BUFFER_SIZE,GFP_ATOMIC);
   if(!p_buffer){
     printk("RT-USB-PING: [ERROR] No Memory for Buffer \n");
     kfree(p_ctrl);
@@ -343,7 +351,7 @@ struct rt_urb *create_urb(  struct usb_device *p_dev,
   p_urb->rt_sem_timeout = 0;
 #endif
 
-  int ret = rt_sem_create( &p_urb->rt_sem, rt_sem_name ,0, S_PRIO);
+  ret = rt_sem_create( &p_urb->rt_sem, rt_sem_name ,0, S_PRIO);
   if(ret){
     if(ret == -EEXIST) printk("RT-USB-PING: [ERROR] RT-Semaphore: The name is already in use by some registered object \n");
     if(ret == -EINVAL) printk("RT-USB-PING: [ERROR] RT-Semaphore: The icount is non-zero and mode specifies a pulse semaphore \n");
@@ -422,7 +430,9 @@ int create_urbs( struct usb_device *p_dev)
 
 int init_module(void)
 {
+  int i;
   int ret;
+
   ret = rt_task_create ( &rtTask, "rt_usb_ping", 0, 99, 0 );
   if(ret){
     printk("RT-USB-PING: Failed to create Task, code = %d\n",ret);
@@ -441,7 +451,6 @@ int init_module(void)
     printk("RT-USB-PING: Host-Controller @ 0x%p \n",p_device->p_hcd);
   }
 
-  int i;
   for(i=0;i<ANZ_URBS;i++){
     urbs.p_urb[i] = NULL;
     urbs.registered[i] = 0;

@@ -1,3 +1,10 @@
+config MODULES
+    bool
+    default y
+
+config USB4RT_VERSION
+    string
+    default "0.0.3"
 
 menu "General"
 

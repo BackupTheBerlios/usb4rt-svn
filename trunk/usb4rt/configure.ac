@@ -3,11 +3,12 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([usb4rt],[0.0.3],[],[])
+AC_INIT([usb4rt],m4_normalize(m4_include([config/version])),usb4rt-users@lists.berlios.de)
 
-CONFIG_USB4RT_VERSION_MAJOR=0
-CONFIG_USB4RT_VERSION_MINOR=0
-CONFIG_USB4RT_REVISION_LEVEL=3
+CONFIG_USB4RT_VERSION_MAJOR=`expr $PACKAGE_VERSION : '\([0-9]*\)'`
+CONFIG_USB4RT_VERSION_MINOR=`expr $PACKAGE_VERSION : '[0-9]*\.\([0-9]*\)'`
+CONFIG_USB4RT_REVISION_LEVEL=`expr $PACKAGE_VERSION : '[0-9]*\.[0-9]*\.\([0-9]*\)'`
+test "x$CONFIG_USB4RT_REVISION_LEVEL" = "x" && CONFIG_USB4RT_REVISION_LEVEL=0
 
 AC_CONFIG_HEADERS([config/usb4rt_config_pre.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
@@ -59,7 +60,7 @@ case "$host" in
     USB4RT_TARGET_ARCH=i386
     wanted_kernel_arch=CONFIG_X86
     ;;
- *) 
+ *)
     AC_MSG_ERROR([ *** Sorry, unsupported architecture])
     ;;
 esac
@@ -173,9 +174,9 @@ dnl ============================================================================
 AC_ARG_WITH(xeno-dir,
   AS_HELP_STRING([--with-xeno-dir=<XENOMAI>], [path to installation directory of xenomai ]),
     [case "${withval}" in
-	"" | y | ye | yes | n | no)
-    	    AC_MSG_ERROR([You must supply an argument to --with-xeno-dir.]) 
-	    ;;
+    "" | y | ye | yes | n | no)
+            AC_MSG_ERROR([You must supply an argument to --with-xeno-dir.])
+        ;;
     esac
     CONFIG_USB4RT_XENOMAIDIR="$withval"
     ])
@@ -197,9 +198,11 @@ dnl ============================================================================
 dnl  get xenomai prefix
 dnl ============================================================================
 
-AC_MSG_CHECKING([for Xenomai DESTDIR])
+AC_MSG_CHECKING([for Xenomai PREFIX])
 USB4RT_XENO_PREFIX="`cd \`${XENO_CONFIG} --prefix\` && pwd`"     # let the shell normalize the path
+AC_MSG_RESULT([${USB4RT_XENO_PREFIX}])
 
+AC_MSG_CHECKING([for Xenomai DESTDIR])
 if test "${USB4RT_XENO_PREFIX}" \!= "${XENO_DIR}"; then
   USB4RT_XENO_DESTDIR="`cd \`echo ${XENO_DIR} | sed -e s,${USB4RT_XENO_PREFIX}$,,\` && pwd`"
   export DESTDIR="${USB4RT_XENO_DESTDIR}"
@@ -225,15 +228,15 @@ CONFIG_USB4RT_XENO_VERSION_PRE="`${XENO_CONFIG} --version`"
 
 case "$CONFIG_USB4RT_XENO_VERSION_PRE" in
   2.0 | 2.0.*)
-    CONFIG_USB4RT_XENO_VERSION=xeno-20
-    AC_DEFINE(CONFIG_XENO_20, 1, [We build for Xenoami 2.0 or better])
+    CONFIG_USB4RT_XENO_VERSION=xeno-2x
+    AC_DEFINE(CONFIG_XENO_2X, 1, [We build for Xenoami 2.0 or better])
     ;;
   *)
     AC_MSG_ERROR([*** Unsupported Xenomai version $CONFIG_USB4RT_XENO_VERSION_PRE in $XENO_DIR])
   ;;
 esac
-AC_MSG_RESULT([${CONFIG_USB4RT_XENO_VERSION}])
-AM_CONDITIONAL(CONFIG_USB4RT_XENO_VERSION,[test "$CONFIG_USB4RT_XENO_VERSION" = xeno-20])
+AC_MSG_RESULT([${CONFIG_USB4RT_XENO_VERSION_PRE}])
+AM_CONDITIONAL(CONFIG_USB4RT_XENO_VERSION,[test "$CONFIG_USB4RT_XENO_VERSION" = xeno-2x])
 
 dnl ============================================================================
 dnl  checking xenomai config file
@@ -256,7 +259,7 @@ dnl ============================================================================
 
 AC_MSG_CHECKING([for Xenomai native skin])
     case "${CONFIG_XENO_SKIN_NATIVE}" in
-	y) AC_MSG_RESULT([${CONFIG_XENO_SKIN_NATIVE}]) ;;
+    y) AC_MSG_RESULT([${CONFIG_XENO_SKIN_NATIVE}]) ;;
         *) AC_MSG_ERROR([*** Please enable native skin]) ;;
     esac
 
@@ -264,10 +267,30 @@ dnl ============================================================================
 dnl  checking xenomai skins
 dnl ============================================================================
 
-XENO_USER_CFLAGS="`${XENO_CONFIG} --fusion-cflags`"
-XENO_KMOD_CFLAGS="`${XENO_CONFIG} --fusion-cflags`"
+XENO_USER_CFLAGS="`${XENO_CONFIG} --xeno-cflags`"
+
+AC_MSG_CHECKING([for Xenomai module cflags])
+XENO_KMOD_CFLAGS="`${XENO_CONFIG} --module-cflags`"
+AC_MSG_RESULT([${XENO_KMOD_CFLAGS}])
+
 CONFIG_USB4RT_XENO_ARCH="`${XENO_CONFIG} --arch`"
 XENO_LIBRARIES="`${XENO_CONFIG} --library-dir`"
+XENO_SYMBOLS="`${XENO_CONFIG} --symbol-dir`"
+
+dnl ======================================================================
+dnl             create links to Xenomai symbols
+dnl ======================================================================
+
+case "${CONFIG_USB4RT_XENO_VERSION}" in
+  xeno-2x)
+    mkdir -p symbols
+    rm -rf symbols/*
+    for FILE in `ls ${XENO_SYMBOLS}/*`; do
+    ${LN_S} ${FILE} symbols/$(basename ${FILE})
+    done
+    ;;
+esac
+
 
 dnl ============================================================================
 dnl   architecture tests....
@@ -299,7 +322,6 @@ dnl ============================================================================
 
 XENO_LINUX_DIR="`${XENO_CONFIG} --linux-dir`"
 XENO_LINUX_VERSION="`${XENO_CONFIG} --linux-version`"
-
 
 AC_MSG_CHECKING([for Linux source tree])
 if test \! -r ${XENO_LINUX_DIR}/Makefile; then
@@ -345,9 +367,68 @@ if test x${CONFIG_MODVERSIONS} = xy; then
   AC_MSG_ERROR([*** Please unset CONFIG_MODVERSIONS for $XENO_LINUX_DIR and rebuild your kernel])
 fi
 
-if test x${CONFIG_RTAI_ADEOS} = xy -a x${CONFIG_ADEOS_CORE} = x; then
-   AC_MSG_ERROR([*** Please activate the Adeos support (General menu) in $XENO_LINUX_DIR and rebuild your kernel])
+dnl ============================================================================
+dnl  Check for an interrupt pipeline extension.
+dnl ============================================================================
+
+AC_MSG_CHECKING([for interrupt pipeline extension])
+
+if test -r $XENO_LINUX_DIR/include/linux/ipipe.h; then
+   v=`grep '^#define.*IPIPE_ARCH_STRING.*"' $XENO_LINUX_DIR/include/asm-$USB4RT_TARGET_ARCH/ipipe.h|sed -e 's,.*"\(.*\)"$,\1,'`
+   AC_MSG_RESULT([Adeos newgen (I-pipe $v)])
+   if test x${CONFIG_IPIPE} = x; then
+      AC_MSG_ERROR([Please activate the Adeos support in $XENO_LINUX_DIR and rebuild your kernel])
+   fi
+   if test x${CONFIG_IPIPE_EXTENDED} = x; then
+      AC_MSG_ERROR([Please re-patch your kernel with the Adeos support])
+   fi
+elif test -r $XENO_LINUX_DIR/include/linux/adeos.h; then
+   v=`grep '^#define.*ADEOS_ARCH_STRING.*"' $XENO_LINUX_DIR/include/asm-$USB4RT_TARGET_ARCH/adeos.h|sed -e 's,.*"\(.*\)"$,\1,'`
+   AC_MSG_RESULT([Adeos oldgen ($v)])
+   if test x${CONFIG_ADEOS_CORE} = x; then
+      AC_MSG_ERROR([Please activate the Adeos support in $XENO_LINUX_DIR and rebuild your kernel])
+   fi
+else
+   AC_MSG_ERROR([No interrupt pipeline extension enabled in your kernel.
+    You need to apply an Adeos patch first.])
 fi
+
+dnl ======================================================================
+dnl             hac^H^H^Hfix problem with multible defined symbols problem
+dnl             shamelessly stolen from RTAI-3.1 tnx to Philippe
+dnl ======================================================================
+
+dnl CAUTION: We need to have the CONFIG_USB4RT_XX symbols always defined when
+dnl the configuration header is read, but we want the Autoconf-produced
+dnl symbols to be defined only when compiling RTNET. This way, we won't
+dnl pollute the namespace with the latter when our configuration header is
+dnl indirectly included by a client application. To achieve this, we ask
+dnl autoheader to produce the following header structure:
+dnl #define CONFIG_XX
+dnl #define CONFIG_XX ...
+dnl #ifdef __IN_RTNET__
+dnl <Autoconf-defined symbols>
+dnl #endif /* __IN_USB4RT__ */
+dnl This is quite a hack since we have to rely on the fact that
+dnl all Autoconf-generated symbols are lexicographically sorted
+dnl after CONFIG_USB4RT_XX ones, but, well...
+
+dnl Use a key which will cause the verbatim string to be put after
+dnl all CONFIG_USB4RT_XX symbols, but still before any Autoconf-generated
+dnl symbol, hence CONFIG_USB4RT___.
+AH_VERBATIM(CONFIG_USB4RT___,[#ifdef __IN_USB4RT__])
+
+dnl Now we can close the conditional section, right after all
+dnl Autoconf-generated symbols have been listed.
+AH_BOTTOM([#endif /* __IN_USB4RT__ */])
+
+
+XENO_KMOD_CFLAGS="-D__IN_USB4RT__ $XENO_KMOD_CFLAGS"
+XENO_USER_CFLAGS="-D__IN_USB4RT__ $XENO_USER_CFLAGS"
+
+AC_SUBST(XENO_KMOD_CFLAGS)
+AC_SUBST(XENO_USER_CFLAGS)
+
 
 dnl ============================================================================
 dnl  crosscompiling
@@ -379,46 +460,36 @@ dnl ============================================================================
 USB4RT_MODULE_EXT=.ko
 USB4RT_KBUILD_ENV='src2obj = $(patsubst %.$(1),%.o,$(filter %.$(1),$(call notdir,$(2))))'
 USB4RT_KBUILD_CMD=" \
-  @for src in \$(filter-out FORCE, \$^); do            \
-    if test \\! -r \`basename \$\$src\`; then          \
-      \$(LN_S) \$\$src;                                \
-    fi;                                                \
-  done;                                                \
-  \$(MAKE) -C $XENO_LINUX_DIR                          \
-  CROSS_COMPILE=\$(CROSS_COMPILE)                      \
-    ARCH=\$(USB4RT_TARGET_ARCH)                         \
-    M=\"\`pwd\`\"                                      \
-    V=\$(V)                                            \
-    xeno_dir=\"${USB4RT_XENO_PREFIX}\"                  \
-    top_srcdir=\"\`cd \$(top_srcdir) && pwd\`\"        \
-    top_builddir=\"\`cd \$(top_builddir) && pwd\`\"    \
-    srcdir=\"\`cd \$(srcdir) && pwd\`\"                \
-    build_objs='\$(call src2obj,c,\$^)'                \
-    build_target='\$(basename \$@)'                    \
-    modules                                            \
+  @for src in \$(filter-out FORCE, \$^); do               \
+    if test \\! -r \`basename \$\$src\`; then             \
+      \$(LN_S) \$\$src;                                   \
+    fi;                                                   \
+  done;                                                   \
+  \$(MAKE) -C $XENO_LINUX_DIR                             \
+  CROSS_COMPILE=\$(CROSS_COMPILE)                         \
+    ARCH=\$(USB4RT_TARGET_ARCH)                           \
+    M=\"\`pwd\`\"                                         \
+    V=\$(V)                                               \
+    xeno_dir=\"${USB4RT_XENO_PREFIX}\"                    \
+    top_srcdir=\"\`cd \$(top_srcdir) && pwd\`\"           \
+    top_builddir=\"\`cd \$(top_builddir) && pwd\`\"       \
+    srcdir=\"\`cd \$(srcdir) && pwd\`\"                   \
+    build_objs='\$(call src2obj,c,\$^)'                   \
+    build_target='\$(basename \$@)'                       \
+    MODVERDIR=\"\`cd \$(top_builddir) && pwd\`/symbols\"  \
+    modules                                               \
     "
-USB4RT_KBUILD_CLEAN="                                  \
-  @rm -f *.ko *.mod.c .*.cmd *.o;                      \
-  for src in \$^; do                                   \
-    if test -h \`basename \$\$src\`; then              \
-      rm -f \`basename \$\$src\`;                      \
-    fi;                                                \
-  done;                                                \
-  if test -d .tmp_versions; then                       \
-    rm -rf .tmp_versions;                              \
-  fi;                                                  \
+USB4RT_KBUILD_CLEAN="                                     \
+  @rm -f *.ko *.mod.c .*.cmd *.o;                         \
+  for src in \$^; do                                      \
+    if test -h \`basename \$\$src\`; then                 \
+      rm -f \`basename \$\$src\`;                         \
+    fi;                                                   \
+  done;                                                   \
+  if test -d .tmp_versions; then                          \
+    rm -rf .tmp_versions;                                 \
+  fi;                                                     \
   "
-
-#
-# Hack to suppress undefined symbol warnings during MODPOST stage ===
-#
-if test -e $XENO_LINUX_DIR/Module.symvers; then
-  mv $XENO_LINUX_DIR/Module.symvers $XENO_LINUX_DIR/Module.symvers.let_modpost_be_quiet
-fi
-if test -e $XENO_LINUX_DIR/vmlinux; then
-  mv $XENO_LINUX_DIR/vmlinux $XENO_LINUX_DIR/vmlinux.let_modpost_be_quiet
-fi
-
 
 AC_MSG_CHECKING([for kernel module extension])
 AC_MSG_RESULT([$USB4RT_MODULE_EXT])
@@ -443,12 +514,12 @@ CPPFLAGS="${ac_save_CPPFLAGS} ${XENO_KMOD_CFLAGS}"
 # you need to match X_Y.h and X/Y.h as different filenames, you are
 # toast. Whichever comes first will be cached as "X_Y_h" and the
 # second one will never get checked in the fs, but simply
-# uncached. This applies to rtai_sem.h and rtai/sem.h for instance.
+# uncached. This applies to native_sem.h and native/sem.h for instance.
 # To prevent this, we must only check a single set of non-conflicting
 # headers, depending on the Xenomai version which has been
 # identified. (rpm)
 
-BS_CHECK_KHEADERS([rtai/sem.h rtai/mutex.h rtai/pipe.h],
+BS_CHECK_KHEADERS([native/sem.h],
       [],
       [AC_MSG_ERROR([*** header not found or working, please check Xenomai installation])],
       [
@@ -503,9 +574,9 @@ AC_CONFIG_FILES([GNUmakefile \
                  core/GNUmakefile \
                  host/GNUmakefile \
                  prog/GNUmakefile \
-		 config/GNUmakefile \
-		 config/kconfig/GNUmakefile \
-		 config/kconfig/lxdialog/GNUmakefile
+         config/GNUmakefile \
+         config/kconfig/GNUmakefile \
+         config/kconfig/lxdialog/GNUmakefile
                 ])
 AC_OUTPUT
 

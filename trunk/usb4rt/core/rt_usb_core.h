@@ -20,7 +20,7 @@
 #ifndef RT_USB_CORE_H
 #define RT_USB_CORE_H
 
-#include "rt_usb.h"
+#include <core/rt_usb.h>
 
 #define MAX_USB_DEV           128 /* 7 bit */
 #define MAX_EP                16  /* 4 bit */
