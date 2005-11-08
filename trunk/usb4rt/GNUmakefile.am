@@ -1,4 +1,9 @@
-OPTDIRS =
+ACLOCAL_AMFLAGS=-I config/autoconf
+
+includedir = $(prefix)/include
+
+include_HEADERS = \
+	usb4rt_config.h
 
 SUBDIRS = \
 	core \
@@ -7,7 +12,18 @@ SUBDIRS = \
 	config
 
 EXTRA_DIST = \
+	defconfig \
 	makefile \
 	Kconfig
 
-DISTCLEANFILES = .usb4rt_config
+DISTCLEANFILES = \
+	.usb4rt_config \
+	.usb4rt_config_old \
+	.cfok \
+	.cfchanged
+
+reconfig xconfig gconfig mconfig menuconfig config oldconfig help:
+	@$(MAKE) -f $(srcdir)/makefile $@ \
+	srctree=$(srcdir) ARCH=@RACK_HOST_STRING@ CROSS_COMPILE=@CROSS_COMPILE@
+
+.PHONY: reconfig xconfig gconfig mconfig menuconfig config oldconfig help
