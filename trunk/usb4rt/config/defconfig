@@ -1,0 +1,20 @@
+#
+# Automatically generated make config: don't edit
+#
+CONFIG_MODULES=y
+CONFIG_USB4RT_VERSION="0.0.3"
+
+#
+# General
+#
+CONFIG_USB4RT_BANDW_RECLAM=y
+CONFIG_USB4RT_XENOMAIDIR="/usr/realtime"
+CONFIG_USB4RT_INSTALLDIR="/usr/local/usb4rt"
+
+#
+# Debug
+#
+CONFIG_USB4RT_DBG_COMMON=y
+CONFIG_USB4RT_DBG_TIME=y
+# CONFIG_USB4RT_DBG_TD is not set
+# CONFIG_USB4RT_DBG_QH is not set

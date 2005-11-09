@@ -29,7 +29,7 @@
 
 #ifdef __IN_USB4RT__
 
-/* We build for Xenoami 2.0 or better */
+/* We build for Xenomai 2.0 or newer */
 #undef CONFIG_XENO_2X
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
@@ -43,9 +43,6 @@
 
 /* Define to 1 if you have the `memset' function. */
 #undef HAVE_MEMSET
-
-/* Define to 1 if you have the <native/sem.h> header file. */
-#undef HAVE_NATIVE_SEM_H
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
