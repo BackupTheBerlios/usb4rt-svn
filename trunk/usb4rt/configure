@@ -466,7 +466,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB CPP CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CCAS CCASFLAGS LD CONFIG_USB4RT_DBG_COMMON_TRUE CONFIG_USB4RT_DBG_COMMON_FALSE CONFIG_USB4RT_DBG_TIME_TRUE CONFIG_USB4RT_DBG_TIME_FALSE CONFIG_USB4RT_DBG_TD_TRUE CONFIG_USB4RT_DBG_TD_FALSE CONFIG_USB4RT_DBG_QH_TRUE CONFIG_USB4RT_DBG_QH_FALSE CONFIG_USB4RT_BANDW_RECLAM_TRUE CONFIG_USB4RT_BANDW_RECLAM_FALSE USB4RT_XENO_PREFIX CONFIG_USB4RT_XENO_VERSION_TRUE CONFIG_USB4RT_XENO_VERSION_FALSE USB4RT_TARGET_ARCH XENO_LINUX_DIR USB4RT_MODULE_EXT CONFIG_KBUILD_TRUE CONFIG_KBUILD_FALSE XENO_KMOD_CFLAGS XENO_USER_CFLAGS CROSS_COMPILE USB4RT_KBUILD_ENV USB4RT_KBUILD_CMD USB4RT_KBUILD_CLEAN USB4RT_MODULE_DIR LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB CPP CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CCAS CCASFLAGS LD XENO_PREFIX XENO_LIBRARIES LINUX_DIR CONFIG_KBUILD_TRUE CONFIG_KBUILD_FALSE USB4RT_TARGET_ARCH CROSS_COMPILE USB4RT_MODULE_EXT USB4RT_KBUILD_ENV USB4RT_KBUILD_CMD USB4RT_KBUILD_CLEAN USB4RT_MODULE_DIR XENO_KMOD_CFLAGS XENO_USER_CFLAGS CONFIG_USB4RT_DBG_COMMON_TRUE CONFIG_USB4RT_DBG_COMMON_FALSE CONFIG_USB4RT_DBG_TIME_TRUE CONFIG_USB4RT_DBG_TIME_FALSE CONFIG_USB4RT_DBG_TD_TRUE CONFIG_USB4RT_DBG_TD_FALSE CONFIG_USB4RT_DBG_QH_TRUE CONFIG_USB4RT_DBG_QH_FALSE CONFIG_USB4RT_BANDW_RECLAM_TRUE CONFIG_USB4RT_BANDW_RECLAM_FALSE LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1718,7 +1718,7 @@ test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 CFLAGS=${CFLAGS:--s}
 
-# Checks for programs.
+
 
 # Check whether --with-CC or --without-CC was given.
 if test "${with_CC+set}" = set; then
@@ -20035,15 +20035,15 @@ kconfig_type=default
 if test "${with_kconfig_file+set}" = set; then
   withval="$with_kconfig_file"
 
-  case "$withval" in
-  "" | y | ye | yes | n | no)
-      { { echo "$as_me:$LINENO: error: You must supply an argument to --with-kconfig-file." >&5
+        case "$withval" in
+        "" | y | ye | yes | n | no)
+          { { echo "$as_me:$LINENO: error: You must supply an argument to --with-kconfig-file." >&5
 echo "$as_me: error: You must supply an argument to --with-kconfig-file." >&2;}
    { (exit 1); exit 1; }; }
-    ;;
-  esac
-  USB4RT_KCONFIG_FILE="$withval"
-  kconfig_type=supplied
+          ;;
+        esac
+        USB4RT_KCONFIG_FILE="$withval"
+        kconfig_type=supplied
 
 fi;
 
@@ -20054,9 +20054,349 @@ if test \! -f $USB4RT_KCONFIG_FILE; then
 echo "$as_me: error: Kconfig-file $USB4RT_KCONFIG_FILE not found -- --with-kconfig-file sets Kconfig file" >&2;}
    { (exit 1); exit 1; }; }
 fi
+
 . $USB4RT_KCONFIG_FILE
 echo "$as_me:$LINENO: result: $USB4RT_KCONFIG_FILE ($kconfig_type)" >&5
 echo "${ECHO_T}$USB4RT_KCONFIG_FILE ($kconfig_type)" >&6
+
+
+
+# Check whether --with-xeno-dir or --without-xeno-dir was given.
+if test "${with_xeno_dir+set}" = set; then
+  withval="$with_xeno_dir"
+  case "${withval}" in
+    "" | y | ye | yes | n | no)
+            { { echo "$as_me:$LINENO: error: You must supply an argument to --with-xeno-dir." >&5
+echo "$as_me: error: You must supply an argument to --with-xeno-dir." >&2;}
+   { (exit 1); exit 1; }; }
+        ;;
+    esac
+    CONFIG_USB4RT_XENOMAIDIR="$withval"
+
+fi;
+
+
+echo "$as_me:$LINENO: checking for Xenomai installation" >&5
+echo $ECHO_N "checking for Xenomai installation... $ECHO_C" >&6
+XENO_CONFIG="${CONFIG_USB4RT_XENOMAIDIR}/bin/xeno-config"
+if test -x "${XENO_CONFIG}"; then
+  XENO_DIR="`cd ${CONFIG_USB4RT_XENOMAIDIR} && pwd`" # let the shell normalize the path
+  echo "$as_me:$LINENO: result: ${XENO_DIR}" >&5
+echo "${ECHO_T}${XENO_DIR}" >&6
+else
+  { { echo "$as_me:$LINENO: error: no Xenomai found in $CONFIG_USB4RT_XENOMAIDIR" >&5
+echo "$as_me: error: no Xenomai found in $CONFIG_USB4RT_XENOMAIDIR" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+
+echo "$as_me:$LINENO: checking for Xenomai PREFIX" >&5
+echo $ECHO_N "checking for Xenomai PREFIX... $ECHO_C" >&6
+XENO_PREFIX="`cd \`${XENO_CONFIG} --prefix\` && pwd`"     # let the shell normalize the path
+echo "$as_me:$LINENO: result: ${XENO_PREFIX}" >&5
+echo "${ECHO_T}${XENO_PREFIX}" >&6
+
+echo "$as_me:$LINENO: checking for Xenomai DESTDIR" >&5
+echo $ECHO_N "checking for Xenomai DESTDIR... $ECHO_C" >&6
+if test "${XENO_PREFIX}" \!= "${XENO_DIR}"; then
+  XENO_DESTDIR="`cd \`echo ${XENO_DIR} | sed -e s,${XENO_PREFIX}$,,\` && pwd`"
+  export DESTDIR="${XENO_DESTDIR}"
+
+  XENO_PREFIX="`cd \`${XENO_CONFIG} --prefix\` && pwd`"   # let the shell normalize the path
+  if test "${XENO_PREFIX}" = "${XENO_DIR}"; then
+    echo "$as_me:$LINENO: result: ${DESTDIR}" >&5
+echo "${ECHO_T}${DESTDIR}" >&6
+  else
+    { { echo "$as_me:$LINENO: error: *** Cannot identify DESTDIR" >&5
+echo "$as_me: error: *** Cannot identify DESTDIR" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+else
+  echo "$as_me:$LINENO: result: none" >&5
+echo "${ECHO_T}none" >&6
+fi
+
+
+
+
+echo "$as_me:$LINENO: checking for Xenomai version" >&5
+echo $ECHO_N "checking for Xenomai version... $ECHO_C" >&6
+XENO_VERSION_PRE="`${XENO_CONFIG} --version`"
+
+case "$XENO_VERSION_PRE" in
+  2.0 | 2.0.*)
+    XENO_VERSION=xeno-2x
+    ;;
+  *)
+    { { echo "$as_me:$LINENO: error: *** Unsupported Xenomai version $XENO_VERSION_PRE in $XENO_DIR" >&5
+echo "$as_me: error: *** Unsupported Xenomai version $XENO_VERSION_PRE in $XENO_DIR" >&2;}
+   { (exit 1); exit 1; }; }
+  ;;
+esac
+echo "$as_me:$LINENO: result: ${XENO_VERSION_PRE}" >&5
+echo "${ECHO_T}${XENO_VERSION_PRE}" >&6
+
+
+echo "$as_me:$LINENO: checking for Xenomai config file" >&5
+echo $ECHO_N "checking for Xenomai config file... $ECHO_C" >&6
+XENO_CONFIG_FILE="`${XENO_CONFIG} --config`"
+if test \! -f $XENO_CONFIG_FILE; then
+  { { echo "$as_me:$LINENO: error: *** Xenomai configuration file not found" >&5
+echo "$as_me: error: *** Xenomai configuration file not found" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+echo "$as_me:$LINENO: result: ${XENO_CONFIG_FILE}" >&5
+echo "${ECHO_T}${XENO_CONFIG_FILE}" >&6
+
+# source (load) the Xenomai configuration
+. ${XENO_CONFIG_FILE}
+
+
+echo "$as_me:$LINENO: checking for Xenomai native skin" >&5
+echo $ECHO_N "checking for Xenomai native skin... $ECHO_C" >&6
+    case "${CONFIG_XENO_SKIN_NATIVE}" in
+        y) echo "$as_me:$LINENO: result: ${CONFIG_XENO_SKIN_NATIVE}" >&5
+echo "${ECHO_T}${CONFIG_XENO_SKIN_NATIVE}" >&6 ;;
+        *) { { echo "$as_me:$LINENO: error: *** Please enable native skin" >&5
+echo "$as_me: error: *** Please enable native skin" >&2;}
+   { (exit 1); exit 1; }; } ;;
+    esac
+
+
+XENO_USER_CFLAGS="`${XENO_CONFIG} --xeno-cflags`"
+XENO_KMOD_CFLAGS="`${XENO_CONFIG} --module-cflags`"
+
+XENO_ARCH="`${XENO_CONFIG} --arch`"
+XENO_LIBRARIES="`${XENO_CONFIG} --library-dir`"
+XENO_SYMBOLS="`${XENO_CONFIG} --symbol-dir`"
+
+
+case "${XENO_VERSION}" in
+  xeno-2x)
+    mkdir -p symbols
+    rm -rf symbols/*
+    for FILE in `ls ${XENO_SYMBOLS}/*`; do
+      ${LN_S} ${FILE} symbols/$(basename ${FILE})
+    done
+    ;;
+  *)
+    { { echo "$as_me:$LINENO: error: *** internal ERROR ***" >&5
+echo "$as_me: error: *** internal ERROR ***" >&2;}
+   { (exit 1); exit 1; }; }
+    ;;
+esac
+
+
+
+
+
+cat >>confdefs.h <<\_ACEOF
+#define CONFIG_XENO_2X 1
+_ACEOF
+
+
+
+
+
+echo "$as_me:$LINENO: checking for Linux source tree" >&5
+echo $ECHO_N "checking for Linux source tree... $ECHO_C" >&6
+LINUX_DIR="`${XENO_CONFIG} --linux-dir`"
+echo "$as_me:$LINENO: result: ${LINUX_DIR}" >&5
+echo "${ECHO_T}${LINUX_DIR}" >&6
+
+
+echo "$as_me:$LINENO: checking for Linux version" >&5
+echo $ECHO_N "checking for Linux version... $ECHO_C" >&6
+USB4RT_LINUX_VERSION="`${XENO_CONFIG} --linux-version`"
+echo "$as_me:$LINENO: result: ${USB4RT_LINUX_VERSION}" >&5
+echo "${ECHO_T}${USB4RT_LINUX_VERSION}" >&6
+
+
+case "${USB4RT_LINUX_VERSION}" in
+    2.6.*)
+        ;;
+    *)
+        { { echo "$as_me:$LINENO: error: *** Unsupported kernel version $USB4RT_LINUX_VERSION" >&5
+echo "$as_me: error: *** Unsupported kernel version $USB4RT_LINUX_VERSION" >&2;}
+   { (exit 1); exit 1; }; }
+        ;;
+esac
+
+
+echo "$as_me:$LINENO: checking for Linux config file" >&5
+echo $ECHO_N "checking for Linux config file... $ECHO_C" >&6
+if test \! -f ${LINUX_DIR}/.config ; then
+  { { echo "$as_me:$LINENO: error: *** Please configure your kernel" >&5
+echo "$as_me: error: *** Please configure your kernel" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+echo "$as_me:$LINENO: result: ${LINUX_DIR}/.config" >&5
+echo "${ECHO_T}${LINUX_DIR}/.config" >&6
+
+
+. ${LINUX_DIR}/.config
+
+
+
+
+
+
+
+if test "$CONFIG_KBUILD" = y; then
+  CONFIG_KBUILD_TRUE=
+  CONFIG_KBUILD_FALSE='#'
+else
+  CONFIG_KBUILD_TRUE='#'
+  CONFIG_KBUILD_FALSE=
+fi
+
+
+
+echo "$as_me:$LINENO: checking for Xenomai target arch" >&5
+echo $ECHO_N "checking for Xenomai target arch... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: ${XENO_ARCH}" >&5
+echo "${ECHO_T}${XENO_ARCH}" >&6
+
+echo "$as_me:$LINENO: checking for USB4RT target arch" >&5
+echo $ECHO_N "checking for USB4RT target arch... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: ${USB4RT_TARGET_ARCH}" >&5
+echo "${ECHO_T}${USB4RT_TARGET_ARCH}" >&6
+
+if test x"${USB4RT_TARGET_ARCH}" != x"${XENO_ARCH}"; then
+    { { echo "$as_me:$LINENO: error: *** Xenomai and USB4RT target architectures are not the same" >&5
+echo "$as_me: error: *** Xenomai and USB4RT target architectures are not the same" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+case "${XENO_ARCH}" in
+    i386)
+
+cat >>confdefs.h <<\_ACEOF
+#define CONFIG_ARCH_I386 1
+_ACEOF
+
+        ;;
+    *)
+        { { echo "$as_me:$LINENO: error: *** unsupported architecture" >&5
+echo "$as_me: error: *** unsupported architecture" >&2;}
+   { (exit 1); exit 1; }; }
+        ;;
+esac
+
+
+
+
+echo "$as_me:$LINENO: checking for CROSS_COMPILE" >&5
+echo $ECHO_N "checking for CROSS_COMPILE... $ECHO_C" >&6
+if test "${CROSS_COMPILE}" = ""; then
+    CROSS_COMPILE="`echo ${CC} | sed s/gcc//`"
+
+    if test "${CROSS_COMPILE}gcc" \!= "${CC}"; then
+        CROSS_COMPILE=""
+        echo "$as_me:$LINENO: result: Cannot identify CROSS_COMPILE - assuming none - set manually if needed" >&5
+echo "${ECHO_T}Cannot identify CROSS_COMPILE - assuming none - set manually if needed" >&6
+    else
+        if test "${CROSS_COMPILE}" = ""; then
+            echo "$as_me:$LINENO: result: none" >&5
+echo "${ECHO_T}none" >&6
+        else
+            echo "$as_me:$LINENO: result: ${CROSS_COMPILE}" >&5
+echo "${ECHO_T}${CROSS_COMPILE}" >&6
+        fi
+    fi
+else
+    echo "$as_me:$LINENO: result: ${CROSS_COMPILE}" >&5
+echo "${ECHO_T}${CROSS_COMPILE}" >&6
+fi
+
+
+
+USB4RT_MODULE_EXT=.ko
+USB4RT_KBUILD_ENV='src2obj = $(patsubst %.$(1),%.o,$(filter %.$(1),$(call notdir,$(2))))'
+USB4RT_KBUILD_CMD=" \
+  @for src in \$(filter-out FORCE, \$^); do               \
+    if test \\! -r \`basename \$\$src\`; then             \
+      \$(LN_S) \$\$src;                                   \
+    fi;                                                   \
+  done;                                                   \
+  \$(MAKE) -C $LINUX_DIR                                  \
+  CROSS_COMPILE=\$(CROSS_COMPILE)                         \
+    ARCH=\$(USB4RT_TARGET_ARCH)                           \
+    M=\"\`pwd\`\"                                         \
+    V=\$(V)                                               \
+    xeno_dir=\"${XENO_PREFIX}\"                           \
+    top_srcdir=\"\`cd \$(top_srcdir) && pwd\`\"           \
+    top_builddir=\"\`cd \$(top_builddir) && pwd\`\"       \
+    srcdir=\"\`cd \$(srcdir) && pwd\`\"                   \
+    build_objs='\$(call src2obj,c,\$^)'                   \
+    build_target='\$(basename \$@)'                       \
+    MODVERDIR=\"\`cd \$(top_builddir) && pwd\`/symbols\"  \
+    modules                                               \
+    "
+USB4RT_KBUILD_CLEAN="                                     \
+  @rm -f *.ko *.mod.c .*.cmd *.o;                         \
+  for src in \$^; do                                      \
+    if test -h \`basename \$\$src\`; then                 \
+      rm -f \`basename \$\$src\`;                         \
+    fi;                                                   \
+  done;                                                   \
+  if test -d .tmp_versions; then                          \
+    rm -rf .tmp_versions;                                 \
+  fi;                                                     \
+  "
+
+echo "$as_me:$LINENO: checking for kernel module extension" >&5
+echo $ECHO_N "checking for kernel module extension... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: $USB4RT_MODULE_EXT" >&5
+echo "${ECHO_T}$USB4RT_MODULE_EXT" >&6
+
+
+
+
+
+
+bs_kmodext=$USB4RT_MODULE_EXT
+bs_kcompile="make -C $LINUX_DIR ARCH=$USB4RT_TARGET_ARCH CROSS_COMPILE=$CROSS_COMPILE V=1 M=`pwd` SUBDIRS=`pwd` modules"
+
+
+echo "$as_me:$LINENO: checking for module installation directory" >&5
+echo $ECHO_N "checking for module installation directory... $ECHO_C" >&6
+
+
+# Check whether --with-module-dir or --without-module-dir was given.
+if test "${with_module_dir+set}" = set; then
+  withval="$with_module_dir"
+  case "${withval}" in
+      "" | y | ye | yes | n | no)
+        { { echo "$as_me:$LINENO: error: You must supply an argument to --with-module-dir." >&5
+echo "$as_me: error: You must supply an argument to --with-module-dir." >&2;}
+   { (exit 1); exit 1; }; } ;;
+    esac
+else
+  with_module_dir='${exec_prefix}/modules'
+fi;
+
+USB4RT_MODULE_DIR="$with_module_dir"
+
+echo "$as_me:$LINENO: result: $USB4RT_MODULE_DIR" >&5
+echo "${ECHO_T}$USB4RT_MODULE_DIR" >&6
+
+
+
+
+
+
+
+
+
+
+
+XENO_KMOD_CFLAGS="-D__IN_USB4RT__ $XENO_KMOD_CFLAGS"
+XENO_USER_CFLAGS="-D__IN_USB4RT__ $XENO_USER_CFLAGS"
+
+
+
+
 
 
 echo "$as_me:$LINENO: checking for debug-messages common" >&5
@@ -20205,475 +20545,7 @@ fi
 
 
 
-# Check whether --with-xeno-dir or --without-xeno-dir was given.
-if test "${with_xeno_dir+set}" = set; then
-  withval="$with_xeno_dir"
-  case "${withval}" in
-    "" | y | ye | yes | n | no)
-            { { echo "$as_me:$LINENO: error: You must supply an argument to --with-xeno-dir." >&5
-echo "$as_me: error: You must supply an argument to --with-xeno-dir." >&2;}
-   { (exit 1); exit 1; }; }
-        ;;
-    esac
-    CONFIG_USB4RT_XENOMAIDIR="$withval"
 
-fi;
-
-
-echo "$as_me:$LINENO: checking for Xenomai installation" >&5
-echo $ECHO_N "checking for Xenomai installation... $ECHO_C" >&6
-XENO_CONFIG="${CONFIG_USB4RT_XENOMAIDIR}/bin/xeno-config"
-if test -x "${XENO_CONFIG}"; then
-  XENO_DIR="`cd ${CONFIG_USB4RT_XENOMAIDIR} && pwd`" # let the shell normalize the path
-  echo "$as_me:$LINENO: result: ${XENO_DIR}" >&5
-echo "${ECHO_T}${XENO_DIR}" >&6
-else
-  echo "$as_me:$LINENO: result: no Xenomai found in $CONFIG_USB4RT_XENOMAIDIR" >&5
-echo "${ECHO_T}no Xenomai found in $CONFIG_USB4RT_XENOMAIDIR" >&6
-fi
-
-
-echo "$as_me:$LINENO: checking for Xenomai PREFIX" >&5
-echo $ECHO_N "checking for Xenomai PREFIX... $ECHO_C" >&6
-USB4RT_XENO_PREFIX="`cd \`${XENO_CONFIG} --prefix\` && pwd`"     # let the shell normalize the path
-echo "$as_me:$LINENO: result: ${USB4RT_XENO_PREFIX}" >&5
-echo "${ECHO_T}${USB4RT_XENO_PREFIX}" >&6
-
-echo "$as_me:$LINENO: checking for Xenomai DESTDIR" >&5
-echo $ECHO_N "checking for Xenomai DESTDIR... $ECHO_C" >&6
-if test "${USB4RT_XENO_PREFIX}" \!= "${XENO_DIR}"; then
-  USB4RT_XENO_DESTDIR="`cd \`echo ${XENO_DIR} | sed -e s,${USB4RT_XENO_PREFIX}$,,\` && pwd`"
-  export DESTDIR="${USB4RT_XENO_DESTDIR}"
-
-  USB4RT_XENO_PREFIX="`cd \`${XENO_CONFIG} --prefix\` && pwd`"   # let the shell normalize the path
-  if test "${USB4RT_XENO_PREFIX}" = "${XENO_DIR}"; then
-    echo "$as_me:$LINENO: result: ${DESTDIR}" >&5
-echo "${ECHO_T}${DESTDIR}" >&6
-  else
-    { { echo "$as_me:$LINENO: error: *** Cannot identify DESTDIR" >&5
-echo "$as_me: error: *** Cannot identify DESTDIR" >&2;}
-   { (exit 1); exit 1; }; }
-  fi
-else
-  echo "$as_me:$LINENO: result: none" >&5
-echo "${ECHO_T}none" >&6
-fi
-
-
-
-
-echo "$as_me:$LINENO: checking for Xenomai version" >&5
-echo $ECHO_N "checking for Xenomai version... $ECHO_C" >&6
-CONFIG_USB4RT_XENO_VERSION_PRE="`${XENO_CONFIG} --version`"
-
-case "$CONFIG_USB4RT_XENO_VERSION_PRE" in
-  2.0 | 2.0.*)
-    CONFIG_USB4RT_XENO_VERSION=xeno-2x
-
-cat >>confdefs.h <<\_ACEOF
-#define CONFIG_XENO_2X 1
-_ACEOF
-
-    ;;
-  *)
-    { { echo "$as_me:$LINENO: error: *** Unsupported Xenomai version $CONFIG_USB4RT_XENO_VERSION_PRE in $XENO_DIR" >&5
-echo "$as_me: error: *** Unsupported Xenomai version $CONFIG_USB4RT_XENO_VERSION_PRE in $XENO_DIR" >&2;}
-   { (exit 1); exit 1; }; }
-  ;;
-esac
-echo "$as_me:$LINENO: result: ${CONFIG_USB4RT_XENO_VERSION_PRE}" >&5
-echo "${ECHO_T}${CONFIG_USB4RT_XENO_VERSION_PRE}" >&6
-
-
-if test "$CONFIG_USB4RT_XENO_VERSION" = xeno-2x; then
-  CONFIG_USB4RT_XENO_VERSION_TRUE=
-  CONFIG_USB4RT_XENO_VERSION_FALSE='#'
-else
-  CONFIG_USB4RT_XENO_VERSION_TRUE='#'
-  CONFIG_USB4RT_XENO_VERSION_FALSE=
-fi
-
-
-
-echo "$as_me:$LINENO: checking for Xenomai config file" >&5
-echo $ECHO_N "checking for Xenomai config file... $ECHO_C" >&6
-CONFIG_USB4RT_XENO_CONFIG_FILE="`${XENO_CONFIG} --config`"
-if test \! -f $CONFIG_USB4RT_XENO_CONFIG_FILE; then
-  { { echo "$as_me:$LINENO: error: *** Xenoami configuration file not found" >&5
-echo "$as_me: error: *** Xenoami configuration file not found" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-echo "$as_me:$LINENO: result: ${CONFIG_USB4RT_XENO_CONFIG_FILE}" >&5
-echo "${ECHO_T}${CONFIG_USB4RT_XENO_CONFIG_FILE}" >&6
-
-
-# source (load) the Xenomai configuration
-. ${CONFIG_USB4RT_XENO_CONFIG_FILE}
-
-
-echo "$as_me:$LINENO: checking for Xenomai native skin" >&5
-echo $ECHO_N "checking for Xenomai native skin... $ECHO_C" >&6
-    case "${CONFIG_XENO_SKIN_NATIVE}" in
-    y) echo "$as_me:$LINENO: result: ${CONFIG_XENO_SKIN_NATIVE}" >&5
-echo "${ECHO_T}${CONFIG_XENO_SKIN_NATIVE}" >&6 ;;
-        *) { { echo "$as_me:$LINENO: error: *** Please enable native skin" >&5
-echo "$as_me: error: *** Please enable native skin" >&2;}
-   { (exit 1); exit 1; }; } ;;
-    esac
-
-
-XENO_USER_CFLAGS="`${XENO_CONFIG} --xeno-cflags`"
-
-echo "$as_me:$LINENO: checking for Xenomai module cflags" >&5
-echo $ECHO_N "checking for Xenomai module cflags... $ECHO_C" >&6
-XENO_KMOD_CFLAGS="`${XENO_CONFIG} --module-cflags`"
-echo "$as_me:$LINENO: result: ${XENO_KMOD_CFLAGS}" >&5
-echo "${ECHO_T}${XENO_KMOD_CFLAGS}" >&6
-
-CONFIG_USB4RT_XENO_ARCH="`${XENO_CONFIG} --arch`"
-XENO_LIBRARIES="`${XENO_CONFIG} --library-dir`"
-XENO_SYMBOLS="`${XENO_CONFIG} --symbol-dir`"
-
-
-case "${CONFIG_USB4RT_XENO_VERSION}" in
-  xeno-2x)
-    mkdir -p symbols
-    rm -rf symbols/*
-    for FILE in `ls ${XENO_SYMBOLS}/*`; do
-    ${LN_S} ${FILE} symbols/$(basename ${FILE})
-    done
-    ;;
-esac
-
-
-
-echo "$as_me:$LINENO: checking for Xenomai target arch" >&5
-echo $ECHO_N "checking for Xenomai target arch... $ECHO_C" >&6
-echo "$as_me:$LINENO: result: ${CONFIG_USB4RT_XENO_ARCH}" >&5
-echo "${ECHO_T}${CONFIG_USB4RT_XENO_ARCH}" >&6
-
-echo "$as_me:$LINENO: checking for USB4RT target arch" >&5
-echo $ECHO_N "checking for USB4RT target arch... $ECHO_C" >&6
-echo "$as_me:$LINENO: result: ${USB4RT_TARGET_ARCH}" >&5
-echo "${ECHO_T}${USB4RT_TARGET_ARCH}" >&6
-
-if test x"${USB4RT_TARGET_ARCH}" != x"${CONFIG_USB4RT_XENO_ARCH}"; then
-    { { echo "$as_me:$LINENO: error: *** Xenomai and USB4RT target architectures are not the same" >&5
-echo "$as_me: error: *** Xenomai and USB4RT target architectures are not the same" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-case "${CONFIG_USB4RT_XENO_ARCH}" in
-  i386)
-
-cat >>confdefs.h <<\_ACEOF
-#define CONFIG_ARCH_I386 1
-_ACEOF
-
-  ;;
-  *)
-    { { echo "$as_me:$LINENO: error: *** unsupported architecture" >&5
-echo "$as_me: error: *** unsupported architecture" >&2;}
-   { (exit 1); exit 1; }; }
-    ;;
-esac
-
-
-
-XENO_LINUX_DIR="`${XENO_CONFIG} --linux-dir`"
-XENO_LINUX_VERSION="`${XENO_CONFIG} --linux-version`"
-
-echo "$as_me:$LINENO: checking for Linux source tree" >&5
-echo $ECHO_N "checking for Linux source tree... $ECHO_C" >&6
-if test \! -r ${XENO_LINUX_DIR}/Makefile; then
-   echo
-   { { echo "$as_me:$LINENO: error: *** No Linux kernel tree in ${XENO_LINUX_DIR}" >&5
-echo "$as_me: error: *** No Linux kernel tree in ${XENO_LINUX_DIR}" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-if test \! -r ${XENO_LINUX_DIR}/.config; then
-   echo
-   { { echo "$as_me:$LINENO: error: *** $XENO_LINUX_DIR is not configured" >&5
-echo "$as_me: error: *** $XENO_LINUX_DIR is not configured" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-
-
-
-case "${XENO_LINUX_VERSION}" in
-  2.6.*)
-    ;;
-  *)
-    { { echo "$as_me:$LINENO: error: *** Unsupported kernel version $XENO_LINUX_VERSION" >&5
-echo "$as_me: error: *** Unsupported kernel version $XENO_LINUX_VERSION" >&2;}
-   { (exit 1); exit 1; }; }
-    ;;
-esac
-
-
-
-
-if test "$CONFIG_KBUILD" = y; then
-  CONFIG_KBUILD_TRUE=
-  CONFIG_KBUILD_FALSE='#'
-else
-  CONFIG_KBUILD_TRUE='#'
-  CONFIG_KBUILD_FALSE=
-fi
-
-
-
-
-. ${XENO_LINUX_DIR}/.config
-echo "$as_me:$LINENO: result: $XENO_LINUX_DIR (kernel ${XENO_LINUX_VERSION}${CONFIG_SMP:+-SMP})" >&5
-echo "${ECHO_T}$XENO_LINUX_DIR (kernel ${XENO_LINUX_VERSION}${CONFIG_SMP:+-SMP})" >&6
-
-if test x${CONFIG_MODULES} = x; then
-  { { echo "$as_me:$LINENO: error: *** Please set CONFIG_MODULES for $XENO_LINUX_DIR and rebuild your kernel" >&5
-echo "$as_me: error: *** Please set CONFIG_MODULES for $XENO_LINUX_DIR and rebuild your kernel" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-if test x${CONFIG_MODVERSIONS} = xy; then
-  { { echo "$as_me:$LINENO: error: *** Please unset CONFIG_MODVERSIONS for $XENO_LINUX_DIR and rebuild your kernel" >&5
-echo "$as_me: error: *** Please unset CONFIG_MODVERSIONS for $XENO_LINUX_DIR and rebuild your kernel" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-
-echo "$as_me:$LINENO: checking for interrupt pipeline extension" >&5
-echo $ECHO_N "checking for interrupt pipeline extension... $ECHO_C" >&6
-
-if test -r $XENO_LINUX_DIR/include/linux/ipipe.h; then
-   v=`grep '^#define.*IPIPE_ARCH_STRING.*"' $XENO_LINUX_DIR/include/asm-$USB4RT_TARGET_ARCH/ipipe.h|sed -e 's,.*"\(.*\)"$,\1,'`
-   echo "$as_me:$LINENO: result: Adeos newgen (I-pipe $v)" >&5
-echo "${ECHO_T}Adeos newgen (I-pipe $v)" >&6
-   if test x${CONFIG_IPIPE} = x; then
-      { { echo "$as_me:$LINENO: error: Please activate the Adeos support in $XENO_LINUX_DIR and rebuild your kernel" >&5
-echo "$as_me: error: Please activate the Adeos support in $XENO_LINUX_DIR and rebuild your kernel" >&2;}
-   { (exit 1); exit 1; }; }
-   fi
-   if test x${CONFIG_IPIPE_EXTENDED} = x; then
-      { { echo "$as_me:$LINENO: error: Please re-patch your kernel with the Adeos support" >&5
-echo "$as_me: error: Please re-patch your kernel with the Adeos support" >&2;}
-   { (exit 1); exit 1; }; }
-   fi
-elif test -r $XENO_LINUX_DIR/include/linux/adeos.h; then
-   v=`grep '^#define.*ADEOS_ARCH_STRING.*"' $XENO_LINUX_DIR/include/asm-$USB4RT_TARGET_ARCH/adeos.h|sed -e 's,.*"\(.*\)"$,\1,'`
-   echo "$as_me:$LINENO: result: Adeos oldgen ($v)" >&5
-echo "${ECHO_T}Adeos oldgen ($v)" >&6
-   if test x${CONFIG_ADEOS_CORE} = x; then
-      { { echo "$as_me:$LINENO: error: Please activate the Adeos support in $XENO_LINUX_DIR and rebuild your kernel" >&5
-echo "$as_me: error: Please activate the Adeos support in $XENO_LINUX_DIR and rebuild your kernel" >&2;}
-   { (exit 1); exit 1; }; }
-   fi
-else
-   { { echo "$as_me:$LINENO: error: No interrupt pipeline extension enabled in your kernel.
-    You need to apply an Adeos patch first." >&5
-echo "$as_me: error: No interrupt pipeline extension enabled in your kernel.
-    You need to apply an Adeos patch first." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-
-
-
-
-
-
-
-
-
-XENO_KMOD_CFLAGS="-D__IN_USB4RT__ $XENO_KMOD_CFLAGS"
-XENO_USER_CFLAGS="-D__IN_USB4RT__ $XENO_USER_CFLAGS"
-
-
-
-
-
-
-echo "$as_me:$LINENO: checking for CROSS_COMPILE" >&5
-echo $ECHO_N "checking for CROSS_COMPILE... $ECHO_C" >&6
-if test "${CROSS_COMPILE}" = ""; then
-  CROSS_COMPILE="`echo ${CC} | sed s/gcc//`"
-
-  if test "${CROSS_COMPILE}gcc" \!= "${CC}"; then
-    CROSS_COMPILE=""
-    echo "$as_me:$LINENO: result: Cannot identify CROSS_COMPILE - assuming none - set manually if needed" >&5
-echo "${ECHO_T}Cannot identify CROSS_COMPILE - assuming none - set manually if needed" >&6
-  else
-    if test "${CROSS_COMPILE}" = ""; then
-      echo "$as_me:$LINENO: result: none" >&5
-echo "${ECHO_T}none" >&6
-    else
-      echo "$as_me:$LINENO: result: ${CROSS_COMPILE}" >&5
-echo "${ECHO_T}${CROSS_COMPILE}" >&6
-    fi
-  fi
-else
-  echo "$as_me:$LINENO: result: ${CROSS_COMPILE}" >&5
-echo "${ECHO_T}${CROSS_COMPILE}" >&6
-fi
-
-
-
-USB4RT_MODULE_EXT=.ko
-USB4RT_KBUILD_ENV='src2obj = $(patsubst %.$(1),%.o,$(filter %.$(1),$(call notdir,$(2))))'
-USB4RT_KBUILD_CMD=" \
-  @for src in \$(filter-out FORCE, \$^); do               \
-    if test \\! -r \`basename \$\$src\`; then             \
-      \$(LN_S) \$\$src;                                   \
-    fi;                                                   \
-  done;                                                   \
-  \$(MAKE) -C $XENO_LINUX_DIR                             \
-  CROSS_COMPILE=\$(CROSS_COMPILE)                         \
-    ARCH=\$(USB4RT_TARGET_ARCH)                           \
-    M=\"\`pwd\`\"                                         \
-    V=\$(V)                                               \
-    xeno_dir=\"${USB4RT_XENO_PREFIX}\"                    \
-    top_srcdir=\"\`cd \$(top_srcdir) && pwd\`\"           \
-    top_builddir=\"\`cd \$(top_builddir) && pwd\`\"       \
-    srcdir=\"\`cd \$(srcdir) && pwd\`\"                   \
-    build_objs='\$(call src2obj,c,\$^)'                   \
-    build_target='\$(basename \$@)'                       \
-    MODVERDIR=\"\`cd \$(top_builddir) && pwd\`/symbols\"  \
-    modules                                               \
-    "
-USB4RT_KBUILD_CLEAN="                                     \
-  @rm -f *.ko *.mod.c .*.cmd *.o;                         \
-  for src in \$^; do                                      \
-    if test -h \`basename \$\$src\`; then                 \
-      rm -f \`basename \$\$src\`;                         \
-    fi;                                                   \
-  done;                                                   \
-  if test -d .tmp_versions; then                          \
-    rm -rf .tmp_versions;                                 \
-  fi;                                                     \
-  "
-
-echo "$as_me:$LINENO: checking for kernel module extension" >&5
-echo $ECHO_N "checking for kernel module extension... $ECHO_C" >&6
-echo "$as_me:$LINENO: result: $USB4RT_MODULE_EXT" >&5
-echo "${ECHO_T}$USB4RT_MODULE_EXT" >&6
-
-
-
-
-
-
-bs_kmodext=$USB4RT_MODULE_EXT
-bs_kcompile="make -C $XENO_LINUX_DIR ARCH=$USB4RT_TARGET_ARCH CROSS_COMPILE=$CROSS_COMPILE V=1 M=`pwd` SUBDIRS=`pwd` modules"
-
-#
-# Xenomai header checks
-#
-
-ac_save_CPPFLAGS="${CPPFLAGS}"
-CPPFLAGS="${ac_save_CPPFLAGS} ${XENO_KMOD_CFLAGS}"
-
-# Working around some Autoconf ugliness here: names of variables
-# stored into the cache are canonicalized, turning /'s into _'s. So if
-# you need to match X_Y.h and X/Y.h as different filenames, you are
-# toast. Whichever comes first will be cached as "X_Y_h" and the
-# second one will never get checked in the fs, but simply
-# uncached. This applies to native_sem.h and native/sem.h for instance.
-# To prevent this, we must only check a single set of non-conflicting
-# headers, depending on the Xenomai version which has been
-# identified. (rpm)
-
-
-for ac_header in native/sem.h
-do
-as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
-if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-        #include <linux/kernel.h>
-
-
-#include <$ac_header>
-_ACEOF
-rm -f Makefile
-cat >Makefile <<_ACEOF
-EXTRA_CFLAGS += ${CFLAGS}
-EXTRA_CFLAGS += ${CPPFLAGS}
-obj-m += conftest.o
-_ACEOF
-rm -f conftest.$bs_kmodext conftest.o
-if { (eval echo "$as_me:$LINENO: \"$bs_kcompile > /dev/null\"") >&5
-  (eval $bs_kcompile > /dev/null) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; then
-  eval "$as_ac_Header=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_Header=no"
-fi
-rm -f conftest.err conftest.$bs_kmodext conftest.o .conftest.o.d .conftest.o.cmd .conftest.ko.cmd .conftest.mod.o.cmd .tmp_versions/conftest.mod Makefile conftest.$ac_ext; rmdir .tmp_versions
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
-if test `eval echo '${'$as_ac_Header'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  { { echo "$as_me:$LINENO: error: *** header not found or working, please check Xenomai installation" >&5
-echo "$as_me: error: *** header not found or working, please check Xenomai installation" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-done
-
-CPPFLAGS="${ac_save_CFLAGS}"
-
-#
-# Installation directory for modules
-#
-echo "$as_me:$LINENO: checking for module installation directory" >&5
-echo $ECHO_N "checking for module installation directory... $ECHO_C" >&6
-
-
-# Check whether --with-module-dir or --without-module-dir was given.
-if test "${with_module_dir+set}" = set; then
-  withval="$with_module_dir"
-  case "${withval}" in
-      "" | y | ye | yes | n | no)
-        { { echo "$as_me:$LINENO: error: You must supply an argument to --with-module-dir." >&5
-echo "$as_me: error: You must supply an argument to --with-module-dir." >&2;}
-   { (exit 1); exit 1; }; } ;;
-    esac
-else
-  with_module_dir='${exec_prefix}/modules'
-fi;
-
-USB4RT_MODULE_DIR="$with_module_dir"
-
-echo "$as_me:$LINENO: result: $USB4RT_MODULE_DIR" >&5
-echo "${ECHO_T}$USB4RT_MODULE_DIR" >&6
-
-
-
-#
-# create links to Makefiles used by linux-2.6.x
-#
 for DIR in \
   core \
   host \
@@ -20684,14 +20556,6 @@ for DIR in \
 done
 
 
-if test \! -r .usb4rt_config; then
-   set | grep -e '^CONFIG_USB4RT' -e '^CONFIG_MODULES' | \
-   sed -e 's,\(.*\)=\(.*\)$,\1=\"\2\",' > .usb4rt_config
-fi
-
-##########################
-# Output files.
-##########################
                                                                       ac_config_files="$ac_config_files GNUmakefile core/GNUmakefile host/GNUmakefile prog/GNUmakefile config/GNUmakefile config/kconfig/GNUmakefile config/kconfig/lxdialog/GNUmakefile"
 
 cat >confcache <<\_ACEOF
@@ -20813,6 +20677,13 @@ echo "$as_me: error: conditional \"am__fastdepCXX\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
+if test -z "${CONFIG_KBUILD_TRUE}" && test -z "${CONFIG_KBUILD_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_KBUILD\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"CONFIG_KBUILD\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
 if test -z "${CONFIG_USB4RT_DBG_COMMON_TRUE}" && test -z "${CONFIG_USB4RT_DBG_COMMON_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"CONFIG_USB4RT_DBG_COMMON\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
@@ -20845,20 +20716,6 @@ if test -z "${CONFIG_USB4RT_BANDW_RECLAM_TRUE}" && test -z "${CONFIG_USB4RT_BAND
   { { echo "$as_me:$LINENO: error: conditional \"CONFIG_USB4RT_BANDW_RECLAM\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"CONFIG_USB4RT_BANDW_RECLAM\" was never defined.
-Usually this means the macro was only invoked conditionally." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-if test -z "${CONFIG_USB4RT_XENO_VERSION_TRUE}" && test -z "${CONFIG_USB4RT_XENO_VERSION_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_USB4RT_XENO_VERSION\" was never defined.
-Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_USB4RT_XENO_VERSION\" was never defined.
-Usually this means the macro was only invoked conditionally." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-if test -z "${CONFIG_KBUILD_TRUE}" && test -z "${CONFIG_KBUILD_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_KBUILD\" was never defined.
-Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_KBUILD\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -21476,6 +21333,20 @@ s,@LIBTOOL@,$LIBTOOL,;t t
 s,@CCAS@,$CCAS,;t t
 s,@CCASFLAGS@,$CCASFLAGS,;t t
 s,@LD@,$LD,;t t
+s,@XENO_PREFIX@,$XENO_PREFIX,;t t
+s,@XENO_LIBRARIES@,$XENO_LIBRARIES,;t t
+s,@LINUX_DIR@,$LINUX_DIR,;t t
+s,@CONFIG_KBUILD_TRUE@,$CONFIG_KBUILD_TRUE,;t t
+s,@CONFIG_KBUILD_FALSE@,$CONFIG_KBUILD_FALSE,;t t
+s,@USB4RT_TARGET_ARCH@,$USB4RT_TARGET_ARCH,;t t
+s,@CROSS_COMPILE@,$CROSS_COMPILE,;t t
+s,@USB4RT_MODULE_EXT@,$USB4RT_MODULE_EXT,;t t
+s,@USB4RT_KBUILD_ENV@,$USB4RT_KBUILD_ENV,;t t
+s,@USB4RT_KBUILD_CMD@,$USB4RT_KBUILD_CMD,;t t
+s,@USB4RT_KBUILD_CLEAN@,$USB4RT_KBUILD_CLEAN,;t t
+s,@USB4RT_MODULE_DIR@,$USB4RT_MODULE_DIR,;t t
+s,@XENO_KMOD_CFLAGS@,$XENO_KMOD_CFLAGS,;t t
+s,@XENO_USER_CFLAGS@,$XENO_USER_CFLAGS,;t t
 s,@CONFIG_USB4RT_DBG_COMMON_TRUE@,$CONFIG_USB4RT_DBG_COMMON_TRUE,;t t
 s,@CONFIG_USB4RT_DBG_COMMON_FALSE@,$CONFIG_USB4RT_DBG_COMMON_FALSE,;t t
 s,@CONFIG_USB4RT_DBG_TIME_TRUE@,$CONFIG_USB4RT_DBG_TIME_TRUE,;t t
@@ -21486,21 +21357,6 @@ s,@CONFIG_USB4RT_DBG_QH_TRUE@,$CONFIG_USB4RT_DBG_QH_TRUE,;t t
 s,@CONFIG_USB4RT_DBG_QH_FALSE@,$CONFIG_USB4RT_DBG_QH_FALSE,;t t
 s,@CONFIG_USB4RT_BANDW_RECLAM_TRUE@,$CONFIG_USB4RT_BANDW_RECLAM_TRUE,;t t
 s,@CONFIG_USB4RT_BANDW_RECLAM_FALSE@,$CONFIG_USB4RT_BANDW_RECLAM_FALSE,;t t
-s,@USB4RT_XENO_PREFIX@,$USB4RT_XENO_PREFIX,;t t
-s,@CONFIG_USB4RT_XENO_VERSION_TRUE@,$CONFIG_USB4RT_XENO_VERSION_TRUE,;t t
-s,@CONFIG_USB4RT_XENO_VERSION_FALSE@,$CONFIG_USB4RT_XENO_VERSION_FALSE,;t t
-s,@USB4RT_TARGET_ARCH@,$USB4RT_TARGET_ARCH,;t t
-s,@XENO_LINUX_DIR@,$XENO_LINUX_DIR,;t t
-s,@USB4RT_MODULE_EXT@,$USB4RT_MODULE_EXT,;t t
-s,@CONFIG_KBUILD_TRUE@,$CONFIG_KBUILD_TRUE,;t t
-s,@CONFIG_KBUILD_FALSE@,$CONFIG_KBUILD_FALSE,;t t
-s,@XENO_KMOD_CFLAGS@,$XENO_KMOD_CFLAGS,;t t
-s,@XENO_USER_CFLAGS@,$XENO_USER_CFLAGS,;t t
-s,@CROSS_COMPILE@,$CROSS_COMPILE,;t t
-s,@USB4RT_KBUILD_ENV@,$USB4RT_KBUILD_ENV,;t t
-s,@USB4RT_KBUILD_CMD@,$USB4RT_KBUILD_CMD,;t t
-s,@USB4RT_KBUILD_CLEAN@,$USB4RT_KBUILD_CLEAN,;t t
-s,@USB4RT_MODULE_DIR@,$USB4RT_MODULE_DIR,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
@@ -22357,8 +22213,9 @@ if test "$no_create" != yes; then
 fi
 
 
+
 #
-# generate include/usb4rt_config.h
+# generate core/usb4rt_config.h
 #
 { echo "$as_me:$LINENO: creating core/usb4rt_config.h" >&5
 echo "$as_me: creating core/usb4rt_config.h" >&6;}
