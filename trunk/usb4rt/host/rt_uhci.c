@@ -657,6 +657,17 @@ int uhc_global_reset( struct uhc_device *p_uhcd )
   return 0;
 }
 
+void reset_framelist( struct uhc_device *p_uhcd )
+{
+  /* writing framellist pointer */
+  DBG("RT-UHC-Driver: Write framellist 0x%p \n",(void *)p_uhcd->p_fl->dma_handle);
+  outl( p_uhcd->p_fl->dma_handle, p_uhcd->p_io->start + FRBASEADD);
+
+  /* setting framenummer to 0 */
+  DBG("RT-UHC-Driver: Setting framenumber to 0\n");
+  outw(0x0000,p_uhcd->p_io->start + FRNUM);
+}
+
 /**
  * Startet einen Universal Host Controller aus.
  * @param hcd_nr Nummer des Host-Controllers
@@ -681,6 +692,9 @@ int uhc_start( struct uhc_device *p_uhcd )
       break;
     }
   }
+
+  /* reset framelist */
+  reset_framelist(p_uhcd);
 
   /* Turn on PIRQ */
   pci_write_config_word(p_uhcd->p_pcidev, USBLEGSUP,USBLEGSUP_DEFAULT);
@@ -767,17 +781,12 @@ static int uhc_init( struct uhc_device *p_uhcd )
   tmp |= PCICMD_BME;
   pci_write_config_word(p_uhcd->p_pcidev,PCICMD,tmp);
 
-  /* Writing Framellist */
-  DBG("RT-UHC-Driver: Write framellist 0x%p \n",(void *)p_uhcd->p_fl->dma_handle);
-  outl( p_uhcd->p_fl->dma_handle, p_uhcd->p_io->start + FRBASEADD);
+  /* init Framelist */
+  reset_framelist(p_uhcd);
 
-   /* Set Max-Packet to 64 */
+  /* Set Max-Packet to 64 */
   DBG("RT-UHC-Driver: Setting max-packet-size to 64 \n");
   outw( inw( p_uhcd->p_io->start + USBCMD ) | USBCMD_MAXP , p_uhcd->p_io->start + USBCMD);
-
-  /* Setting Framenummer to 0 */
-  DBG("RT-UHC-Driver: Setting framenumber to 0\n");
-  outw(0x0000,p_uhcd->p_io->start + FRNUM);
 
   uhc_disable_all_interrupts(p_uhcd);
 
