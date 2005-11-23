@@ -1,14 +1,17 @@
 #
 # Automatically generated make config: don't edit
+# USB4RT version: 0.0.4
+# Wed Nov 23 09:20:33 2005
 #
 CONFIG_MODULES=y
-CONFIG_USB4RT_VERSION="0.0.3"
+CONFIG_USB4RT_VERSION="0.0.4"
 
 #
 # General
 #
 CONFIG_USB4RT_BANDW_RECLAM=y
-CONFIG_USB4RT_XENOMAIDIR="/usr/realtime"
+CONFIG_USB4RT_LINUXDIR="/usr/src/linux"
+CONFIG_USB4RT_XENOMAIDIR="/usr/xenomai"
 CONFIG_USB4RT_INSTALLDIR="/usr/local/usb4rt"
 
 #

@@ -29,8 +29,8 @@
 
 #ifdef __IN_USB4RT__
 
-/* We build for Xenomai 2.0 or newer */
-#undef CONFIG_XENO_2X
+/* We build for Xenomai 2.1 or newer */
+#undef CONFIG_XENO_21X
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H

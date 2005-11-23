@@ -96,48 +96,116 @@ fi
 . $USB4RT_KCONFIG_FILE
 AC_MSG_RESULT([$USB4RT_KCONFIG_FILE ($kconfig_type)])
 
-dnl ============================================================================
-dnl  Xenomai
-dnl ============================================================================
+dnl ======================================================================
+dnl  LINUX kernel with XENOMAI
+dnl ======================================================================
 
-AC_ARG_WITH(xeno-dir,
-  AS_HELP_STRING([--with-xeno-dir=<XENOMAI>], [path to installation directory of xenomai ]),
+AC_ARG_WITH(linux-dir,
+    AS_HELP_STRING([--with-linux-dir=<Linux-Sources>], [Linux source directory]),
     [case "${withval}" in
-    "" | y | ye | yes | n | no)
-            AC_MSG_ERROR([You must supply an argument to --with-xeno-dir.])
+        "" | y | ye | yes | n | no)
+            AC_MSG_ERROR([You must supply an argument to --with-linux-dir.])
+      ;;
+    esac
+    CONFIG_USB4RT_LINUXDIR="$withval"
+    ])
+
+dnl -----------------------------------------------------------------
+dnl check config file
+dnl -----------------------------------------------------------------
+
+AC_MSG_CHECKING([for Linux config file])
+if test \! -f ${CONFIG_USB4RT_LINUXDIR}/.config ; then
+  AC_MSG_ERROR([*** Please configure your kernel])
+fi
+AC_MSG_RESULT([${CONFIG_USB4RT_LINUXDIR}/.config])
+
+dnl -----------------------------------------------------------------
+dnl get linux version
+dnl -----------------------------------------------------------------
+
+AC_MSG_CHECKING([for Linux version])
+LINUX_VERSION="` cat ${CONFIG_USB4RT_LINUXDIR}/.config | \
+                 grep "# Linux kernel version:" | \
+                 gawk -F ": " '{print $2}'`"
+AC_MSG_RESULT([${LINUX_VERSION}])
+
+dnl -----------------------------------------------------------------
+dnl check version
+dnl -----------------------------------------------------------------
+
+case "${LINUX_VERSION}" in
+    2.6.*)
         ;;
+    *)
+        AC_MSG_ERROR([*** Unsupported kernel version $LINUX_VERSION])
+        ;;
+esac
+
+dnl -----------------------------------------------------------------
+dnl loading linux config
+dnl -----------------------------------------------------------------
+
+. ${CONFIG_USB4RT_LINUXDIR}/.config
+
+dnl -----------------------------------------------------------------
+dnl  checking needed Xenomai and skins in linux config
+dnl -----------------------------------------------------------------
+
+AC_MSG_CHECKING([for Xenomai])
+    case "${CONFIG_XENOMAI}" in
+        y) AC_MSG_RESULT([${CONFIG_XENOMAI}]) ;;
+        *) AC_MSG_ERROR([*** Please enable Xenomai]) ;;
+    esac
+
+AC_MSG_CHECKING([for Xenomai native skin])
+    case "${CONFIG_XENO_SKIN_NATIVE}" in
+        y) AC_MSG_RESULT([${CONFIG_XENO_SKIN_NATIVE}]) ;;
+        *) AC_MSG_ERROR([*** Please enable native skin]) ;;
+    esac
+
+dnl ======================================================================
+dnl  XENOMAI userspace
+dnl ======================================================================
+
+AC_ARG_WITH(xeno-user-dir,
+    AS_HELP_STRING([--with-xeno-user-dir=<Xenomai>], [Xenomai userspace installation path]),
+    [case "${withval}" in
+        "" | y | ye | yes | n | no)
+            AC_MSG_ERROR([You must supply an argument to --with-xeno-user-dir.])
+      ;;
     esac
     CONFIG_USB4RT_XENOMAIDIR="$withval"
     ])
 
 dnl -----------------------------------------------------------------
-dnl  try to find Xenomai
+dnl  try to find Xenomai user
 dnl -----------------------------------------------------------------
 
-AC_MSG_CHECKING([for Xenomai installation])
-XENO_CONFIG="${CONFIG_USB4RT_XENOMAIDIR}/bin/xeno-config"
-if test -x "${XENO_CONFIG}"; then
-  XENO_DIR="`cd ${CONFIG_USB4RT_XENOMAIDIR} && pwd`" # let the shell normalize the path
-  AC_MSG_RESULT([${XENO_DIR}])
+AC_MSG_CHECKING([for Xenomai userspace installation])
+XENO_USER_CONFIG="${CONFIG_USB4RT_XENOMAIDIR}/bin/xeno-config"
+if test -x "${XENO_USER_CONFIG}"; then
+  XENO_USER_DIR="`cd ${CONFIG_USB4RT_XENOMAIDIR} && pwd`" # let the shell normalize the path
+  AC_MSG_RESULT([${XENO_USER_DIR}])
 else
   AC_MSG_ERROR([no Xenomai found in $CONFIG_USB4RT_XENOMAIDIR])
 fi
 
 dnl -----------------------------------------------------------------
-dnl  get Xenomai prefix
+dnl  get Xenomai user prefix
 dnl -----------------------------------------------------------------
 
-AC_MSG_CHECKING([for Xenomai PREFIX])
-XENO_PREFIX="`cd \`${XENO_CONFIG} --prefix\` && pwd`"     # let the shell normalize the path
-AC_MSG_RESULT([${XENO_PREFIX}])
+AC_MSG_CHECKING([for Xenomai userspace PREFIX])
+XENO_USER_PREFIX="`cd \`${XENO_USER_CONFIG} --prefix\` && pwd`"     # let the shell normalize the path
+AC_MSG_RESULT([${XENO_USER_PREFIX}])
 
-AC_MSG_CHECKING([for Xenomai DESTDIR])
-if test "${XENO_PREFIX}" \!= "${XENO_DIR}"; then
-  XENO_DESTDIR="`cd \`echo ${XENO_DIR} | sed -e s,${XENO_PREFIX}$,,\` && pwd`"
+AC_MSG_CHECKING([for Xenomai userspace DESTDIR])
+if test "${XENO_USER_PREFIX}" \!= "${XENO_USER_DIR}"; then
+  XENO_DESTDIR="`cd \`echo ${XENO_USER_DIR} | sed -e s,${XENO_USER_PREFIX}$,,\` && pwd`"
   export DESTDIR="${XENO_DESTDIR}"
 
-  XENO_PREFIX="`cd \`${XENO_CONFIG} --prefix\` && pwd`"   # let the shell normalize the path
-  if test "${XENO_PREFIX}" = "${XENO_DIR}"; then
+  XENO_USER_PREFIX="`cd \`${XENO_USER_CONFIG} --prefix\` && pwd`"   # let the shell normalize the path
+  if test "${XENO_USER_PREFIX}" = "${XENO_USER_DIR}"; then
     AC_MSG_RESULT([${DESTDIR}])
   else
     AC_MSG_ERROR([*** Cannot identify DESTDIR])
@@ -146,158 +214,54 @@ else
   AC_MSG_RESULT([none])
 fi
 
-AC_SUBST(XENO_PREFIX)
-
 dnl -----------------------------------------------------------------
 dnl  checking Xenomai version
 dnl -----------------------------------------------------------------
 
 AC_MSG_CHECKING([for Xenomai version])
-XENO_VERSION_PRE="`${XENO_CONFIG} --version`"
+XENO_VERSION_PRE="`${XENO_USER_CONFIG} --version`"
 
 case "$XENO_VERSION_PRE" in
-  2.0 | 2.0.*)
-    XENO_VERSION=xeno-2x
+  2.1* )
+    XENO_VERSION=xeno-21x
     ;;
   *)
-    AC_MSG_ERROR([*** Unsupported Xenomai version $XENO_VERSION_PRE in $XENO_DIR])
+    AC_MSG_ERROR([*** Unsupported Xenomai version $XENO_VERSION_PRE in $XENO_USER_DIR])
   ;;
 esac
 AC_MSG_RESULT([${XENO_VERSION_PRE}])
 
 dnl -----------------------------------------------------------------
-dnl  checking Xenomai config file
-dnl -----------------------------------------------------------------
-
-AC_MSG_CHECKING([for Xenomai config file])
-XENO_CONFIG_FILE="`${XENO_CONFIG} --config`"
-if test \! -f $XENO_CONFIG_FILE; then
-  AC_MSG_ERROR([*** Xenomai configuration file not found])
-fi
-AC_MSG_RESULT([${XENO_CONFIG_FILE}])
-
-# source (load) the Xenomai configuration
-. ${XENO_CONFIG_FILE}
-
-dnl -----------------------------------------------------------------
-dnl  checking needed Xenomai skins
-dnl -----------------------------------------------------------------
-
-AC_MSG_CHECKING([for Xenomai native skin])
-    case "${CONFIG_XENO_SKIN_NATIVE}" in
-        y) AC_MSG_RESULT([${CONFIG_XENO_SKIN_NATIVE}]) ;;
-        *) AC_MSG_ERROR([*** Please enable native skin]) ;;
-    esac
-
-dnl -----------------------------------------------------------------
 dnl  get some more information about Xenomai
 dnl -----------------------------------------------------------------
 
-XENO_USER_CFLAGS="`${XENO_CONFIG} --xeno-cflags`"
-XENO_KMOD_CFLAGS="`${XENO_CONFIG} --module-cflags`"
-
-XENO_ARCH="`${XENO_CONFIG} --arch`"
-XENO_LIBRARIES="`${XENO_CONFIG} --library-dir`"
-XENO_SYMBOLS="`${XENO_CONFIG} --symbol-dir`"
+XENO_USER_CFLAGS="`${XENO_USER_CONFIG} --xeno-cflags`"
+XENO_USER_ARCH="`${XENO_USER_CONFIG} --arch`"
+XENO_LIBRARIES="`${XENO_USER_CONFIG} --library-dir`"
 
 dnl -----------------------------------------------------------------
-dnl  create links to Xenomai symbols
+dnl export Xenomai values
 dnl -----------------------------------------------------------------
 
-case "${XENO_VERSION}" in
-  xeno-2x)
-    mkdir -p symbols
-    rm -rf symbols/*
-    for FILE in `ls ${XENO_SYMBOLS}/*`; do
-      ${LN_S} ${FILE} symbols/$(basename ${FILE})
-    done
-    ;;
-  *)
-    AC_MSG_ERROR([*** internal ERROR ***])
-    ;;
-esac
-
-dnl -----------------------------------------------------------------
-dnl export linux values
-dnl -----------------------------------------------------------------
-
-AC_SUBST(XENO_PREFIX)
+AC_SUBST(XENO_USER_PREFIX)
 AC_SUBST(XENO_LIBRARIES)
-AC_DEFINE(CONFIG_XENO_2X, 1, [We build for Xenomai 2.0 or newer])
-
-
-dnl ======================================================================
-dnl          get linux kernel tree, version and config file
-dnl ======================================================================
-
-dnl -----------------------------------------------------------------
-dnl get linux source directory from Xenomai
-dnl -----------------------------------------------------------------
-
-AC_MSG_CHECKING([for Linux source tree])
-LINUX_DIR="`${XENO_CONFIG} --linux-dir`"
-AC_MSG_RESULT([${LINUX_DIR}])
-
-dnl -----------------------------------------------------------------
-dnl get linux version from Xenomai
-dnl -----------------------------------------------------------------
-
-AC_MSG_CHECKING([for Linux version])
-USB4RT_LINUX_VERSION="`${XENO_CONFIG} --linux-version`"
-AC_MSG_RESULT([${USB4RT_LINUX_VERSION}])
-
-dnl -----------------------------------------------------------------
-dnl check version
-dnl -----------------------------------------------------------------
-
-case "${USB4RT_LINUX_VERSION}" in
-    2.6.*)
-        ;;
-    *)
-        AC_MSG_ERROR([*** Unsupported kernel version $USB4RT_LINUX_VERSION])
-        ;;
-esac
-
-dnl -----------------------------------------------------------------
-dnl check config file
-dnl -----------------------------------------------------------------
-
-AC_MSG_CHECKING([for Linux config file])
-if test \! -f ${LINUX_DIR}/.config ; then
-  AC_MSG_ERROR([*** Please configure your kernel])
-fi
-AC_MSG_RESULT([${LINUX_DIR}/.config])
-
-dnl -----------------------------------------------------------------
-dnl loading linux config
-dnl -----------------------------------------------------------------
-
-. ${LINUX_DIR}/.config
-
-AC_SUBST(LINUX_DIR)
-
-dnl -----------------------------------------------------------------
-dnl export linux values
-dnl -----------------------------------------------------------------
-
-AC_SUBST(LINUX_DIR)
-AM_CONDITIONAL(CONFIG_KBUILD,[test "$CONFIG_KBUILD" = y])
+AC_DEFINE(CONFIG_XENO_21X, 1, [We build for Xenomai 2.1 or newer])
 
 dnl ======================================================================
 dnl  architecture test Xenomai <-> usb4rt
 dnl ======================================================================
 
 AC_MSG_CHECKING([for Xenomai target arch])
-AC_MSG_RESULT([${XENO_ARCH}])
+AC_MSG_RESULT([${XENO_USER_ARCH}])
 
 AC_MSG_CHECKING([for USB4RT target arch])
 AC_MSG_RESULT([${USB4RT_TARGET_ARCH}])
 
-if test x"${USB4RT_TARGET_ARCH}" != x"${XENO_ARCH}"; then
+if test x"${USB4RT_TARGET_ARCH}" != x"${XENO_USER_ARCH}"; then
     AC_MSG_ERROR([*** Xenomai and USB4RT target architectures are not the same])
 fi
 
-case "${XENO_ARCH}" in
+case "${XENO_USER_ARCH}" in
     i386)
         AC_DEFINE(CONFIG_ARCH_I386, 1,[we are building for x86])
         ;;
@@ -343,12 +307,13 @@ USB4RT_KBUILD_CMD=" \
       \$(LN_S) \$\$src;                                   \
     fi;                                                   \
   done;                                                   \
-  \$(MAKE) -C $LINUX_DIR                                  \
-  CROSS_COMPILE=\$(CROSS_COMPILE)                         \
+  \$(MAKE) -C $CONFIG_USB4RT_LINUXDIR                     \
+    CROSS_COMPILE=\$(CROSS_COMPILE)                       \
     ARCH=\$(USB4RT_TARGET_ARCH)                           \
     M=\"\`pwd\`\"                                         \
     V=\$(V)                                               \
-    xeno_dir=\"${XENO_PREFIX}\"                           \
+    linux_dir=\"${CONFIG_USB4RT_LINUXDIR}\"               \
+    xeno_user_dir=\"${XENO_USER_PREFIX}\"                 \
     top_srcdir=\"\`cd \$(top_srcdir) && pwd\`\"           \
     top_builddir=\"\`cd \$(top_builddir) && pwd\`\"       \
     srcdir=\"\`cd \$(srcdir) && pwd\`\"                   \
@@ -378,7 +343,8 @@ AC_SUBST(USB4RT_KBUILD_CMD)
 AC_SUBST(USB4RT_KBUILD_CLEAN)
 
 bs_kmodext=$USB4RT_MODULE_EXT
-bs_kcompile="make -C $LINUX_DIR ARCH=$USB4RT_TARGET_ARCH CROSS_COMPILE=$CROSS_COMPILE V=1 M=`pwd` SUBDIRS=`pwd` modules"
+bs_kcompile="make -C $CONFIG_USB4RT_LINUXDIR ARCH=$USB4RT_TARGET_ARCH
+             CROSS_COMPILE=$CROSS_COMPILE V=1 M=`pwd` SUBDIRS=`pwd` modules"
 
 dnl ======================================================================
 dnl             Installation directory for modules

@@ -20,11 +20,11 @@
 
 #include <linux/module.h>
 #include <linux/kernel.h>
-#include <native/task.h>
-#include <native/timer.h>
-#include <native/sem.h>
+#include <xenomai/native/task.h>
+#include <xenomai/native/timer.h>
+#include <xenomai/native/sem.h>
 
-#include "../core/rt_usb.h"
+#include <core/rt_usb.h>
 //                        --s-ms-us-ns
 #define NS_PER_PERIOD        100125000
 
