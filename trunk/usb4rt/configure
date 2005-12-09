@@ -20125,7 +20125,7 @@ echo "$as_me: error: *** Please enable Xenomai" >&2;}
 echo "$as_me:$LINENO: checking for Xenomai native skin" >&5
 echo $ECHO_N "checking for Xenomai native skin... $ECHO_C" >&6
     case "${CONFIG_XENO_SKIN_NATIVE}" in
-        y) echo "$as_me:$LINENO: result: ${CONFIG_XENO_SKIN_NATIVE}" >&5
+        y | m) echo "$as_me:$LINENO: result: ${CONFIG_XENO_SKIN_NATIVE}" >&5
 echo "${ECHO_T}${CONFIG_XENO_SKIN_NATIVE}" >&6 ;;
         *) { { echo "$as_me:$LINENO: error: *** Please enable native skin" >&5
 echo "$as_me: error: *** Please enable native skin" >&2;}

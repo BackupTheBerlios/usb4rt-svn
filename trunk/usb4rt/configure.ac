@@ -160,7 +160,7 @@ AC_MSG_CHECKING([for Xenomai])
 
 AC_MSG_CHECKING([for Xenomai native skin])
     case "${CONFIG_XENO_SKIN_NATIVE}" in
-        y) AC_MSG_RESULT([${CONFIG_XENO_SKIN_NATIVE}]) ;;
+        y | m) AC_MSG_RESULT([${CONFIG_XENO_SKIN_NATIVE}]) ;;
         *) AC_MSG_ERROR([*** Please enable native skin]) ;;
     esac
 
