@@ -140,13 +140,13 @@ STRIP = @STRIP@
 USB4RT_KBUILD_CLEAN = @USB4RT_KBUILD_CLEAN@
 USB4RT_KBUILD_CMD = @USB4RT_KBUILD_CMD@
 USB4RT_KBUILD_ENV = @USB4RT_KBUILD_ENV@
+USB4RT_KMOD_CFLAGS = @USB4RT_KMOD_CFLAGS@
 USB4RT_MODULE_DIR = @USB4RT_MODULE_DIR@
 USB4RT_MODULE_EXT = @USB4RT_MODULE_EXT@
 USB4RT_TARGET_ARCH = @USB4RT_TARGET_ARCH@
+USB4RT_USER_CFLAGS = @USB4RT_USER_CFLAGS@
 VERSION = @VERSION@
-XENO_KMOD_CFLAGS = @XENO_KMOD_CFLAGS@
 XENO_LIBRARIES = @XENO_LIBRARIES@
-XENO_USER_CFLAGS = @XENO_USER_CFLAGS@
 XENO_USER_PREFIX = @XENO_USER_PREFIX@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
@@ -191,18 +191,25 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-moduledir = $(DESTDIR)@USB4RT_MODULE_DIR@
+moduledir = $(DESTDIR)$(USB4RT_MODULE_DIR)
 modext = @USB4RT_MODULE_EXT@
-EXTRA_LIBRARIES = libkernel_rtai_rt_usbping.a
+EXTRA_LIBRARIES = \
+	libkernel_rtai_rt_usbping.a
+
 libkernel_rtai_rt_usbping_a_CPPFLAGS = \
-	@RTAI_KMOD_CFLAGS@
+	$(USB4RT_KMOD_CFLAGS) \
+	-I$(top_srcdir)
 
 libkernel_rtai_rt_usbping_a_SOURCES = \
 	rt_usb_ping.c
 
 OBJS = rt_usbping$(modext)
-EXTRA_DIST = Makefile.kbuild
-DISTCLEANFILES = Makefile
+EXTRA_DIST = \
+	Makefile.kbuild
+
+DISTCLEANFILES = \
+	Makefile
+
 all: all-am
 
 .SUFFIXES:
@@ -406,7 +413,7 @@ distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
 	-rm -f GNUmakefile
 distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-libtool distclean-tags
+	distclean-libtool distclean-local distclean-tags
 
 dvi: dvi-am
 
@@ -451,9 +458,9 @@ uninstall-am: uninstall-info-am
 .PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
 	clean-generic clean-libtool clean-local ctags distclean \
 	distclean-compile distclean-generic distclean-libtool \
-	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-exec \
-	install-exec-am install-exec-local install-info \
+	distclean-local distclean-tags distdir dvi dvi-am html html-am \
+	info info-am install install-am install-data install-data-am \
+	install-exec install-exec-am install-exec-local install-info \
 	install-info-am install-man install-strip installcheck \
 	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
@@ -472,10 +479,13 @@ all-local: $(OBJS)
 
 install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)
-	$(INSTALL_DATA) $^ $(moduledir)
+	if test "$^" \!= ""; then $(INSTALL_DATA) $^ $(moduledir); fi
 
 clean-local: $(libkernel_rtai_rt_usbping_a_SOURCES)
 	@USB4RT_KBUILD_CLEAN@
+
+distclean-local:
+	$(USB4RT_KBUILD_DISTCLEAN)
 
 .PHONY: FORCE
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

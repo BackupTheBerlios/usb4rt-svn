@@ -1,20 +1,26 @@
-moduledir = $(DESTDIR)@USB4RT_MODULE_DIR@
+
+includedir = $prefix)/include/core
+
+include_HEADERS = \
+	rt_usb.h \
+	rt_usb_core.h \
+	rt_usb_hub.h \
+	rt_usb_debug.h
+
+moduledir = $(DESTDIR)$(USB4RT_MODULE_DIR)
 modext = @USB4RT_MODULE_EXT@
 
-## libkernel_rtai_rtusbcore.a ###################
-
-EXTRA_LIBRARIES = libkernel_rtai_rtusbcore.a
-
-nobase_include_HEADERS = rt_usb.h rt_usb_core.h rt_usb_hub.h rt_usb_debug.h
+EXTRA_LIBRARIES = \
+	libkernel_rtai_rtusbcore.a
 
 libkernel_rtai_rtusbcore_a_CPPFLAGS = \
-	-I$(top_srcdir) \
-	@XENO_KMOD_CFLAGS@
+	$(USB4RT_KMOD_CFLAGS) \
+	-I$(top_srcdir)
 
 libkernel_rtai_rtusbcore_a_SOURCES = \
-	rt_usb_core.c rt_usb_debug.c rt_usb_hub.c
-
-###############################################
+	rt_usb_core.c \
+	rt_usb_debug.c \
+	rt_usb_hub.c
 
 OBJS = rt_usbcore$(modext)
 
@@ -29,13 +35,18 @@ all-local: $(OBJS)
 
 install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)
-	$(INSTALL_DATA) $^ $(moduledir)
+	if test "$^" \!= ""; then $(INSTALL_DATA) $^ $(moduledir); fi
 
 clean-local: $(libkernel_rtai_rtusbcore_a_SOURCES)
 	@USB4RT_KBUILD_CLEAN@
 
-EXTRA_DIST = Makefile.kbuild
+distclean-local:
+	$(USB4RT_KBUILD_DISTCLEAN)
 
-DISTCLEANFILES = Makefile
+EXTRA_DIST = \
+	Makefile.kbuild
+
+DISTCLEANFILES = \
+	Makefile
 
 .PHONY: FORCE

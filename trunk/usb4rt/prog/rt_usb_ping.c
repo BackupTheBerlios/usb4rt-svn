@@ -20,9 +20,9 @@
 
 #include <linux/module.h>
 #include <linux/kernel.h>
-#include <xenomai/native/task.h>
-#include <xenomai/native/timer.h>
-#include <xenomai/native/sem.h>
+#include <native/task.h>
+#include <native/timer.h>
+#include <native/sem.h>
 
 #include <core/rt_usb.h>
 //                        --s-ms-us-ns
@@ -62,8 +62,6 @@ MODULE_PARM (vendor,"i");
 MODULE_PARM_DESC (vendor,"Hex-Value of Vendor-ID");
 MODULE_PARM (product,"i");
 MODULE_PARM_DESC (product,"Hex-Value of Product-ID");
-
-__u8 stop_timer = 1;
 
 static RT_TASK  rtTask;
 
@@ -152,21 +150,6 @@ void periodic_fkt( void *p_data )
 
   if(len <= 0){
     return;
-  }
-
-  ret = rt_timer_start( TM_ONESHOT );
-  if(ret){
-    if(ret == -EBUSY){
-      printk("RT-USB-PING: Timer is running\n");
-      stop_timer = 0;
-
-    } else {
-      printk("RT-USB-PING: [ERROR] Failed to start Timer, code = %d \n",ret);
-      return;
-    }
-  } else {
-    printk("RT-USB-PING: Timer started\n");
-    stop_timer = 1;
   }
 
   tick_period = rt_timer_ns2ticks( NS_PER_PERIOD );
@@ -481,11 +464,6 @@ int init_module(void)
 
 void cleanup_module(void)
 {
-  if(stop_timer){
-    printk("RT-USB-PING: Stopping Timer \n");
-    rt_timer_stop();
-  }
-
   destroy_urbs();
   rt_usb_put_device(p_device);
 

@@ -466,7 +466,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB CPP CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CCAS CCASFLAGS LD XENO_USER_PREFIX XENO_LIBRARIES USB4RT_TARGET_ARCH CROSS_COMPILE USB4RT_MODULE_EXT USB4RT_KBUILD_ENV USB4RT_KBUILD_CMD USB4RT_KBUILD_CLEAN USB4RT_MODULE_DIR XENO_KMOD_CFLAGS XENO_USER_CFLAGS CONFIG_USB4RT_DBG_COMMON_TRUE CONFIG_USB4RT_DBG_COMMON_FALSE CONFIG_USB4RT_DBG_TIME_TRUE CONFIG_USB4RT_DBG_TIME_FALSE CONFIG_USB4RT_DBG_TD_TRUE CONFIG_USB4RT_DBG_TD_FALSE CONFIG_USB4RT_DBG_QH_TRUE CONFIG_USB4RT_DBG_QH_FALSE CONFIG_USB4RT_BANDW_RECLAM_TRUE CONFIG_USB4RT_BANDW_RECLAM_FALSE LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB CPP CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CCAS CCASFLAGS LD XENO_USER_PREFIX XENO_LIBRARIES USB4RT_TARGET_ARCH CROSS_COMPILE USB4RT_MODULE_EXT USB4RT_KBUILD_ENV USB4RT_KBUILD_CMD USB4RT_KBUILD_CLEAN USB4RT_MODULE_DIR USB4RT_KMOD_CFLAGS USB4RT_USER_CFLAGS CONFIG_USB4RT_DBG_COMMON_TRUE CONFIG_USB4RT_DBG_COMMON_FALSE CONFIG_USB4RT_DBG_TIME_TRUE CONFIG_USB4RT_DBG_TIME_FALSE CONFIG_USB4RT_DBG_TD_TRUE CONFIG_USB4RT_DBG_TD_FALSE CONFIG_USB4RT_DBG_QH_TRUE CONFIG_USB4RT_DBG_QH_FALSE CONFIG_USB4RT_BANDW_RECLAM_TRUE CONFIG_USB4RT_BANDW_RECLAM_FALSE LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -20208,7 +20208,20 @@ echo "$as_me:$LINENO: result: ${XENO_VERSION_PRE}" >&5
 echo "${ECHO_T}${XENO_VERSION_PRE}" >&6
 
 
-XENO_USER_CFLAGS="`${XENO_USER_CONFIG} --xeno-cflags`"
+USB4RT_KMOD_CFLAGS="-I${CONFIG_USB4RT_LINUXDIR}/include/xenomai"
+
+echo "$as_me:$LINENO: checking usb4rt kernel compiler flags" >&5
+echo $ECHO_N "checking usb4rt kernel compiler flags... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: $USB4RT_KMOD_CFLAGS" >&5
+echo "${ECHO_T}$USB4RT_KMOD_CFLAGS" >&6
+
+USB4RT_USER_CFLAGS="`${XENO_USER_CONFIG} --xeno-cflags`"
+
+echo "$as_me:$LINENO: checking usb4rt userspace compiler flags" >&5
+echo $ECHO_N "checking usb4rt userspace compiler flags... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: $USB4RT_USER_CFLAGS" >&5
+echo "${ECHO_T}$USB4RT_USER_CFLAGS" >&6
+
 XENO_USER_ARCH="`${XENO_USER_CONFIG} --arch`"
 XENO_LIBRARIES="`${XENO_USER_CONFIG} --library-dir`"
 
@@ -20294,6 +20307,7 @@ USB4RT_KBUILD_CMD=" \
     ARCH=\$(USB4RT_TARGET_ARCH)                           \
     M=\"\`pwd\`\"                                         \
     V=\$(V)                                               \
+    usb4rt_kmod_cflags=\"\$(USB4RT_KMOD_CFLAGS)\"         \
     linux_dir=\"${CONFIG_USB4RT_LINUXDIR}\"               \
     xeno_user_dir=\"${XENO_USER_PREFIX}\"                 \
     top_srcdir=\"\`cd \$(top_srcdir) && pwd\`\"           \
@@ -20314,6 +20328,12 @@ USB4RT_KBUILD_CLEAN="                                     \
   if test -d .tmp_versions; then                          \
     rm -rf .tmp_versions;                                 \
   fi;                                                     \
+  "
+USB4RT_KBUILD_DISTCLEAN="                                         \
+  @for mod in \${OBJS}; do                                        \
+    rm -f \`cd \$(top_builddir) && pwd\`/symbols/\`echo \$\$mod | \
+    sed -e's/${USB4RT_MODULE_EXT}//'\`.mod;                        \
+  done;                                                           \
   "
 
 echo "$as_me:$LINENO: checking for kernel module extension" >&5
@@ -20363,8 +20383,8 @@ echo "${ECHO_T}$USB4RT_MODULE_DIR" >&6
 
 
 
-XENO_KMOD_CFLAGS="-D__IN_USB4RT__ $XENO_KMOD_CFLAGS"
-XENO_USER_CFLAGS="-D__IN_USB4RT__ $XENO_USER_CFLAGS"
+USB4RT_KMOD_CFLAGS="-D__IN_USB4RT__ $USB4RT_KMOD_CFLAGS"
+USB4RT_USER_CFLAGS="-D__IN_USB4RT__ $USB4RT_USER_CFLAGS"
 
 
 
@@ -21307,8 +21327,8 @@ s,@USB4RT_KBUILD_ENV@,$USB4RT_KBUILD_ENV,;t t
 s,@USB4RT_KBUILD_CMD@,$USB4RT_KBUILD_CMD,;t t
 s,@USB4RT_KBUILD_CLEAN@,$USB4RT_KBUILD_CLEAN,;t t
 s,@USB4RT_MODULE_DIR@,$USB4RT_MODULE_DIR,;t t
-s,@XENO_KMOD_CFLAGS@,$XENO_KMOD_CFLAGS,;t t
-s,@XENO_USER_CFLAGS@,$XENO_USER_CFLAGS,;t t
+s,@USB4RT_KMOD_CFLAGS@,$USB4RT_KMOD_CFLAGS,;t t
+s,@USB4RT_USER_CFLAGS@,$USB4RT_USER_CFLAGS,;t t
 s,@CONFIG_USB4RT_DBG_COMMON_TRUE@,$CONFIG_USB4RT_DBG_COMMON_TRUE,;t t
 s,@CONFIG_USB4RT_DBG_COMMON_FALSE@,$CONFIG_USB4RT_DBG_COMMON_FALSE,;t t
 s,@CONFIG_USB4RT_DBG_TIME_TRUE@,$CONFIG_USB4RT_DBG_TIME_TRUE,;t t

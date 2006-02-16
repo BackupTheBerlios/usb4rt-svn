@@ -37,7 +37,6 @@ struct usb_device usb_dev[MAX_USB_DEV];
 struct list_head usb_ctrl_list;
 struct list_head hub_list;
 
-__u8 timer_started = 0;
 __u8 next_usbdev = 1;
 __u8 usb_anz_ctrl = 0;
 
@@ -1962,12 +1961,6 @@ int __init mod_start(void)
   PRNT("RT-USBCORE: Initialize Controller-List \n");
   INIT_LIST_HEAD( &usb_ctrl_list);
 
-  ret = rt_timer_start( TM_ONESHOT );
-  if(!ret){
-    PRNT("RT-USBCORE: RT-Timer started  \n");
-    timer_started = 1;
-  }
-
   PRNT("RT-USBCORE: Loading Completed (%d Byte allocated) \n",alloc_bytes);
 
   return 0;
@@ -2001,13 +1994,6 @@ void mod_exit(void)
   for(i = 1; i<MAX_USB_DEV; i++){
     usb_clear_device( &usb_dev[i] );
   }
-
-  if( timer_started){
-    rt_timer_stop( );
-    PRNT("RT-USBCORE: RT-Timer stopped  \n");
-    timer_started = 0;
-  }
-
 
   PRNT("RT-USBCORE: Unloading Completed (%d Byte allocated) \n",alloc_bytes);
 }

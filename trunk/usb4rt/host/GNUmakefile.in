@@ -37,7 +37,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 subdir = host
-DIST_COMMON = $(nobase_include_HEADERS) $(srcdir)/GNUmakefile.am \
+DIST_COMMON = $(include_HEADERS) $(srcdir)/GNUmakefile.am \
 	$(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/version \
@@ -75,8 +75,8 @@ am__vpath_adj = case $$p in \
   esac;
 am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(includedir)"
-nobase_includeHEADERS_INSTALL = $(install_sh_DATA)
-HEADERS = $(nobase_include_HEADERS)
+includeHEADERS_INSTALL = $(INSTALL_HEADER)
+HEADERS = $(include_HEADERS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -152,13 +152,13 @@ STRIP = @STRIP@
 USB4RT_KBUILD_CLEAN = @USB4RT_KBUILD_CLEAN@
 USB4RT_KBUILD_CMD = @USB4RT_KBUILD_CMD@
 USB4RT_KBUILD_ENV = @USB4RT_KBUILD_ENV@
+USB4RT_KMOD_CFLAGS = @USB4RT_KMOD_CFLAGS@
 USB4RT_MODULE_DIR = @USB4RT_MODULE_DIR@
 USB4RT_MODULE_EXT = @USB4RT_MODULE_EXT@
 USB4RT_TARGET_ARCH = @USB4RT_TARGET_ARCH@
+USB4RT_USER_CFLAGS = @USB4RT_USER_CFLAGS@
 VERSION = @VERSION@
-XENO_KMOD_CFLAGS = @XENO_KMOD_CFLAGS@
 XENO_LIBRARIES = @XENO_LIBRARIES@
-XENO_USER_CFLAGS = @XENO_USER_CFLAGS@
 XENO_USER_PREFIX = @XENO_USER_PREFIX@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
@@ -188,7 +188,7 @@ host_alias = @host_alias@
 host_cpu = @host_cpu@
 host_os = @host_os@
 host_vendor = @host_vendor@
-includedir = @includedir@
+includedir = $prefix)/include/host
 infodir = @infodir@
 install_sh = @install_sh@
 libdir = @libdir@
@@ -203,19 +203,30 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-moduledir = $(DESTDIR)@USB4RT_MODULE_DIR@
+include_HEADERS = \
+	rt_uhci.h \
+	rt_uhci_hub.h
+
+moduledir = $(DESTDIR)$(USB4RT_MODULE_DIR)
 modext = @USB4RT_MODULE_EXT@
-EXTRA_LIBRARIES = libkernel_rtai_rt_uhci_hcd.a
-nobase_include_HEADERS = rt_uhci.h rt_uhci_hub.h
+EXTRA_LIBRARIES = \
+	libkernel_rtai_rt_uhci_hcd.a
+
 libkernel_rtai_rt_uhci_hcd_a_CPPFLAGS = \
-	@RTAI_KMOD_CFLAGS@
+	$(USB4RT_KMOD_CFLAGS) \
+	-I$(top_srcdir)
 
 libkernel_rtai_rt_uhci_hcd_a_SOURCES = \
-	rt_uhci.c rt_uhci_hub.c
+	rt_uhci.c \
+	rt_uhci_hub.c
 
 OBJS = rt_uhci_hcd$(modext)
-EXTRA_DIST = Makefile.kbuild
-DISTCLEANFILES = Makefile
+EXTRA_DIST = \
+	Makefile.kbuild
+
+DISTCLEANFILES = \
+	Makefile
+
 all: all-am
 
 .SUFFIXES:
@@ -321,22 +332,20 @@ clean-libtool:
 distclean-libtool:
 	-rm -f libtool
 uninstall-info-am:
-install-nobase_includeHEADERS: $(nobase_include_HEADERS)
+install-includeHEADERS: $(include_HEADERS)
 	@$(NORMAL_INSTALL)
 	test -z "$(includedir)" || $(mkdir_p) "$(DESTDIR)$(includedir)"
-	@$(am__vpath_adj_setup) \
-	list='$(nobase_include_HEADERS)'; for p in $$list; do \
+	@list='$(include_HEADERS)'; for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  $(am__vpath_adj) \
-	  echo " $(nobase_includeHEADERS_INSTALL) '$$d$$p' '$(DESTDIR)$(includedir)/$$f'"; \
-	  $(nobase_includeHEADERS_INSTALL) "$$d$$p" "$(DESTDIR)$(includedir)/$$f"; \
+	  f=$(am__strip_dir) \
+	  echo " $(includeHEADERS_INSTALL) '$$d$$p' '$(DESTDIR)$(includedir)/$$f'"; \
+	  $(includeHEADERS_INSTALL) "$$d$$p" "$(DESTDIR)$(includedir)/$$f"; \
 	done
 
-uninstall-nobase_includeHEADERS:
+uninstall-includeHEADERS:
 	@$(NORMAL_UNINSTALL)
-	@$(am__vpath_adj_setup) \
-	list='$(nobase_include_HEADERS)'; for p in $$list; do \
-	  $(am__vpath_adj) \
+	@list='$(include_HEADERS)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
 	  echo " rm -f '$(DESTDIR)$(includedir)/$$f'"; \
 	  rm -f "$(DESTDIR)$(includedir)/$$f"; \
 	done
@@ -456,7 +465,7 @@ distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
 	-rm -f GNUmakefile
 distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-libtool distclean-tags
+	distclean-libtool distclean-local distclean-tags
 
 dvi: dvi-am
 
@@ -468,7 +477,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-nobase_includeHEADERS
+install-data-am: install-includeHEADERS
 
 install-exec-am: install-exec-local
 
@@ -496,20 +505,20 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-info-am uninstall-nobase_includeHEADERS
+uninstall-am: uninstall-includeHEADERS uninstall-info-am
 
 .PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
 	clean-generic clean-libtool clean-local ctags distclean \
 	distclean-compile distclean-generic distclean-libtool \
-	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-exec \
-	install-exec-am install-exec-local install-info \
-	install-info-am install-man install-nobase_includeHEADERS \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags uninstall uninstall-am \
-	uninstall-info-am uninstall-nobase_includeHEADERS
+	distclean-local distclean-tags distdir dvi dvi-am html html-am \
+	info info-am install install-am install-data install-data-am \
+	install-exec install-exec-am install-exec-local \
+	install-includeHEADERS install-info install-info-am \
+	install-man install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
+	uninstall-am uninstall-includeHEADERS uninstall-info-am
 
 
 rt_uhci_hcd.o: libkernel_rtai_rt_uhci_hcd.a
@@ -523,10 +532,13 @@ all-local: $(OBJS)
 
 install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)
-	$(INSTALL_DATA) $^ $(moduledir)
+	if test "$^" \!= ""; then $(INSTALL_DATA) $^ $(moduledir); fi
 
 clean-local: $(libkernel_rtai_rt_uhci_hcd_a_SOURCES)
 	@USB4RT_KBUILD_CLEAN@
+
+distclean-local:
+	$(USB4RT_KBUILD_DISTCLEAN)
 
 .PHONY: FORCE
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

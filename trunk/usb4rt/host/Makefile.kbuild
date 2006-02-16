@@ -1,5 +1,5 @@
 EXTRA_CFLAGS += \
-	-I$(xeno_dir)/include \
+	$(usb4rt_kmod_cflags) \
 	-I$(top_srcdir) \
 	-I$(top_builddir) \
 	-I$(srcdir)

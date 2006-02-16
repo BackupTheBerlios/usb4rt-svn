@@ -235,7 +235,16 @@ dnl -----------------------------------------------------------------
 dnl  get some more information about Xenomai
 dnl -----------------------------------------------------------------
 
-XENO_USER_CFLAGS="`${XENO_USER_CONFIG} --xeno-cflags`"
+USB4RT_KMOD_CFLAGS="-I${CONFIG_USB4RT_LINUXDIR}/include/xenomai"
+
+AC_MSG_CHECKING([usb4rt kernel compiler flags])
+AC_MSG_RESULT([$USB4RT_KMOD_CFLAGS])
+
+USB4RT_USER_CFLAGS="`${XENO_USER_CONFIG} --xeno-cflags`"
+
+AC_MSG_CHECKING([usb4rt userspace compiler flags])
+AC_MSG_RESULT([$USB4RT_USER_CFLAGS])
+
 XENO_USER_ARCH="`${XENO_USER_CONFIG} --arch`"
 XENO_LIBRARIES="`${XENO_USER_CONFIG} --library-dir`"
 
@@ -312,6 +321,7 @@ USB4RT_KBUILD_CMD=" \
     ARCH=\$(USB4RT_TARGET_ARCH)                           \
     M=\"\`pwd\`\"                                         \
     V=\$(V)                                               \
+    usb4rt_kmod_cflags=\"\$(USB4RT_KMOD_CFLAGS)\"         \
     linux_dir=\"${CONFIG_USB4RT_LINUXDIR}\"               \
     xeno_user_dir=\"${XENO_USER_PREFIX}\"                 \
     top_srcdir=\"\`cd \$(top_srcdir) && pwd\`\"           \
@@ -332,6 +342,12 @@ USB4RT_KBUILD_CLEAN="                                     \
   if test -d .tmp_versions; then                          \
     rm -rf .tmp_versions;                                 \
   fi;                                                     \
+  "
+USB4RT_KBUILD_DISTCLEAN="                                         \
+  @for mod in \${OBJS}; do                                        \
+    rm -f \`cd \$(top_builddir) && pwd\`/symbols/\`echo \$\$mod | \
+    sed -e's/${USB4RT_MODULE_EXT}//'\`.mod;                       \
+  done;                                                           \
   "
 
 AC_MSG_CHECKING([for kernel module extension])
@@ -373,13 +389,13 @@ dnl ======================================================================
 
 dnl CAUTION: We need to have the CONFIG_USB4RT_XX symbols always defined when
 dnl the configuration header is read, but we want the Autoconf-produced
-dnl symbols to be defined only when compiling RTNET. This way, we won't
+dnl symbols to be defined only when compiling USB4RT. This way, we won't
 dnl pollute the namespace with the latter when our configuration header is
 dnl indirectly included by a client application. To achieve this, we ask
 dnl autoheader to produce the following header structure:
 dnl #define CONFIG_XX
 dnl #define CONFIG_XX ...
-dnl #ifdef __IN_RTNET__
+dnl #ifdef __IN_USB4RT__
 dnl <Autoconf-defined symbols>
 dnl #endif /* __IN_USB4RT__ */
 dnl This is quite a hack since we have to rely on the fact that
@@ -395,11 +411,11 @@ dnl Now we can close the conditional section, right after all
 dnl Autoconf-generated symbols have been listed.
 AH_BOTTOM([#endif /* __IN_USB4RT__ */])
 
-XENO_KMOD_CFLAGS="-D__IN_USB4RT__ $XENO_KMOD_CFLAGS"
-XENO_USER_CFLAGS="-D__IN_USB4RT__ $XENO_USER_CFLAGS"
+USB4RT_KMOD_CFLAGS="-D__IN_USB4RT__ $USB4RT_KMOD_CFLAGS"
+USB4RT_USER_CFLAGS="-D__IN_USB4RT__ $USB4RT_USER_CFLAGS"
 
-AC_SUBST(XENO_KMOD_CFLAGS)
-AC_SUBST(XENO_USER_CFLAGS)
+AC_SUBST(USB4RT_KMOD_CFLAGS)
+AC_SUBST(USB4RT_USER_CFLAGS)
 
 dnl ======================================================================
 dnl                      components
@@ -505,9 +521,9 @@ AC_CONFIG_FILES([GNUmakefile \
                  core/GNUmakefile \
                  host/GNUmakefile \
                  prog/GNUmakefile \
-         config/GNUmakefile \
-         config/kconfig/GNUmakefile \
-         config/kconfig/lxdialog/GNUmakefile
+                 config/GNUmakefile \
+                 config/kconfig/GNUmakefile \
+                 config/kconfig/lxdialog/GNUmakefile
                 ])
 AC_OUTPUT
 
