@@ -22,9 +22,9 @@
 #include <linux/delay.h>
 #include <asm/io.h>
 
-#include <host/rt_uhci_hub.h>
+#include "rt_uhci_hub.h"
+#include <rt_usb.h>
 #include <core/rt_usb_hub.h>
-#include <core/rt_usb.h>
 #include <core/rt_usb_debug.h>
 
 extern struct uhc_device uhc_dev[MAX_UHC_CONTROLLER];

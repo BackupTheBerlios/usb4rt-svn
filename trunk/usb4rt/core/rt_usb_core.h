@@ -20,7 +20,7 @@
 #ifndef RT_USB_CORE_H
 #define RT_USB_CORE_H
 
-#include <core/rt_usb.h>
+#include <rt_usb.h>
 
 #define MAX_USB_DEV           128 /* 7 bit */
 #define MAX_EP                16  /* 4 bit */
@@ -45,116 +45,93 @@
 #define URB_WAIT_BUSY         0x0004
 
 struct hcd_funktions {
-  /* Host Controller Functions called by Core */
-  struct usb_device *(*  nrt_hcd_poll_root_hub_port) ( struct hc_device *p_hcd, __u8 rh_port_nr);
-  int(* nrt_hcd_register_urb)  ( struct rt_urb *p_urb);
-  int(* nrt_hcd_unregister_urb)( struct rt_urb *p_urb);
-  int(*  rt_hcd_submit_urb)    ( struct rt_urb *p_urb, __u16 urb_submit_flags);
+    // Host Controller Functions called by Core
+    struct usb_device *(*nrt_hcd_poll_root_hub_port)(struct hc_device *p_hcd,
+                                                     __u8 rh_port_nr);
+    int (*nrt_hcd_register_urb)(struct rt_urb *p_urb);
+    int (*nrt_hcd_unregister_urb)(struct rt_urb *p_urb);
+    int (*rt_hcd_submit_urb)(struct rt_urb *p_urb, __u16 urb_submit_flags);
 
-  /* Core-Functions called by Host Controller Driver */
-  struct usb_device *(* nrt_usb_config_dev)    ( struct hc_device *p_hcd, __u8 rh_port_nr, unsigned int lowspeed);
-  void(* nrt_usb_search_devices)( struct hc_device *p_hcd );
+    // Core-Functions called by Host Controller Driver
+    struct usb_device *(* nrt_usb_config_dev)(struct hc_device *p_hcd,
+                                              __u8 rh_port_nr,
+                                              unsigned int lowspeed);
+    void(* nrt_usb_search_devices)(struct hc_device *p_hcd);
 };
 
-struct hc_device{
-  /* Access by Host Controller */
-  __u8 type;
-  __u8 rh_numports;
-  void *p_private;
+struct hc_device
+{
+    // access by host controller
+    __u8 type;
+    __u8 rh_numports;
+    void *p_private;
 
-  /* Access by Core */
-  struct list_head usb_ctrl_list;
-  atomic_t use_counter;
-  __u8 hcd_nr;
+    // access by core
+    struct list_head usb_ctrl_list;
+    atomic_t use_counter;
+    __u8 hcd_nr;
 
-  /* Common use */
-  struct hcd_funktions *p_hcd_fkt ;
+    // common use
+    struct hcd_funktions *p_hcd_fkt ;
 };
 
-struct hub_device{
-  __u8 configured;
-  struct usb_device *p_usbdev;
-  struct list_head hub_list;
+struct hub_device
+{
+    __u8 configured;
+    struct usb_device *p_usbdev;
+    struct list_head hub_list;
 };
 
-/*-----------------*/
-/*  Driver API     */
-/*-----------------*/
-struct rt_urb *nrt_usb_create_ctrl_callback_urb( rt_usb_complete_t rt_callback_fkt );
-void nrt_usb_destroy_ctrl_callback_urb( struct rt_urb *p_urb );
+/*-----------------*
+ *  Driver API     *
+ *-----------------*/
+struct rt_urb *nrt_usb_create_ctrl_callback_urb(rt_usb_complete_t rt_callback_fkt);
+void nrt_usb_destroy_ctrl_callback_urb(struct rt_urb *p_urb);
 
-struct rt_urb *nrt_usb_create_callback_urb( rt_usb_complete_t rt_callback_fkt );
-void nrt_usb_destroy_callback_urb( struct rt_urb *p_urb );
+struct rt_urb *nrt_usb_create_callback_urb(rt_usb_complete_t rt_callback_fkt);
+void nrt_usb_destroy_callback_urb(struct rt_urb *p_urb);
 
-struct rt_urb *nrt_usb_create_ctrl_semaphore_urb( unsigned char *name , RTIME rt_sem_timeout );
-void nrt_usb_destroy_ctrl_semaphore_urb( struct rt_urb *p_urb );
+struct rt_urb *nrt_usb_create_ctrl_semaphore_urb(unsigned char *name,
+                                                 int64_t rt_sem_timeout);
+void nrt_usb_destroy_ctrl_semaphore_urb(struct rt_urb *p_urb);
 
-struct rt_urb *nrt_usb_create_semaphore_urb( unsigned char *name , RTIME rt_sem_timeout );
-void nrt_usb_destroy_semaphore_urb( struct rt_urb *p_urb );
+struct rt_urb *nrt_usb_create_semaphore_urb(unsigned char *name,
+                                            int64_t rt_sem_timeout);
+void nrt_usb_destroy_semaphore_urb(struct rt_urb *p_urb);
 
-struct rt_urb *nrt_usb_alloc_urb( void );
-void nrt_usb_free_urb( struct rt_urb *p_urb );
+struct rt_urb *nrt_usb_alloc_urb(void);
+void nrt_usb_free_urb(struct rt_urb *p_urb);
 
-struct rt_urb *nrt_usb_alloc_ctrl_urb( void );
-void nrt_usb_free_ctrl_urb( struct rt_urb *p_urb );
+struct rt_urb *nrt_usb_alloc_ctrl_urb(void);
+void nrt_usb_free_ctrl_urb(struct rt_urb *p_urb);
 
 int nrt_usb_register_urb(struct rt_urb *p_urb);
 int nrt_usb_unregister_urb(struct rt_urb *p_urb);
 
-struct usb_device *rt_usb_get_device(__u16 vendor, __u16 product ,struct usb_device *p_old_device);
-void rt_usb_put_device( struct usb_device *p_usbdev );
+struct usb_device *rt_usb_get_device(__u16 vendor, __u16 product,
+                                     struct usb_device *p_old_device);
+void rt_usb_put_device(struct usb_device *p_usbdev);
 
-int nrt_usb_clear_stall( struct rt_urb *p_urb );
+int nrt_usb_clear_stall(struct rt_urb *p_urb);
 
-/*--------------------------*/
-/*   Synchronous Messages   */
-/*--------------------------*/
-int rt_usb_send_urb_msg( struct rt_urb *p_urb);
-int rt_usb_send_ctrl_msg(struct rt_urb *p_urb, __u8 request_type,__u8 request, __u16 wValue, __u16 wIndex, __u16 wLength , void *data);
+/*--------------------------*
+ *   synchronous messages   *
+ *--------------------------*/
+int rt_usb_send_urb_msg(struct rt_urb *p_urb);
+int rt_usb_send_ctrl_msg(struct rt_urb *p_urb, __u8 request_type,__u8 request,
+                         __u16 wValue, __u16 wIndex, __u16 wLength , void *data);
 
-/*--------------------------*/
-/*   Asynchronous Messages  */
-/*--------------------------*/
-int rt_usb_submit_urb( struct rt_urb *p_urb);
-int rt_usb_submit_ctrl_urb( struct rt_urb *p_urb,__u8 request_type,__u8 request, __u16 wValue, __u16 wIndex, __u16 wLength , void *data);
+/*--------------------------*
+ *   asynchronous messages  *
+ *--------------------------*/
+int rt_usb_submit_urb(struct rt_urb *p_urb);
+int rt_usb_submit_ctrl_urb(struct rt_urb *p_urb,__u8 request_type,__u8 request,
+                           __u16 wValue, __u16 wIndex, __u16 wLength , void *data);
 
-/*--------------------------*/
-/*   Host-Controller API    */
-/*--------------------------*/
-int nrt_hcd_register_driver( struct hc_device *p_hcd );
-int nrt_hcd_unregister_driver( struct hc_device *p_hcd );
-
-EXPORT_SYMBOL(nrt_usb_create_ctrl_callback_urb);
-EXPORT_SYMBOL(nrt_usb_destroy_ctrl_callback_urb);
-
-EXPORT_SYMBOL(nrt_usb_create_callback_urb);
-EXPORT_SYMBOL(nrt_usb_destroy_callback_urb);
-
-EXPORT_SYMBOL(nrt_usb_create_ctrl_semaphore_urb);
-EXPORT_SYMBOL(nrt_usb_destroy_ctrl_semaphore_urb);
-
-EXPORT_SYMBOL(nrt_usb_create_semaphore_urb);
-EXPORT_SYMBOL(nrt_usb_destroy_semaphore_urb);
-
-EXPORT_SYMBOL(nrt_usb_alloc_urb);
-EXPORT_SYMBOL(nrt_usb_free_urb);
-
-EXPORT_SYMBOL(nrt_usb_alloc_ctrl_urb);
-EXPORT_SYMBOL(nrt_usb_free_ctrl_urb);
-
-EXPORT_SYMBOL(nrt_usb_register_urb);
-EXPORT_SYMBOL(nrt_usb_unregister_urb);
-
-EXPORT_SYMBOL(nrt_usb_clear_stall);
-
-EXPORT_SYMBOL(rt_usb_get_device);
-EXPORT_SYMBOL(rt_usb_put_device);
-EXPORT_SYMBOL(rt_usb_send_urb_msg);
-EXPORT_SYMBOL(rt_usb_send_ctrl_msg);
-EXPORT_SYMBOL(rt_usb_submit_urb);
-EXPORT_SYMBOL(rt_usb_submit_ctrl_urb);
-
-EXPORT_SYMBOL(nrt_hcd_register_driver);
-EXPORT_SYMBOL(nrt_hcd_unregister_driver);
+/*--------------------------*
+ *   host controller API    *
+ *--------------------------*/
+int nrt_hcd_register_driver(struct hc_device *p_hcd);
+int nrt_hcd_unregister_driver(struct hc_device *p_hcd);
 
 #endif

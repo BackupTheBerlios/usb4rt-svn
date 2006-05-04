@@ -1,12 +1,4 @@
 
-includedir = $prefix)/include/core
-
-include_HEADERS = \
-	rt_usb.h \
-	rt_usb_core.h \
-	rt_usb_hub.h \
-	rt_usb_debug.h
-
 moduledir = $(DESTDIR)$(USB4RT_MODULE_DIR)
 modext = @USB4RT_MODULE_EXT@
 
@@ -18,9 +10,12 @@ libkernel_rtai_rtusbcore_a_CPPFLAGS = \
 	-I$(top_srcdir)
 
 libkernel_rtai_rtusbcore_a_SOURCES = \
+	rt_usb_core.h \
 	rt_usb_core.c \
-	rt_usb_debug.c \
-	rt_usb_hub.c
+	rt_usb_hub.h \
+	rt_usb_hub.c \
+	rt_usb_debug.h \
+	rt_usb_debug.c
 
 OBJS = rt_usbcore$(modext)
 

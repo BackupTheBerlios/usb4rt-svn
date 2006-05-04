@@ -22,8 +22,8 @@
 #define RT_USB_DEBUG_H
 
 #include <core/usb4rt_config.h>
-#include <core/rt_usb.h>
-#include <core/rt_usb_hub.h>  /* portstat_t */
+#include <rt_usb.h>
+#include "rt_usb_hub.h"  // portstat_t
 
 #define PRNT(txt, args...)                         printk(txt, ##args); /* TD debug messages */
 

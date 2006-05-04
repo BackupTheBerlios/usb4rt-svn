@@ -21,7 +21,7 @@
 #ifndef RT_UHCI_HUB_H
 #define RT_UHCI_HUB_H
 
-#include <host/rt_uhci.h>
+#include "rt_uhci.h"
 
 /* BITs im USB-IO PORTSC[0,1]-Register */
 #define PORTSC_CCS          0x0001    /* Current Connect Status */

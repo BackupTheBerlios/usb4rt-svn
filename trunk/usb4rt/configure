@@ -20332,7 +20332,7 @@ USB4RT_KBUILD_CLEAN="                                     \
 USB4RT_KBUILD_DISTCLEAN="                                         \
   @for mod in \${OBJS}; do                                        \
     rm -f \`cd \$(top_builddir) && pwd\`/symbols/\`echo \$\$mod | \
-    sed -e's/${USB4RT_MODULE_EXT}//'\`.mod;                        \
+    sed -e's/${USB4RT_MODULE_EXT}//'\`.mod;                       \
   done;                                                           \
   "
 

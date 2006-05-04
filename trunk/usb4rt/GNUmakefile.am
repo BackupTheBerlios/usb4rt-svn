@@ -1,5 +1,10 @@
 ACLOCAL_AMFLAGS=-I config/autoconf
 
+includedir = $(prefix)/include
+
+include_HEADERS = \
+	rt_usb.h
+
 SUBDIRS = \
 	core \
 	host \

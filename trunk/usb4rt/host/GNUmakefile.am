@@ -1,10 +1,4 @@
 
-includedir = $prefix)/include/host
-
-include_HEADERS = \
-	rt_uhci.h \
-	rt_uhci_hub.h
-
 moduledir = $(DESTDIR)$(USB4RT_MODULE_DIR)
 modext = @USB4RT_MODULE_EXT@
 
@@ -16,7 +10,9 @@ libkernel_rtai_rt_uhci_hcd_a_CPPFLAGS = \
 	-I$(top_srcdir)
 
 libkernel_rtai_rt_uhci_hcd_a_SOURCES = \
+	rt_uhci.h \
 	rt_uhci.c \
+	rt_uhci_hub.h \
 	rt_uhci_hub.c
 
 OBJS = rt_uhci_hcd$(modext)

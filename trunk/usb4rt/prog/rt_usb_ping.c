@@ -21,10 +21,8 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <native/task.h>
-#include <native/timer.h>
-#include <native/sem.h>
+#include <rt_usb.h>
 
-#include <core/rt_usb.h>
 //                        --s-ms-us-ns
 #define NS_PER_PERIOD        100125000
 
@@ -54,9 +52,9 @@ int anz_retrys = ANZ_URBS;      // Number of retrys
 int retry = 0;                  // actual retry
 int all_urbs_finished = 0;      // ==1, if all URBs finished
 int len;                        // length of Configuration-Descriptor
-RTIME min,max;
-RTIME sum = 0;
-RTIME value[ANZ_URBS];
+uint64_t min,max;
+int64_t sum = 0;
+uint64_t value[ANZ_URBS];
 
 MODULE_PARM (vendor,"i");
 MODULE_PARM_DESC (vendor,"Hex-Value of Vendor-ID");
@@ -205,13 +203,13 @@ void periodic_fkt( void *p_data )
 
 #endif // BLOCKING
 
-    rt_task_wait_period();
+    rt_task_wait_period(NULL);
     retry++;
   }
 
 /* Waiting until all URBs completed */
     while(!all_urbs_finished ){
-    rt_task_wait_period();
+    rt_task_wait_period(NULL);
 
     all_urbs_finished = 1;
     for(i=0; i< anz_retrys; i++){
@@ -286,7 +284,6 @@ struct rt_urb *create_urb(  struct usb_device *p_dev,
   struct rt_urb           *p_urb    = NULL;
   struct usb_ctrlrequest  *p_ctrl   = NULL;
   unsigned char           *p_buffer = NULL;
-  int ret;
 
   p_urb = kmalloc(sizeof(struct rt_urb),GFP_ATOMIC);
   if(!p_urb){
@@ -334,21 +331,8 @@ struct rt_urb *create_urb(  struct usb_device *p_dev,
   p_urb->rt_sem_timeout = 0;
 #endif
 
-  ret = rt_sem_create( &p_urb->rt_sem, rt_sem_name ,0, S_PRIO);
-  if(ret){
-    if(ret == -EEXIST) printk("RT-USB-PING: [ERROR] RT-Semaphore: The name is already in use by some registered object \n");
-    if(ret == -EINVAL) printk("RT-USB-PING: [ERROR] RT-Semaphore: The icount is non-zero and mode specifies a pulse semaphore \n");
-    if(ret == -EPERM ) printk("RT-USB-PING: [ERROR] RT-Semaphore: This service was called from an asynchronous context \n");
-    kfree(p_buffer);
-    alloc_bytes -= MAX_BUFFER_SIZE;
-    kfree(p_ctrl);
-    alloc_bytes -= sizeof(struct usb_ctrlrequest);
-    kfree(p_urb);
-    alloc_bytes -= sizeof(struct rt_urb);
-    return NULL;
-  }
+  rtdm_sem_init (&p_urb->rt_sem, 0);
 
-  //printk("RT-SEM @ 0x%p \n",&p_urb->rt_sem);
   return p_urb;
 }
 
@@ -362,7 +346,7 @@ void destroy_urbs(void)
         nrt_usb_unregister_urb(urbs.p_urb[i]);
       }
       if(urbs.rt_sem_created[i]){
-        rt_sem_delete(&urbs.p_urb[i]->rt_sem);
+        rtdm_sem_destroy(&urbs.p_urb[i]->rt_sem);
       }
 
       if(urbs.p_urb[i]->p_setup_packet){

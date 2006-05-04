@@ -20,8 +20,8 @@
 
 #include <linux/delay.h>
 
-#include <core/rt_usb_hub.h>
-#include <core/rt_usb_debug.h>
+#include "rt_usb_hub.h"
+#include "rt_usb_debug.h"
 
 extern struct usb_device usb_dev[MAX_USB_DEV];
 extern unsigned int alloc_bytes;

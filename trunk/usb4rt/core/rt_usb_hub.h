@@ -21,7 +21,7 @@
 #ifndef RT_USB_HUB_H
 #define RT_USB_HUB_H
 
-#include <core/rt_usb_core.h>
+#include "rt_usb_core.h"
 
  // some port features
 #define PORT_CONNECTION         0x00

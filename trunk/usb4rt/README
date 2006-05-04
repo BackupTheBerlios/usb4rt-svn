@@ -14,13 +14,13 @@ Features
 Requirements
     - UHCI-compatible host controller
     - Linux Kernel 2.6
-    - RTAI/fusion 0.8.0 or later
+    - Xenomai 2.1.50 or later
 
 
 Compilation
     1. "cd .../usb4rt".
     2. "./configure" if fusion has been installed to /usr/realtime/fusion, or
-       "./configure --with-rtai=<path_to_fusion_installation>"
+       "./configure --with-xeno-user-dir=<path_to_xenomai_installation>"
     3. "make"
     4. "make install"
 

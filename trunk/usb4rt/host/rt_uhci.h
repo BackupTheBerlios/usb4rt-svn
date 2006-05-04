@@ -21,7 +21,7 @@
 #define RT_UHCI_H
 
 #include <linux/pci.h>
-#include <native/intr.h>
+#include <rtdm/rtdm_driver.h>
 #include <core/rt_usb_core.h>
 
 #define MAX_UHC_CONTROLLER      4
@@ -139,21 +139,21 @@ typedef struct queue_head {
 #define TD_STAT_ACTLEN_MASK   0x7FF           /* actual length, encoded as n - 1 */
 #define TD_STAT_ANY_ERROR     (TD_STAT_STALLED | TD_STAT_DBUFERR | TD_STAT_BABBLE | TD_STAT_CRCTIMEO | TD_STAT_BITSTUFF)
 
-#define td_status_errcount(err)   ( (u32)(((err) << TD_STAT_C_ERR_SHIFT) & TD_STAT_C_ERR_MASK) )
-#define td_status_active(act)     ( (u32)((act) ? TD_STAT_ACTIVE : 0 ) )
-#define td_status_lowspeed(ls)    ( (u32)((ls)  ? TD_STAT_LS     : 0 ) )
-#define td_status_ioc(val)        ( (u32)((val) ? TD_STAT_IOC    : 0 ) )
-#define td_status_spd(val)        ( (u32)((val) ? TD_STAT_SPD    : 0 ) )
-#define td_status_iso(val)        ( (u32)((val) ? TD_STAT_ISO    : 0 ) )
-#define td_status_bits(val)       ( (u32)(((val) << TD_STAT_BIT_SHIFT) & TD_STAT_BIT_MASK) )
-#define td_status_actlen(val)     ( (u32)((val) & TD_STAT_ACTLEN_MASK ) )
+#define td_status_errcount(err)   ((u32)(((err) << TD_STAT_C_ERR_SHIFT) & TD_STAT_C_ERR_MASK))
+#define td_status_active(act)     ((u32)((act) ? TD_STAT_ACTIVE : 0))
+#define td_status_lowspeed(ls)    ((u32)((ls)  ? TD_STAT_LS     : 0))
+#define td_status_ioc(val)        ((u32)((val) ? TD_STAT_IOC    : 0))
+#define td_status_spd(val)        ((u32)((val) ? TD_STAT_SPD    : 0))
+#define td_status_iso(val)        ((u32)((val) ? TD_STAT_ISO    : 0))
+#define td_status_bits(val)       ((u32)(((val) << TD_STAT_BIT_SHIFT) & TD_STAT_BIT_MASK))
+#define td_status_actlen(val)     ((u32)((val) & TD_STAT_ACTLEN_MASK))
 
-#define set_status_ioc(td)        ( td_status(td) |= TD_STAT_IOC )
-#define clear_status_ioc(td)      ( td_status(td) &= ~TD_STAT_IOC )
+#define set_status_ioc(td)        (td_status(td) |= TD_STAT_IOC)
+#define clear_status_ioc(td)      (td_status(td) &= ~TD_STAT_IOC)
 
-#define get_status_active(td)     ( td_status(td) & TD_STAT_ACTIVE )
-#define get_status_actlen(td)     ( td_status(td) & TD_STAT_ACTLEN_MASK )
-#define get_status_errcount(td)   ( ( td_status(td)  & TD_STAT_C_ERR_MASK ) >> TD_STAT_C_ERR_SHIFT )
+#define get_status_active(td)     (td_status(td) & TD_STAT_ACTIVE)
+#define get_status_actlen(td)     (td_status(td) & TD_STAT_ACTLEN_MASK)
+#define get_status_errcount(td)   ((td_status(td)  & TD_STAT_C_ERR_MASK) >> TD_STAT_C_ERR_SHIFT)
 
 /* for TD <token> */
 /* TOKEN : XXXXXXXX XXX-TEEE EDDDDDDD PPPPPPPP */
@@ -173,16 +173,16 @@ typedef struct queue_head {
 #define TD_TOKEN_EXPLEN_MASK      0x7ff   /* expected length, encoded as n - 1 */
 #define TD_TOKEN_PID_MASK         0xff
 
-#define td_token_pid(pid)         ( (u32)((pid) & TD_TOKEN_PID_MASK) )
-#define td_token_addr(addr)       ( (u32)((addr & TD_TOKEN_DEVADDR_MASK) << TD_TOKEN_DEVADDR_SHIFT) )
-#define td_token_endpoint(ep)     ( (u32)((ep & TD_TOKEN_ENDPOINT_MASK) << TD_TOKEN_ENDPOINT_SHIFT) )
-#define td_token_maxlen(len)      ( (u32)(((len) & TD_TOKEN_EXPLEN_MASK) << TD_TOKEN_EXPLEN_SHIFT) )
-#define td_token_toggle(val)      ( (u32)((val & 1) << TD_TOKEN_TOGGLE_SHIFT) )
+#define td_token_pid(pid)         ((u32)((pid) & TD_TOKEN_PID_MASK))
+#define td_token_addr(addr)       ((u32)((addr & TD_TOKEN_DEVADDR_MASK) << TD_TOKEN_DEVADDR_SHIFT))
+#define td_token_endpoint(ep)     ((u32)((ep & TD_TOKEN_ENDPOINT_MASK) << TD_TOKEN_ENDPOINT_SHIFT))
+#define td_token_maxlen(len)      ((u32)(((len) & TD_TOKEN_EXPLEN_MASK) << TD_TOKEN_EXPLEN_SHIFT))
+#define td_token_toggle(val)      ((u32)((val & 1) << TD_TOKEN_TOGGLE_SHIFT))
 
-#define get_packet_type(td)       ( td_token(td) & TD_TOKEN_PID_MASK )
-#define get_max_len(td)           ( ((td_token(td) >> TD_TOKEN_EXPLEN_SHIFT)   & TD_TOKEN_EXPLEN_MASK   ))
-#define get_endpoint(td)          ( ((td_token(td) >> TD_TOKEN_ENDPOINT_SHIFT) & TD_TOKEN_ENDPOINT_MASK ))
-#define get_address(td)           ( ((td_token(td) >> TD_TOKEN_DEVADDR_SHIFT)  & TD_TOKEN_DEVADDR_MASK  ))
+#define get_packet_type(td)       (td_token(td) & TD_TOKEN_PID_MASK)
+#define get_max_len(td)           (((td_token(td) >> TD_TOKEN_EXPLEN_SHIFT)   & TD_TOKEN_EXPLEN_MASK ))
+#define get_endpoint(td)          (((td_token(td) >> TD_TOKEN_ENDPOINT_SHIFT) & TD_TOKEN_ENDPOINT_MASK))
+#define get_address(td)           (((td_token(td) >> TD_TOKEN_DEVADDR_SHIFT)  & TD_TOKEN_DEVADDR_MASK))
 
 
 typedef struct transf_desc {
@@ -273,13 +273,13 @@ struct rt_privurb {
 
   int get_time_of_first_bit;
   int compl_tds_at_first_irq;
-  RTIME time_at_first_irq;
+  uint64_t time_at_first_irq;
   unsigned int byte_at_first_irq;
 
 };
 
 struct uhc_irq{
-  RT_INTR rt_intr;
+  rtdm_irq_t irq_handle;
   int irq;
   struct list_head irq_list;
 };

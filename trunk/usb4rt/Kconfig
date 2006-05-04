@@ -4,65 +4,64 @@ config MODULES
 
 config USB4RT_VERSION
     string
-    default "0.0.4"
+    default "0.0.5"
 
 menu "General"
 
 config USB4RT_BANDW_RECLAM
-bool "Bandwidth Reclamation"
-default y
-help
-...TODO...
+    bool "Bandwidth Reclamation"
+    default y
+    help
+    ...TODO...
 
 config USB4RT_LINUXDIR
-string "Linux source directory"
-default "/usr/src/linux"
-help
-...TODO...
+    string "Linux source directory"
+    default "/usr/src/linux"
+    help
+    ...TODO...
 
 config USB4RT_XENOMAIDIR
-    string "Xenomai build tree"
+    string "Xenomai install tree"
     default "/usr/xenomai"
     help
-    This variable contains the directory where was built your
+    This variable contains the directory where was installed your
     Xenomai. As explained before, you can change the value
     of the Xenomai build tree which is fixed by default to
-    /usr/xenomai i.e. the build directory of the running Xenomai.
+    /usr/xenomai i.e. the install directory of the running Xenomai.
 
 config USB4RT_INSTALLDIR
-string "USB4RT installation Directory"
-default "/usr/local/usb4rt"
-help
-...TODO...
+    string "USB4RT installation Directory"
+    default "/usr/local/usb4rt"
+    help
+    ...TODO...
 
 endmenu
 
 
-menu "Debug"
+menu "Debugging"
 
 config USB4RT_DBG_COMMON
-bool "Common debug messages"
-default y
-help
-...TODO...
+    bool "Common debug messages"
+    default y
+    help
+    ...TODO...
 
 config USB4RT_DBG_TIME
-bool "Time debug"
-default y
-help
-...TODO...
+    bool "Time debug"
+    default y
+    help
+    ...TODO...
 
 config USB4RT_DBG_TD
-bool "Transfer Descriptor debugging"
-default n
-help
-...TODO...
+    bool "Transfer Descriptor debugging"
+    default n
+    help
+    ...TODO...
 
 config USB4RT_DBG_QH
-bool "Queue-Head debugging"
-default n
-help
-...TODO...
+    bool "Queue-Head debugging"
+    default n
+    help
+    ...TODO...
 
 endmenu
-
