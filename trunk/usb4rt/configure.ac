@@ -422,77 +422,92 @@ dnl                      components
 dnl ======================================================================
 
 dnl -----------------------------------------------------------------
-dnl  ARG-Enable Common-Debug (default=enabled)
+dnl  common debugging
 dnl -----------------------------------------------------------------
 
-AC_MSG_CHECKING(for debug-messages [common])
-AC_ARG_ENABLE(dbg_common,
-  AS_HELP_STRING([--disable-dbg-common], [Disable common debug messages (default: enabled)]),
+AC_MSG_CHECKING(for common debug messages)
+
+AC_ARG_ENABLE(dbg-common,
+  AS_HELP_STRING([--disable-dbg-common], [Disable common debug messages]),
   [case "$enableval" in
   n | no) unset CONFIG_USB4RT_DBG_COMMON ;;
   *) CONFIG_USB4RT_DBG_COMMON=y ;;
   esac])
-AC_MSG_RESULT(${CONFIG_USB4RT_DBG_COMMON:-yes})
+
+AC_MSG_RESULT(${CONFIG_USB4RT_DBG_COMMON:-n})
+
 test x$CONFIG_USB4RT_DBG_COMMON = xy && AC_DEFINE(CONFIG_USB4RT_DBG_COMMON,1,[Kconfig])
 AM_CONDITIONAL(CONFIG_USB4RT_DBG_COMMON,[test x$CONFIG_USB4RT_DBG_COMMON = xy])
 
 dnl -----------------------------------------------------------------
-dnl  ARG-Enable Time-Debug (default=disabled)
+dnl  time debugging
 dnl -----------------------------------------------------------------
 
-AC_MSG_CHECKING(for debug-messages [timing])
-AC_ARG_ENABLE(dbg_time,
-  AS_HELP_STRING([--enable-dbg-time], [Enable time debug messages (default: disabled)]),
+AC_MSG_CHECKING(for time debug messages)
+
+AC_ARG_ENABLE(dbg-time,
+  AS_HELP_STRING([--enable-dbg-time], [Enable time debug messages]),
   [case "$enableval" in
   y | yes) CONFIG_USB4RT_DBG_TIME=y ;;
   *) unset CONFIG_USB4RT_DBG_TIME ;;
   esac])
-AC_MSG_RESULT(${CONFIG_USB4RT_DBG_TIME:-no})
+
+AC_MSG_RESULT(${CONFIG_USB4RT_DBG_TIME:-n})
+
 test x$CONFIG_USB4RT_DBG_TIME = xy && AC_DEFINE(CONFIG_USB4RT_DBG_TIME,1,[Kconfig])
 AM_CONDITIONAL(CONFIG_USB4RT_DBG_TIME,[test x$CONFIG_USB4RT_DBG_TIME = xy])
 
 dnl -----------------------------------------------------------------
-dnl  ARG-Enable Transfer-Descriptor-Debug (default=disabled)
+dnl  transfer descriptor debugging
 dnl -----------------------------------------------------------------
 
-AC_MSG_CHECKING(for debug-messages [transfer-descriptor])
-AC_ARG_ENABLE(dbg_td,
-  AS_HELP_STRING([--enable-dbg-td], [Enable transfer-descriptor debug messages (default: disabled)]),
+AC_MSG_CHECKING(for transfer-descriptor debug messages)
+
+AC_ARG_ENABLE(dbg-td,
+  AS_HELP_STRING([--enable-dbg-td], [Enable transfer-descriptor debug messages]),
   [case "$enableval" in
   y | yes) CONFIG_USB4RT_DBG_TD=y ;;
   *) unset CONFIG_USB4RT_DBG_TD ;;
   esac])
-AC_MSG_RESULT(${CONFIG_USB4RT_DBG_TD:-no})
+
+AC_MSG_RESULT(${CONFIG_USB4RT_DBG_TD:-n})
+
 test x$CONFIG_USB4RT_DBG_TD = xy && AC_DEFINE(CONFIG_USB4RT_DBG_TD,1,[Kconfig])
 AM_CONDITIONAL(CONFIG_USB4RT_DBG_TD,[test x$CONFIG_USB4RT_DBG_TD = xy])
 
 dnl -----------------------------------------------------------------
-dnl  ARG-Enable Queue-Head-Debug (default=disabled)
+dnl  ARG-Enable Queue-Head-Debug
 dnl -----------------------------------------------------------------
 
-AC_MSG_CHECKING(for debug-messages [queue-heads])
-AC_ARG_ENABLE(dbg_qh,
-  AS_HELP_STRING([--enable-dbg-qh], [Enable queue-head debug messages (default: disabled)]),
+AC_MSG_CHECKING(for queue-head debug messages)
+
+AC_ARG_ENABLE(dbg-qh,
+  AS_HELP_STRING([--enable-dbg-qh], [Enable queue-head debug messages]),
   [case "$enableval" in
   y | yes) CONFIG_USB4RT_DBG_QH=y ;;
   *) unset CONFIG_USB4RT_DBG_QH ;;
   esac])
-AC_MSG_RESULT(${CONFIG_USB4RT_DBG_QH:-no})
+
+AC_MSG_RESULT(${CONFIG_USB4RT_DBG_QH:-n})
+
 test x$CONFIG_USB4RT_DBG_QH = xy && AC_DEFINE(CONFIG_USB4RT_DBG_QH,1,[Kconfig])
 AM_CONDITIONAL(CONFIG_USB4RT_DBG_QH,[test x$CONFIG_USB4RT_DBG_QH = xy])
 
 dnl -----------------------------------------------------------------
-dnl  ARG-Enable Bandwidth-Reclamation (default=enabled)
+dnl  ARG-Enable Bandwidth-Reclamation
 dnl -----------------------------------------------------------------
 
-AC_MSG_CHECKING(for debug-messages [timing])
-AC_ARG_ENABLE(bandw_reclam,
-  AS_HELP_STRING([--disable-bandw-reclam], [Disable bandwith-reclamation for Fullspeed Bulk- and Control-Transfer (default: enabled)]),
+AC_MSG_CHECKING(for bandwith reclamation)
+
+AC_ARG_ENABLE(bandw-reclam,
+  AS_HELP_STRING([--disable-bandw-reclam], [Disable bandwith reclamation for fullspeed Bulk- and Control-Transfer (default)]),
   [case "$enableval" in
   n | no) unset CONFIG_USB4RT_BANDW_RECLAM ;;
   *) CONFIG_USB4RT_BANDW_RECLAM=y ;;
   esac])
-AC_MSG_RESULT(${CONFIG_USB4RT_BANDW_RECLAM:-yes})
+
+AC_MSG_RESULT(${CONFIG_USB4RT_BANDW_RECLAM:-n})
+
 test x$CONFIG_USB4RT_BANDW_RECLAM = xy && AC_DEFINE(CONFIG_USB4RT_BANDW_RECLAM,1,[Kconfig])
 AM_CONDITIONAL(CONFIG_USB4RT_BANDW_RECLAM,[test x$CONFIG_USB4RT_BANDW_RECLAM = xy])
 

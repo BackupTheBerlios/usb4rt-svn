@@ -12,13 +12,11 @@ config USB4RT_BANDW_RECLAM
     bool "Bandwidth Reclamation"
     default y
     help
-    ...TODO...
 
 config USB4RT_LINUXDIR
     string "Linux source directory"
     default "/usr/src/linux"
     help
-    ...TODO...
 
 config USB4RT_XENOMAIDIR
     string "Xenomai install tree"
@@ -33,35 +31,29 @@ config USB4RT_INSTALLDIR
     string "USB4RT installation Directory"
     default "/usr/local/usb4rt"
     help
-    ...TODO...
 
 endmenu
-
 
 menu "Debugging"
 
 config USB4RT_DBG_COMMON
-    bool "Common debug messages"
+    bool "Common"
     default y
     help
-    ...TODO...
 
 config USB4RT_DBG_TIME
-    bool "Time debug"
-    default y
+    bool "Timing"
+    default n
     help
-    ...TODO...
 
 config USB4RT_DBG_TD
-    bool "Transfer Descriptor debugging"
+    bool "Transfer descriptors"
     default n
     help
-    ...TODO...
 
 config USB4RT_DBG_QH
-    bool "Queue-Head debugging"
+    bool "Queue heads"
     default n
     help
-    ...TODO...
 
 endmenu
