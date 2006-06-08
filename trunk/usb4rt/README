@@ -1,7 +1,7 @@
                                     USB4RT
                                     ------
 
-            Real-Time Universial Serial Bus Stack for Linux/RTAI
+            Real-Time Universial Serial Bus Stack for Linux/Xenomai
 
 
 Features
@@ -19,28 +19,36 @@ Requirements
 
 Compilation
     1. "cd .../usb4rt".
-    2. "./configure" if fusion has been installed to /usr/realtime/fusion, or
+    2. "./configure" if Xenomai has been installed to /usr/xenomai, or
        "./configure --with-xeno-user-dir=<path_to_xenomai_installation>"
     3. "make"
     4. "make install"
 
 Test
     1. Unload standard Linux usb drivers (uhci-hcd / ehci-hcd).
-       "rmmod ehci-hcd uhci-hcd "
+       "rmmod ehci-hcd uhci-hcd"
+
     2. Plug-in any peripheral USB device you want to contact
        (note: hot-plugging is not supported)
+
     3. Loading Realtime-Core-Module
        "insmod <usb4rt_install_directory>/modules/rt_usbcore.ko".
+
     4. Loading Realtime-Universal-Host-Controller-Driver
        "insmod <usb4rt_install_directory>/modules/rt_uhci_hcd.ko".
-       Optionally, you can instruct the host-controller driver to attach 
+       Optionally, you can instruct the host-controller driver to attach
        only to a specific device by issuing
        (1) "insmod <usb4rt_install_directory>/modules/rt_uhci_hcd.ko deviceid=<hex_pci_device-id>".
        (2) "insmod <usb4rt_install_directory>/modules/rt_uhci_hcd.ko irq=<irq-number>".
        (3) "insmod <usb4rt_install_directory>/modules/rt_uhci_hcd.ko ioport=<hex_hcd_io_port>".
+
     5. Ping an attached USB-device
        "insmod <usb4rt_install_directory>/modules/rt_usb_ping vendor=<device_hex_vendor-id> \
-                                                              product=<device_hex_product-id>".
+                                                              product=<device_hex_product-id> \
+                                                              blocking=[0/1] (Optional) \
+                                                              next_in_callback=[0/1] (Optional) \
+                                                              period_time=<time_in_ns> (Optional)".
+
        You should see some report of the required time to exchange packets
        with the addressed peripheral device.
 
