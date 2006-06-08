@@ -56,9 +56,10 @@ uint64_t min,max;
 int64_t sum = 0;
 uint64_t value[ANZ_URBS];
 
-MODULE_PARM (vendor,"i");
+module_param(vendor, uint, 0);
 MODULE_PARM_DESC (vendor,"Hex-Value of Vendor-ID");
-MODULE_PARM (product,"i");
+
+module_param(product, uint, 0);
 MODULE_PARM_DESC (product,"Hex-Value of Product-ID");
 
 static RT_TASK  rtTask;

@@ -93,7 +93,6 @@ struct usb_device
 //#define URB_ISO_ASAP           0x0002  // iso-only, urb->start_frame ignored
 #define URB_NO_TRANSFER_DMA_MAP  0x0004  // urb->transfer_dma valid on submit
 #define URB_NO_SETUP_DMA_MAP     0x0008  // urb->setup_dma valid on submit
-//#define URB_ASYNC_UNLINK       0x0010  // usb_unlink_urb() returns asap
 //#define URB_NO_FSBR            0x0020  // UHCI-specific
 //#define URB_ZERO_PACKET        0x0040  // Finish bulk OUTs with short packet
 //#define URB_NO_INTERRUPT       0x0080  // HINT: no non-error interrupt needed

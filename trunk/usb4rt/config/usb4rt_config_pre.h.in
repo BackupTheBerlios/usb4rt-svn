@@ -12,16 +12,16 @@
 /* Compiler */
 #undef CONFIG_USB4RT_COMPILER
 
-/* Kconfig */
+/* Define to 1 if you want to enable common debugging. */
 #undef CONFIG_USB4RT_DBG_COMMON
 
-/* Kconfig */
+/* Define to 1 if you want to enable QH debugging. */
 #undef CONFIG_USB4RT_DBG_QH
 
-/* Kconfig */
+/* Define to 1 if you want to enable TD debugging. */
 #undef CONFIG_USB4RT_DBG_TD
 
-/* Kconfig */
+/* Define to 1 if you want to enable time debugging. */
 #undef CONFIG_USB4RT_DBG_TIME
 
 /* Host system alias */

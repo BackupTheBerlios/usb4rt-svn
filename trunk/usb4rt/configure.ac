@@ -436,8 +436,9 @@ AC_ARG_ENABLE(dbg-common,
 
 AC_MSG_RESULT(${CONFIG_USB4RT_DBG_COMMON:-n})
 
-test x$CONFIG_USB4RT_DBG_COMMON = xy && AC_DEFINE(CONFIG_USB4RT_DBG_COMMON,1,[Kconfig])
-AM_CONDITIONAL(CONFIG_USB4RT_DBG_COMMON,[test x$CONFIG_USB4RT_DBG_COMMON = xy])
+test x${CONFIG_USB4RT_DBG_COMMON} = xy && AC_DEFINE(CONFIG_USB4RT_DBG_COMMON,1,[Define to 1 if you want to enable common debugging.])
+AM_CONDITIONAL(CONFIG_USB4RT_DBG_COMMON,[test x${CONFIG_USB4RT_DBG_COMMON} = xy])
+AC_SUBST(CONFIG_USB4RT_DBG_COMMON)
 
 dnl -----------------------------------------------------------------
 dnl  time debugging
@@ -454,8 +455,9 @@ AC_ARG_ENABLE(dbg-time,
 
 AC_MSG_RESULT(${CONFIG_USB4RT_DBG_TIME:-n})
 
-test x$CONFIG_USB4RT_DBG_TIME = xy && AC_DEFINE(CONFIG_USB4RT_DBG_TIME,1,[Kconfig])
-AM_CONDITIONAL(CONFIG_USB4RT_DBG_TIME,[test x$CONFIG_USB4RT_DBG_TIME = xy])
+test x${CONFIG_USB4RT_DBG_TIME} = xy && AC_DEFINE(CONFIG_USB4RT_DBG_TIME,1,[Define to 1 if you want to enable time debugging.])
+AM_CONDITIONAL(CONFIG_USB4RT_DBG_TIME,[test x${CONFIG_USB4RT_DBG_TIME} = xy])
+AC_SUBST(CONFIG_USB4RT_DBG_TIME)
 
 dnl -----------------------------------------------------------------
 dnl  transfer descriptor debugging
@@ -472,8 +474,9 @@ AC_ARG_ENABLE(dbg-td,
 
 AC_MSG_RESULT(${CONFIG_USB4RT_DBG_TD:-n})
 
-test x$CONFIG_USB4RT_DBG_TD = xy && AC_DEFINE(CONFIG_USB4RT_DBG_TD,1,[Kconfig])
-AM_CONDITIONAL(CONFIG_USB4RT_DBG_TD,[test x$CONFIG_USB4RT_DBG_TD = xy])
+test x${CONFIG_USB4RT_DBG_TD} = xy && AC_DEFINE(CONFIG_USB4RT_DBG_TD,1,[Define to 1 if you want to enable TD debugging.])
+AM_CONDITIONAL(CONFIG_USB4RT_DBG_TD,[test x${CONFIG_USB4RT_DBG_TD} = xy])
+AC_SUBST(CONFIG_USB4RT_DBG_TD)
 
 dnl -----------------------------------------------------------------
 dnl  ARG-Enable Queue-Head-Debug
@@ -490,8 +493,9 @@ AC_ARG_ENABLE(dbg-qh,
 
 AC_MSG_RESULT(${CONFIG_USB4RT_DBG_QH:-n})
 
-test x$CONFIG_USB4RT_DBG_QH = xy && AC_DEFINE(CONFIG_USB4RT_DBG_QH,1,[Kconfig])
-AM_CONDITIONAL(CONFIG_USB4RT_DBG_QH,[test x$CONFIG_USB4RT_DBG_QH = xy])
+test x${CONFIG_USB4RT_DBG_QH} = xy && AC_DEFINE(CONFIG_USB4RT_DBG_QH,1,[Define to 1 if you want to enable QH debugging.])
+AM_CONDITIONAL(CONFIG_USB4RT_DBG_QH,[test x${CONFIG_USB4RT_DBG_QH} = xy])
+AC_SUBST(CONFIG_USB4RT_DBG_QH)
 
 dnl -----------------------------------------------------------------
 dnl  ARG-Enable Bandwidth-Reclamation
@@ -508,8 +512,9 @@ AC_ARG_ENABLE(bandw-reclam,
 
 AC_MSG_RESULT(${CONFIG_USB4RT_BANDW_RECLAM:-n})
 
-test x$CONFIG_USB4RT_BANDW_RECLAM = xy && AC_DEFINE(CONFIG_USB4RT_BANDW_RECLAM,1,[Kconfig])
-AM_CONDITIONAL(CONFIG_USB4RT_BANDW_RECLAM,[test x$CONFIG_USB4RT_BANDW_RECLAM = xy])
+test x${CONFIG_USB4RT_BANDW_RECLAM} = xy && AC_DEFINE(CONFIG_USB4RT_BANDW_RECLAM,1,[Kconfig])
+AM_CONDITIONAL(CONFIG_USB4RT_BANDW_RECLAM,[test x${CONFIG_USB4RT_BANDW_RECLAM} = xy])
+AC_SUBST(CONFIG_USB4RT_BANDW_RECLAM)
 
 dnl -----------------------------------------------------------------
 dnl  ...

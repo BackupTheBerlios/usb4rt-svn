@@ -27,7 +27,7 @@
 #include "rt_usb_hub.h"
 #include <core/usb4rt_config.h>
 
-#define DRIVER_VERSION  "USB4RT_PACKAGE_VERSION"
+#define DRIVER_VERSION  USB4RT_PACKAGE_VERSION
 #define DRIVER_AUTHOR "Joerg Langenberg - joerg.langenberg@gmx.net"
 #define DRIVER_DESC "Realtime USB-Core Module"
 
@@ -79,7 +79,7 @@ int nrt_usb_unregister_urb(struct rt_urb *p_urb);
 static __u8 get_free_hcd_nr(void)
 {
     int i = 0;
-    while((ctrl_mask & (1 << i)) && i < MAX_CONTROLLER)
+    while ((ctrl_mask & (1 << i)) && i < MAX_CONTROLLER)
     {
         i++;
     }
@@ -140,7 +140,7 @@ void nrt_usb_search_devices(struct hc_device *p_hcd)
 
     DBG_MSG1(p_hcd, " Searching for USB-Devices\n");
 
-    for(i = 0; i < p_hcd->rh_numports; i++)
+    for (i = 0; i < p_hcd->rh_numports; i++)
     {
         DBG_MSG1(p_hcd, "%02d: Root-Hub portscan start \n", i);
         p_new_usbdev = p_hcd->p_hcd_fkt->nrt_hcd_poll_root_hub_port(p_hcd, i);
@@ -485,13 +485,13 @@ static void usb_clear_device(struct usb_device *p_usbdev)
     int len = 0;
     struct hc_device *p_hcd = NULL;
 
-    if(!p_usbdev)
+    if (!p_usbdev)
         return;
 
     p_hcd = p_usbdev->p_hcd;
     if (p_hcd)
     {
-        if(p_usbdev->p_hub_desc)
+        if (p_usbdev->p_hub_desc)
         {
             DBG_MSG2(p_hcd, p_usbdev, " Free Hub-Descriptor @ 0x%p\n",
                      p_usbdev->p_hub_desc);
@@ -723,16 +723,18 @@ void usb_check_device(struct usb_device *p_usbdev)
 }
 
 /**
- * Konfiguriert ein neu gefundenes USB-Device.
- * Das neue Geraet bekommt eine Adresse zugewiesen, alle Descriptoren werden
- * ausgelesen und gespeichert.
- * @param p_hcd Zeiger auf den Host-Controller, an dem das Geraet gefunden wurde.
- * @param rh_port_nr Root-Hub-Portnummer (Eigentlich nur zu Debug-Zwecken)
- * @param lowspeed gibt an, wie das neue Geraet anzusprechen ist (Low- oder Fullspeed)
- * @return Zeiger auf das neue USB-Device (struct usb_device)
- * @return NULL, wenn ein Fehler auftrat
+ * This function configures a new found USB device. The new USB device gets a
+ * unique address. All descriptore are read out and were saved.
+ *
+ * @param p_hcd Pointer to the host controller the device was found on.
+ * @param rh_port_nr Root-hub port number (used for debugging messages)
+ * @param lowspeed Is unequal to zero if it is a lowspee device.
+ *
+ * @return Pointer to the new USB device (struct usb_device), NULL if an error
+ * occurs
  */
-struct usb_device *nrt_usb_config_dev(struct hc_device *p_hcd, __u8 rh_port_nr, unsigned int lowspeed)
+struct usb_device *nrt_usb_config_dev(struct hc_device *p_hcd, __u8 rh_port_nr,
+                                      unsigned int lowspeed)
 {
     struct usb_device_descriptor    *p_dev_desc;
     struct usb_config_descriptor    *p_conf_desc;
@@ -752,7 +754,7 @@ struct usb_device *nrt_usb_config_dev(struct hc_device *p_hcd, __u8 rh_port_nr, 
     unsigned char string[string_len];
     unsigned char buffer[m_buff_size];
 
-    DBG_MSG2(p_hcd, &usb_dev[0], " LOCK USB-Device \n");
+    DBG_MSG2(p_hcd, &usb_dev[0], " LOCK USB-Device[0]\n");
     if (!usb_lock_device(&usb_dev[0]))
     {
         ERR("RT-USBCORE: [ERROR] Can't get lock for USB-Device[0] \n");
@@ -785,7 +787,7 @@ struct usb_device *nrt_usb_config_dev(struct hc_device *p_hcd, __u8 rh_port_nr, 
     else
         usb_dev[0].speed =  USB_SPEED_FULL;
 
-    INFO_MSG2(p_hcd, &usb_dev[0], " New USB device found\n");
+    DBG_MSG2(p_hcd, &usb_dev[0], " New USB device found\n");
 
     p_dev_desc = (struct usb_device_descriptor *) buffer;
 
@@ -810,6 +812,9 @@ struct usb_device *nrt_usb_config_dev(struct hc_device *p_hcd, __u8 rh_port_nr, 
         return NULL;
     }
 
+    DBG_MSG2(p_hcd, &usb_dev[0], " Device supports packet size %d\n",
+             p_dev_desc->bMaxPacketSize0);
+
     p_usbdev = usb_get_free_device();
     if (!p_usbdev)
     {
@@ -819,7 +824,7 @@ struct usb_device *nrt_usb_config_dev(struct hc_device *p_hcd, __u8 rh_port_nr, 
         return NULL;
     }
 
-    INFO_MSG2(p_hcd, &usb_dev[0], " Setting Address\n");
+    INFO_MSG2(p_hcd, &usb_dev[0], " Setting Address %d\n", p_usbdev->address);
     ret = nrt_intern_usb_control_msg(p_urb,
                                      0x00, // endpoint
                                      0x00,
@@ -829,7 +834,7 @@ struct usb_device *nrt_usb_config_dev(struct hc_device *p_hcd, __u8 rh_port_nr, 
                                      0x0000,
                                      NULL);
 
-    DBG_MSG2(p_hcd, &usb_dev[0], " UNLOCK USB-Device \n");
+    DBG_MSG2(p_hcd, &usb_dev[0], " UNLOCK USB-Device[0]\n");
     usb_unlock_device(&usb_dev[0]);
 
     if (ret < 0)
@@ -839,10 +844,11 @@ struct usb_device *nrt_usb_config_dev(struct hc_device *p_hcd, __u8 rh_port_nr, 
         return NULL;
     }
 
-    DBG_MSG2(p_hcd, p_usbdev, " LOCK USB-Device \n");
+    DBG_MSG2(p_hcd, p_usbdev, " LOCK USB-Device[%d]\n", p_usbdev->address);
     if (!usb_lock_device(p_usbdev))
     {
-           DBG_MSG2(p_hcd, p_usbdev, " Can't get lock for USB-Device \n");
+        DBG_MSG2(p_hcd, p_usbdev, " Can't get lock for USB-Device[%d]\n",
+                 p_usbdev->address);
         nrt_usb_unregister_urb(p_urb);
         return NULL;
     }
@@ -853,9 +859,10 @@ struct usb_device *nrt_usb_config_dev(struct hc_device *p_hcd, __u8 rh_port_nr, 
     p_usbdev->epmaxpacketin[0]  = p_dev_desc->bMaxPacketSize0;
     p_usbdev->epmaxpacketout[0] = p_dev_desc->bMaxPacketSize0;
 
-    switch(p_usbdev->epmaxpacketin[0])
+    switch (p_usbdev->epmaxpacketin[0])
     {
         case 8:
+            p_urb->p_usbdev = p_usbdev;
             break;
         case 16:
             nrt_usb_unregister_urb(p_urb);
@@ -891,7 +898,7 @@ struct usb_device *nrt_usb_config_dev(struct hc_device *p_hcd, __u8 rh_port_nr, 
 
     len = p_dev_desc->bLength;
 
-    INFO_MSG2(p_hcd, p_usbdev, " Get Device-Descriptor (%d Byte)\n", len);
+    DBG_MSG2(p_hcd, p_usbdev, " Get Device-Descriptor (%d Byte)\n", len);
     ret = nrt_intern_usb_control_msg(p_urb,
                                      0x00,
                                      USB_DIR_IN | USB_TYPE_STANDARD |
@@ -899,9 +906,10 @@ struct usb_device *nrt_usb_config_dev(struct hc_device *p_hcd, __u8 rh_port_nr, 
                                      USB_REQ_GET_DESCRIPTOR,
                                      USB_DT_DEVICE << 8 | 0x00, // index
                                      0x0000, // no language ID
-                                     len, // first 8 Byte
+                                     len,
                                      buffer);
-    if(ret < len)
+
+    if (ret < len)
     {
         ERR_MSG2(p_hcd, p_usbdev, " Received / Sent only %d / %d Byte \n", ret, len);
         nrt_usb_unregister_urb(p_urb);
@@ -960,7 +968,7 @@ struct usb_device *nrt_usb_config_dev(struct hc_device *p_hcd, __u8 rh_port_nr, 
     }
 
     len = p_conf_desc->wTotalLength;
-    INFO_MSG2(p_hcd, p_usbdev, " Get Configuration-Descriptor (%d Byte)\n", len);
+    DBG_MSG2(p_hcd, p_usbdev, " Get Configuration-Descriptor (%d Byte)\n", len);
     ret = nrt_intern_usb_control_msg(p_urb,
                                      0x00,
                                      USB_DIR_IN | USB_TYPE_STANDARD |
@@ -970,7 +978,7 @@ struct usb_device *nrt_usb_config_dev(struct hc_device *p_hcd, __u8 rh_port_nr, 
                                      0x0000,
                                      len,
                                      p_conf_desc);
-    if(ret < len)
+    if (ret < len)
     {
         ERR_MSG2(p_hcd, p_usbdev, " Received / Sent only %d / %d Byte \n",
                  ret, len);
@@ -1004,7 +1012,7 @@ struct usb_device *nrt_usb_config_dev(struct hc_device *p_hcd, __u8 rh_port_nr, 
                           p_conf_desc->bLength +
                           p_if_desc->bLength);
 
-    INFO_MSG2(p_hcd, p_usbdev, " Set Configuration 0x%0x\n",
+    DBG_MSG2(p_hcd, p_usbdev, " Set Configuration 0x%0x\n",
               p_conf_desc->bConfigurationValue);
 
     ret = nrt_intern_usb_control_msg(p_urb,
@@ -1071,7 +1079,7 @@ struct usb_device *nrt_usb_config_dev(struct hc_device *p_hcd, __u8 rh_port_nr, 
     if (p_dev_desc->iSerialNumber)
     {
         ret_len = get_string(p_urb, p_dev_desc->iSerialNumber, lang, string_len, string);
-        if(ret_len > 0)
+        if (ret_len > 0)
         {
             INFO_MSG2(p_hcd, p_usbdev, " Serial : %s\n", string);
         }
@@ -1098,7 +1106,7 @@ struct usb_device *nrt_usb_config_dev(struct hc_device *p_hcd, __u8 rh_port_nr, 
     DBG_MSG2(p_hcd, p_usbdev, " UNLOCK USB-Device \n");
     usb_unlock_device(p_usbdev);
 
-    INFO_MSG2(p_hcd, p_usbdev, " DEVICE CONFIGURED\n");
+    INFO_MSG2(p_hcd, p_usbdev, " Device %d configured\n", p_usbdev->address);
 
     dump_usb_device(p_usbdev);
     list_usb_devices();
@@ -1111,7 +1119,7 @@ struct usb_device *nrt_usb_config_dev(struct hc_device *p_hcd, __u8 rh_port_nr, 
  **************************************/
 
 /**
- * RT-USB-Core interne Funktion zum Versenden eines URBs.
+ * Core internal funktion to submit an URB.
  * Abhaengig vom submit_flag blockiert diese Funktion bis die Nachricht
  * uebertragen wurde oder kehrt sofort zurck, nachdem der Host-Controller die Daten
  * empfangen hat.
@@ -1167,32 +1175,25 @@ static int rt_intern_usb_submit_urb(struct rt_urb *p_urb, __u16 urb_submit_flags
 #ifdef DEBUG
     __u8 device   = usb_pipedevice(p_urb->pipe);
 
-    if(p_urb->transfer_flags & URB_SHORT_NOT_OK)
+    if (p_urb->transfer_flags & URB_SHORT_NOT_OK)
         DBG_MSG2(p_urb->p_hcd, p_urb->p_usbdev, " URB_SHORT_NOT_OK \n");
 
-    if(p_urb->transfer_flags & URB_NO_TRANSFER_DMA_MAP)
+    if (p_urb->transfer_flags & URB_NO_TRANSFER_DMA_MAP)
         DBG_MSG2(p_urb->p_hcd, p_urb->p_usbdev, " URB_NO_TRANSFER_DMA_MAP \n");
 
-    if(p_urb->transfer_flags & URB_NO_SETUP_DMA_MAP)
+    if (p_urb->transfer_flags & URB_NO_SETUP_DMA_MAP)
         DBG_MSG2(p_urb->p_hcd, p_urb->p_usbdev, " URB_NO_SETUP_DMA_MAP \n");
 
-    if(p_urb->transfer_flags & URB_TIMESTAMP_DATA)
+    if (p_urb->transfer_flags & URB_TIMESTAMP_DATA)
         DBG_MSG2(p_urb->p_hcd, p_urb->p_usbdev, " URB_TIMESTAMP_DATA \n");
-
-    DBG_MSG2(p_urb->p_hcd, p_urb->p_usbdev, " URB 0x%p: Pipe: %s\n",
-             p_urb, out ? "OUT" : "IN");
-    DBG_MSG2(p_urb->p_hcd, p_urb->p_usbdev, " URB 0x%p: USB-Device %d\n",
-             p_urb, device);
-    DBG_MSG2(p_urb->p_hcd, p_urb->p_usbdev, " URB 0x%p: Endpoint %d\n",
-             p_urb, endpoint);
-    DBG_MSG2(p_urb->p_hcd, p_urb->p_usbdev, " URB 0x%p: Type : ",
-             p_urb);
 #endif
 
-    switch(usb_pipetype(p_urb->pipe))
+    switch (usb_pipetype(p_urb->pipe))
     {
         case USB_ENDPOINT_XFER_CONTROL:
-            DBG("CTRL\n");
+            DBG("URB Type: CTRL, Address: %d, Pipe: %s, Endpoint %d\n",
+                p_urb->p_usbdev->address, out ? "OUT" : "IN", endpoint);
+
             if (!(p_urb->p_usbdev->ctrl_mask[(out?1:0)] & (1 << endpoint)))
             {
                 ERR_MSG2(p_urb->p_hcd, p_urb->p_usbdev,
@@ -1231,7 +1232,9 @@ static int rt_intern_usb_submit_urb(struct rt_urb *p_urb, __u16 urb_submit_flags
             break;
 
         case USB_ENDPOINT_XFER_BULK:
-            DBG("BULK\n");
+            DBG("URB Type: BULK, Address: %d, Pipe: %s, Endpoint %d\n",
+                p_urb->p_usbdev->address, out ? "OUT" : "IN", endpoint);
+
             if (!(p_urb->p_usbdev->bulk_mask[(out?1:0)] & (1 << endpoint)))
             {
                 ERR_MSG2(p_urb->p_hcd, p_urb->p_usbdev,
@@ -1249,7 +1252,9 @@ static int rt_intern_usb_submit_urb(struct rt_urb *p_urb, __u16 urb_submit_flags
             break;
 
         case USB_ENDPOINT_XFER_INT:
-            DBG("INT\n");
+            DBG("URB Type: INT, Address: %d, Pipe: %s, Endpoint %d\n",
+                p_urb->p_usbdev->address, out ? "OUT" : "IN", endpoint);
+
             if (!(p_urb->p_usbdev->int_mask[(out?1:0)] & (1 << endpoint)))
             {
                 ERR_MSG2(p_urb->p_hcd, p_urb->p_usbdev,
@@ -1260,7 +1265,9 @@ static int rt_intern_usb_submit_urb(struct rt_urb *p_urb, __u16 urb_submit_flags
             break;
 
         case USB_ENDPOINT_XFER_ISOC:
-            DBG("ISO\n");
+            DBG("URB Type: ISO, Address: %d, Pipe: %s, Endpoint %d\n",
+                p_urb->p_usbdev->address, out ? "OUT" : "IN", endpoint);
+
             if (!(p_urb->p_usbdev->iso_mask[(out?1:0)] & (1 << endpoint)))
             {
                 ERR_MSG2(p_urb->p_hcd, p_urb->p_usbdev,
@@ -1338,20 +1345,21 @@ static int rt_intern_usb_submit_urb(struct rt_urb *p_urb, __u16 urb_submit_flags
 }
 
 /**
- * RT-USB-Core interne Funktion zum Versenden eines Control-URBs.
- * Abhaengig vom submit_flag blockiert diese Funktion bis die Nachricht
- * uebertragen wurde oder kehrt sofort zurueck, nachdem der Host-Controller
- * die Daten empfangen hat.
- * @param p_urb Zeiger auf den zu versendenen URB
- * @param endpoint Endpoint-Nummer
- * @param request_type Request-Typ (z.B.  USB_DIR_IN | USB_TYPE_STANDARD | USB_RECIP_DEVICE), 8 Bit
+ * Core internal function to send a control URB.
+ *
+ * @param p_urb Pointer to the URB.
+ * @param endpoint Endpoint number.
+ * @param request_type Request type (e.g.  USB_DIR_IN | USB_TYPE_STANDARD |
+ * USB_RECIP_DEVICE), 8 Bit
  * @param request Request (z.B. USB_REQ_GET_DESCRIPTOR), 8 Bit
  * @param wValue Wert, 16 Bit
  * @param wIndex Index, 16 Bit
- * @param wLength Laenge der Puffer-Daten, 16 Bit
- * @param data Zeiger auf die Daten, die bertragen werden sollen
- * @return -ENODEV, wenn im URB ein ungltiger Zeiger auf einen Host-Controller oder ein USB-Device gespeichert ist
- * @return -EINVAL, wenn Zeiger auf den URB ungltig oder ein ungltiger Wert gespeichert ist (siehe Debug-Meldungen)
+ * @param wLength Length of the transfer buffer, 16 Bit
+ * @param data Pointer to the transfer data.
+ *
+ * @return -ENODEV, Invalid host controller or usb device pointer has been saved
+ * in th URB.
+ * @return -EINVAL, Pointer to the URB invalid or invalid values inside the URB.
  */
 int nrt_intern_usb_control_msg(struct rt_urb *p_urb, __u8 endpoint,
                                __u8 request_type, __u8 request, __u16 wValue,
@@ -1470,7 +1478,7 @@ int nrt_hcd_unregister_driver(struct hc_device *p_hcd)
     p_hub = NULL;
     p_list = hub_list.next;
 
-    while(p_list != &hub_list)
+    while (p_list != &hub_list)
     {
         p_next = p_list->next;
         p_hub = list_entry(p_list, struct hub_device, hub_list);
@@ -1661,7 +1669,7 @@ struct rt_urb *nrt_usb_alloc_ctrl_urb(void)
  */
 void nrt_usb_free_ctrl_urb(struct rt_urb *p_urb)
 {
-    if(!p_urb)
+    if (!p_urb)
         return;
 
     if (p_urb->p_setup_packet)
@@ -2120,6 +2128,29 @@ int __init mod_start(void)
     PRNT("RT-USBCORE: Max %d Controller \n", MAX_CONTROLLER);
     PRNT("RT-USBCORE: Max %d USB-Devices \n", MAX_USB_DEV);
 
+#ifdef CONFIG_USB4RT_DBG_COMMON
+    PRNT("RT-USBCORE: Common debugging: enabled\n");
+#else
+    PRNT("RT-USBCORE: Common debugging: disabled\n");
+#endif
+
+#ifdef CONFIG_USB4RT_DBG_QH
+    PRNT("RT-USBCORE: Queue head debugging: enabled\n");
+#else
+    PRNT("RT-USBCORE: Common debugging: disabled\n");
+#endif
+
+#ifdef CONFIG_USB4RT_DBG_TD
+    PRNT("RT-USBCORE: Transfer descriptor debugging: enabled\n");
+#else
+    PRNT("RT-USBCORE: Common debugging: disabled\n");
+#endif
+
+#ifdef CONFIG_USB4RT_DBG_TIME
+    PRNT("RT-USBCORE: Time debugging: enabled\n");
+#else
+    PRNT("RT-USBCORE: Common debugging: disabled\n");
+#endif
     usb_anz_ctrl = 0;
 
     for (i=0;i < MAX_USB_DEV;i++)

@@ -25,70 +25,87 @@
 #include <rt_usb.h>
 #include "rt_usb_hub.h"  // portstat_t
 
-#define PRNT(txt, args...)                         printk(txt, ##args); /* TD debug messages */
+#define PRNT(txt, args...)                        printk(txt, ##args);
 
-# define INFO(txt, args...)                        PRNT(txt, ##args);
-# define INFO_MSG1( p_hcd, txt, args...)           PRNT("%03d:" txt, (p_hcd)->hcd_nr, ##args);
-# define INFO_MSG2( p_hcd, p_usbdev, txt, args...) PRNT("%03d:%02d-%03d:" txt,\
+#define INFO(txt, args...)                        PRNT(txt, ##args);
+#define INFO_MSG1( p_hcd, txt, args...)           PRNT("%03d:" txt, (p_hcd)->hcd_nr, ##args);
+#define INFO_MSG2( p_hcd, p_usbdev, txt, args...) PRNT("%03d:%02d-%03d:" txt,\
                                                        (p_hcd)->hcd_nr, \
                                                        (p_usbdev)->rh_port,\
                                                        (p_usbdev)->address, ##args);
 
 #ifdef CONFIG_USB4RT_DBG_TD
-# define TD_DBG(txt, args...)                      PRNT(txt, ##args); /* TD debug messages */
-# define TD_MSG1( p_hcd, txt, args...)             PRNT("%03d:" txt, (p_hcd)->hcd_nr, ##args);
-# define TD_ERR(txt, args...)                      PRNT(txt, ##args); /* error messages */
+
+#define TD_DBG(txt, args...)                      PRNT(txt, ##args); /* TD debug messages */
+#define TD_MSG1( p_hcd, txt, args...)             PRNT("%03d:" txt, (p_hcd)->hcd_nr, ##args);
+#define TD_ERR(txt, args...)                      PRNT(txt, ##args); /* error messages */
+
 #else
-# define TD_DBG(txt, args...)
-# define TD_MSG1( p_hcd, txt, args...)
-# define TD_ERR(txt, args...)
+
+#define TD_DBG(txt, args...)
+#define TD_MSG1( p_hcd, txt, args...)
+#define TD_ERR(txt, args...)
+
 #endif
 
 #ifdef CONFIG_USB4RT_DBG_QH
-# define QH_DBG(txt, args...)                      PRNT(txt, ##args); /* QH debug messages */
-# define QH_ERR(txt, args...)                      PRNT(txt, ##args); /* error messages */
+
+#define QH_DBG(txt, args...)                      PRNT(txt, ##args); /* QH debug messages */
+#define QH_ERR(txt, args...)                      PRNT(txt, ##args); /* error messages */
+
 #else
-# define QH_DBG(txt, args...)
-# define QH_ERR(txt, args...)
+
+#define QH_DBG(txt, args...)
+#define QH_ERR(txt, args...)
+
 #endif
 
 #ifdef CONFIG_USB4RT_DBG_COMMON
-# define DBG(txt, args...)                         PRNT(txt, ##args);
-# define DBG_MSG1( p_hcd, txt, args...)            PRNT("%03d:" txt, (p_hcd)->hcd_nr, ##args);
-# define DBG_MSG2( p_hcd, p_usbdev, txt, args...)  PRNT("%03d:%02d-%03d:" txt,\
+
+#define DBG(txt, args...)                         PRNT(txt, ##args);
+#define DBG_MSG1( p_hcd, txt, args...)            PRNT("%03d:" txt, (p_hcd)->hcd_nr, ##args);
+#define DBG_MSG2( p_hcd, p_usbdev, txt, args...)  PRNT("%03d:%02d-%03d:" txt,\
                                                        (p_hcd)->hcd_nr, \
                                                        (p_usbdev)->rh_port,\
                                                        (p_usbdev)->address, ##args);
 #else
-# define DBG(txt, args...)
-# define DBG_MSG1(p_hcd,txt,args...)
-# define DBG_MSG2(p_hcd,p_usbdev,txt,args...)
+
+#define DBG(txt, args...)
+#define DBG_MSG1(p_hcd,txt,args...)
+#define DBG_MSG2(p_hcd,p_usbdev,txt,args...)
+
 #endif
 
 #ifdef CONFIG_USB4RT_DBG_ERR
-# define ERR(txt, args...)                         PRNT(txt, ##args); /* error messages */
-# define ERR_MSG1(p_hcd,txt,args...)               PRNT("%03d: [ERROR]" txt, (p_hcd)->hcd_nr, ##args);
-# define ERR_MSG2(p_hcd,p_usbdev,txt,args...)      PRNT("%03d:%02d-%03d: [ERROR]" txt,\
+
+#define ERR(txt, args...)                         PRNT(txt, ##args); /* error messages */
+#define ERR_MSG1(p_hcd,txt,args...)               PRNT("%03d: [ERROR]" txt, (p_hcd)->hcd_nr, ##args);
+#define ERR_MSG2(p_hcd,p_usbdev,txt,args...)      PRNT("%03d:%02d-%03d: [ERROR]" txt,\
                                                        (p_hcd)->hcd_nr, \
                                                        (p_usbdev)->rh_port,\
                                                        (p_usbdev)->address, ##args);
 #else
-# define ERR(txt, args...)
-# define ERR_MSG1(p_hcd,txt,args...)
-# define ERR_MSG2(p_hcd,p_usbdev,txt,args...)
+
+#define ERR(txt, args...)
+#define ERR_MSG1(p_hcd,txt,args...)
+#define ERR_MSG2(p_hcd,p_usbdev,txt,args...)
+
 #endif
 
 #ifdef CONFIG_USB4RT_DBG_TIME
-# define TDBG(txt, args...)                        PRNT(txt, ##args);
-# define TDBG_MSG1( p_hcd, txt, args...)           PRNT("%03d:" txt, (p_hcd)->hcd_nr, ##args);
-# define TDBG_MSG2( p_hcd, p_usbdev, txt, args...) PRNT("%03d:%02d-%03d:" txt,\
+
+#define TDBG(txt, args...)                        PRNT(txt, ##args);
+#define TDBG_MSG1( p_hcd, txt, args...)           PRNT("%03d:" txt, (p_hcd)->hcd_nr, ##args);
+#define TDBG_MSG2( p_hcd, p_usbdev, txt, args...) PRNT("%03d:%02d-%03d:" txt,\
                                                       (p_hcd)->hcd_nr, \
                                                       (p_usbdev)->rh_port,\
                                                       (p_usbdev)->address, ##args);
 #else
-# define TDBG(txt, args...)
-# define TDBG_MSG1(p_hcd,txt,args...)
-# define TDBG_MSG2(p_hcd,p_usbdev,txt,args...)
+
+#define TDBG(txt, args...)
+#define TDBG_MSG1(p_hcd,txt,args...)
+#define TDBG_MSG2(p_hcd,p_usbdev,txt,args...)
+
 #endif
 
 void dump_device_descriptor( struct usb_device *p_usbdev, struct usb_device_descriptor *p_desc );
