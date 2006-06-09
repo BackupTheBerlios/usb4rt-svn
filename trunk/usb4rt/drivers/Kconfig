@@ -1,0 +1,10 @@
+
+menu "Drivers"
+
+config USB4RT_DRV_FTDI_SIO
+    bool "FTDI Serial Converter (under construction)"
+    default n
+    help
+    Realtime driver for the FTDI usb to serial converter (under construction).
+
+endmenu

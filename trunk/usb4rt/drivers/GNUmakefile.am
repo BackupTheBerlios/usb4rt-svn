@@ -1,0 +1,46 @@
+
+moduledir = $(DESTDIR)$(USB4RT_MODULE_DIR)
+modext = @USB4RT_MODULE_EXT@
+
+EXTRA_LIBRARIES =
+OBJS =
+
+if CONFIG_USB4RT_DRV_FTDI_SIO
+EXTRA_LIBRARIES += libkernel_rt_ftdi_sio.a
+OBJS += rt_ftdi_sio$(modext)
+endif
+
+libkernel_rt_ftdi_sio_a_CPPFLAGS = \
+	$(USB4RT_KMOD_CFLAGS) \
+	-I$(top_srcdir)
+
+libkernel_rt_ftdi_sio_a_SOURCES = \
+	rt_ftdi_sio.h \
+	rt_ftdi_sio.c
+
+rt_ftdi_sio.o: libkernel_rt_ftdi_sio.a
+	$(LD) --whole-archive $< -r -o $@
+
+rt_ftdi_sio.ko: @USB4RT_KBUILD_ENV@
+rt_ftdi_sio.ko: $(libkernel_rt_ftdi_sio_a_SOURCES) FORCE
+	@USB4RT_KBUILD_CMD@
+
+all-local: $(OBJS)
+
+install-exec-local: $(OBJS)
+	$(mkinstalldirs) $(moduledir)
+	if test "$^" \!= ""; then $(INSTALL_DATA) $^ $(moduledir); fi
+
+clean-local: $(libkernel_rt_ftdi_sio_a_SOURCES) 
+	@USB4RT_KBUILD_CLEAN@
+
+distclean-local:
+	$(USB4RT_KBUILD_DISTCLEAN)
+
+EXTRA_DIST = \
+	Makefile.kbuild
+
+DISTCLEANFILES = \
+	Makefile
+
+.PHONY: FORCE

@@ -1,0 +1,9 @@
+EXTRA_CFLAGS += \
+	$(usb4rt_kmod_cflags) \
+	-I$(top_srcdir) \
+	-I$(top_builddir) \
+	-I$(srcdir)
+
+obj-m += $(build_target).o
+
+rt_usbping-objs := $(build_objs)
