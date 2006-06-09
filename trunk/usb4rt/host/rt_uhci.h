@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Jörg Langenberg                                 *
+ *   Copyright (C) 2005, 2006 by Joerg Langenberg                          *
  *   joerg.langenberg@gmx.net                                              *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,8 +17,8 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef RT_UHCI_H
-#define RT_UHCI_H
+#ifndef __RT_UHCI_H__
+#define __RT_UHCI_H__
 
 #include <linux/pci.h>
 #include <rtdm/rtdm_driver.h>
@@ -289,4 +289,4 @@ struct rt_urb_priv{
   struct uhc_device *p_uhcd;
 };
 
-#endif
+#endif // __RT_UHCI_H__

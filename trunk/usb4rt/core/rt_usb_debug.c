@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Jörg Langenberg                                 *
+ *   Copyright (C) 2005, 2006 by Joerg Langenberg                          *
  *   joerg.langenberg@gmx.net                                              *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *

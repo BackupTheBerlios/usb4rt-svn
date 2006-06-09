@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Jörg Langenberg                                 *
+ *   Copyright (C) 2005, 2006 by Joerg Langenberg                          *
  *   joerg.langenberg@gmx.net                                              *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -7,14 +7,14 @@
  *   the Free Software Foundation; either version 2 of the License, or     *
  *   (at your option) any later version.                                   *
  *                                                                         *
- *   This program is distributed in the hope that it will be useful, *
+ *   This program is distributed in the hope that it will be useful,       *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU General Public License for more details.                          *
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc., *
+ *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
@@ -1754,6 +1754,7 @@ struct rt_urb *nrt_usb_create_ctrl_semaphore_urb(unsigned char *name,
                                                  int64_t rt_sem_timeout)
 {
     struct rt_urb *p_urb = nrt_usb_alloc_ctrl_urb();
+
     if (!p_urb)
         return NULL;
 
@@ -1789,6 +1790,7 @@ struct rt_urb *nrt_usb_create_semaphore_urb(unsigned char *name,
                                             int64_t rt_sem_timeout)
 {
     struct rt_urb *p_urb = nrt_usb_alloc_urb();
+
     if (!p_urb)
         return NULL;
 
@@ -2137,19 +2139,19 @@ int __init mod_start(void)
 #ifdef CONFIG_USB4RT_DBG_QH
     PRNT("RT-USBCORE: Queue head debugging: enabled\n");
 #else
-    PRNT("RT-USBCORE: Common debugging: disabled\n");
+    PRNT("RT-USBCORE: Queue head debugging: disabled\n");
 #endif
 
 #ifdef CONFIG_USB4RT_DBG_TD
     PRNT("RT-USBCORE: Transfer descriptor debugging: enabled\n");
 #else
-    PRNT("RT-USBCORE: Common debugging: disabled\n");
+    PRNT("RT-USBCORE: Transfer descriptor debugging: disabled\n");
 #endif
 
 #ifdef CONFIG_USB4RT_DBG_TIME
     PRNT("RT-USBCORE: Time debugging: enabled\n");
 #else
-    PRNT("RT-USBCORE: Common debugging: disabled\n");
+    PRNT("RT-USBCORE: Time debugging: disabled\n");
 #endif
     usb_anz_ctrl = 0;
 

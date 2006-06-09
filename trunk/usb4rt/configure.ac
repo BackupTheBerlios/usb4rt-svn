@@ -422,8 +422,48 @@ dnl                      components
 dnl ======================================================================
 
 dnl -----------------------------------------------------------------
-dnl  common debugging
+dnl  applications
 dnl -----------------------------------------------------------------
+
+AC_MSG_CHECKING(for realtime usb ping application)
+
+AC_ARG_ENABLE(app-ping,
+  AS_HELP_STRING([--disable-app-ping], [Disable realtime usb ping application]),
+  [case "$enableval" in
+  n | no) unset CONFIG_USB4RT_APP_PING ;;
+  *) CONFIG_USB4RT_APP_PING=y ;;
+  esac])
+
+AC_MSG_RESULT(${CONFIG_USB4RT_APP_PING:-n})
+
+test x${CONFIG_USB4RT_APP_PING} = xy && AC_DEFINE(CONFIG_USB4RT_APP_PING,1,[Define to 1 if you want to use the realtime usb ping application.])
+AM_CONDITIONAL(CONFIG_USB4RT_APP_PING,[test x${CONFIG_USB4RT_APP_PING} = xy])
+AC_SUBST(CONFIG_USB4RT_APP_PING)
+
+dnl -----------------------------------------------------------------
+dnl  drivers
+dnl -----------------------------------------------------------------
+
+AC_MSG_CHECKING(for realtime ftdi_sio driver)
+
+AC_ARG_ENABLE(drv-ftdi,
+  AS_HELP_STRING([--enable-drv-ftdi], [Enable realtime ftdi_sio driver]),
+  [case "$enableval" in
+  y | yes) CONFIG_USB4RT_DRV_FTDI_SIO=y ;;
+  *) unset CONFIG_USB4RT_DRV_FTDI_SIO ;;
+  esac])
+
+AC_MSG_RESULT(${CONFIG_USB4RT_DRV_FTDI_SIO:-n})
+
+test x${CONFIG_USB4RT_DRV_FTDI_SIO} = xy && AC_DEFINE(CONFIG_USB4RT_DRV_FTDI_SIO,1,[Define to 1 if you want to use the realtime ftdi_sio driver.])
+AM_CONDITIONAL(CONFIG_USB4RT_DRV_FTDI_SIO,[test x${CONFIG_USB4RT_DRV_FTDI_SIO} = xy])
+AC_SUBST(CONFIG_USB4RT_DRV_FTDI_SIO)
+
+dnl -----------------------------------------------------------------
+dnl  debugging
+dnl -----------------------------------------------------------------
+
+dnl ----- common ----------------------------------------------------
 
 AC_MSG_CHECKING(for common debug messages)
 
@@ -440,9 +480,7 @@ test x${CONFIG_USB4RT_DBG_COMMON} = xy && AC_DEFINE(CONFIG_USB4RT_DBG_COMMON,1,[
 AM_CONDITIONAL(CONFIG_USB4RT_DBG_COMMON,[test x${CONFIG_USB4RT_DBG_COMMON} = xy])
 AC_SUBST(CONFIG_USB4RT_DBG_COMMON)
 
-dnl -----------------------------------------------------------------
-dnl  time debugging
-dnl -----------------------------------------------------------------
+dnl ----- time ----------------------------------------------------
 
 AC_MSG_CHECKING(for time debug messages)
 
@@ -459,9 +497,7 @@ test x${CONFIG_USB4RT_DBG_TIME} = xy && AC_DEFINE(CONFIG_USB4RT_DBG_TIME,1,[Defi
 AM_CONDITIONAL(CONFIG_USB4RT_DBG_TIME,[test x${CONFIG_USB4RT_DBG_TIME} = xy])
 AC_SUBST(CONFIG_USB4RT_DBG_TIME)
 
-dnl -----------------------------------------------------------------
-dnl  transfer descriptor debugging
-dnl -----------------------------------------------------------------
+dnl ----- transfer descriptor ----------------------------------------------------
 
 AC_MSG_CHECKING(for transfer-descriptor debug messages)
 
@@ -478,9 +514,7 @@ test x${CONFIG_USB4RT_DBG_TD} = xy && AC_DEFINE(CONFIG_USB4RT_DBG_TD,1,[Define t
 AM_CONDITIONAL(CONFIG_USB4RT_DBG_TD,[test x${CONFIG_USB4RT_DBG_TD} = xy])
 AC_SUBST(CONFIG_USB4RT_DBG_TD)
 
-dnl -----------------------------------------------------------------
-dnl  ARG-Enable Queue-Head-Debug
-dnl -----------------------------------------------------------------
+dnl ----- queue heads ----------------------------------------------------
 
 AC_MSG_CHECKING(for queue-head debug messages)
 
@@ -528,7 +562,8 @@ dnl ======================================================================
 for DIR in \
   core \
   host \
-  prog \
+  apps \
+  drivers \
   ; do
       AC_CONFIG_LINKS(${DIR}/Makefile:${DIR}/Makefile.kbuild)
 done
@@ -540,7 +575,8 @@ dnl ======================================================================
 AC_CONFIG_FILES([GNUmakefile \
                  core/GNUmakefile \
                  host/GNUmakefile \
-                 prog/GNUmakefile \
+                 apps/GNUmakefile \
+		 drivers/GNUmakefile \
                  config/GNUmakefile \
                  config/kconfig/GNUmakefile \
                  config/kconfig/lxdialog/GNUmakefile

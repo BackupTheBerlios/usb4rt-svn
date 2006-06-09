@@ -466,7 +466,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB CPP CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CCAS CCASFLAGS LD XENO_USER_PREFIX XENO_LIBRARIES USB4RT_TARGET_ARCH CROSS_COMPILE USB4RT_MODULE_EXT USB4RT_KBUILD_ENV USB4RT_KBUILD_CMD USB4RT_KBUILD_CLEAN USB4RT_MODULE_DIR USB4RT_KMOD_CFLAGS USB4RT_USER_CFLAGS CONFIG_USB4RT_DBG_COMMON_TRUE CONFIG_USB4RT_DBG_COMMON_FALSE CONFIG_USB4RT_DBG_COMMON CONFIG_USB4RT_DBG_TIME_TRUE CONFIG_USB4RT_DBG_TIME_FALSE CONFIG_USB4RT_DBG_TIME CONFIG_USB4RT_DBG_TD_TRUE CONFIG_USB4RT_DBG_TD_FALSE CONFIG_USB4RT_DBG_TD CONFIG_USB4RT_DBG_QH_TRUE CONFIG_USB4RT_DBG_QH_FALSE CONFIG_USB4RT_DBG_QH CONFIG_USB4RT_BANDW_RECLAM_TRUE CONFIG_USB4RT_BANDW_RECLAM_FALSE CONFIG_USB4RT_BANDW_RECLAM LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB CPP CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CCAS CCASFLAGS LD XENO_USER_PREFIX XENO_LIBRARIES USB4RT_TARGET_ARCH CROSS_COMPILE USB4RT_MODULE_EXT USB4RT_KBUILD_ENV USB4RT_KBUILD_CMD USB4RT_KBUILD_CLEAN USB4RT_MODULE_DIR USB4RT_KMOD_CFLAGS USB4RT_USER_CFLAGS CONFIG_USB4RT_APP_PING_TRUE CONFIG_USB4RT_APP_PING_FALSE CONFIG_USB4RT_APP_PING CONFIG_USB4RT_DRV_FTDI_SIO_TRUE CONFIG_USB4RT_DRV_FTDI_SIO_FALSE CONFIG_USB4RT_DRV_FTDI_SIO CONFIG_USB4RT_DBG_COMMON_TRUE CONFIG_USB4RT_DBG_COMMON_FALSE CONFIG_USB4RT_DBG_COMMON CONFIG_USB4RT_DBG_TIME_TRUE CONFIG_USB4RT_DBG_TIME_FALSE CONFIG_USB4RT_DBG_TIME CONFIG_USB4RT_DBG_TD_TRUE CONFIG_USB4RT_DBG_TD_FALSE CONFIG_USB4RT_DBG_TD CONFIG_USB4RT_DBG_QH_TRUE CONFIG_USB4RT_DBG_QH_FALSE CONFIG_USB4RT_DBG_QH CONFIG_USB4RT_BANDW_RECLAM_TRUE CONFIG_USB4RT_BANDW_RECLAM_FALSE CONFIG_USB4RT_BANDW_RECLAM LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1047,6 +1047,8 @@ Optional Features:
   --enable-fast-install[=PKGS]
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
+  --disable-app-ping      Disable realtime usb ping application
+  --enable-drv-ftdi       Enable realtime ftdi_sio driver
   --disable-dbg-common    Disable common debug messages
   --enable-dbg-time       Enable time debug messages
   --enable-dbg-td         Enable transfer-descriptor debug messages
@@ -3778,7 +3780,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 3781 "configure"' > conftest.$ac_ext
+  echo '#line 3783 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5377,7 +5379,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5380:" \
+echo "$as_me:5382:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6440,11 +6442,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6443: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6445: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6447: \$? = $ac_status" >&5
+   echo "$as_me:6449: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -6708,11 +6710,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6711: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6713: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6715: \$? = $ac_status" >&5
+   echo "$as_me:6717: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -6812,11 +6814,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6815: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6817: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:6819: \$? = $ac_status" >&5
+   echo "$as_me:6821: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -9157,7 +9159,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9160 "configure"
+#line 9162 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -9257,7 +9259,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9260 "configure"
+#line 9262 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11597,11 +11599,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11600: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11602: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:11604: \$? = $ac_status" >&5
+   echo "$as_me:11606: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -11701,11 +11703,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11704: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11706: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:11708: \$? = $ac_status" >&5
+   echo "$as_me:11710: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -13271,11 +13273,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13274: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13276: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13278: \$? = $ac_status" >&5
+   echo "$as_me:13280: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -13375,11 +13377,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13378: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13380: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13382: \$? = $ac_status" >&5
+   echo "$as_me:13384: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15578,11 +15580,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15581: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15583: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15585: \$? = $ac_status" >&5
+   echo "$as_me:15587: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -15846,11 +15848,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15849: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15851: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15853: \$? = $ac_status" >&5
+   echo "$as_me:15855: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -15950,11 +15952,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15953: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15955: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15957: \$? = $ac_status" >&5
+   echo "$as_me:15959: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -19346,6 +19348,73 @@ USB4RT_USER_CFLAGS="-D__IN_USB4RT__ $USB4RT_USER_CFLAGS"
 
 
 
+echo "$as_me:$LINENO: checking for realtime usb ping application" >&5
+echo $ECHO_N "checking for realtime usb ping application... $ECHO_C" >&6
+
+# Check whether --enable-app-ping or --disable-app-ping was given.
+if test "${enable_app_ping+set}" = set; then
+  enableval="$enable_app_ping"
+  case "$enableval" in
+  n | no) unset CONFIG_USB4RT_APP_PING ;;
+  *) CONFIG_USB4RT_APP_PING=y ;;
+  esac
+fi;
+
+echo "$as_me:$LINENO: result: ${CONFIG_USB4RT_APP_PING:-n}" >&5
+echo "${ECHO_T}${CONFIG_USB4RT_APP_PING:-n}" >&6
+
+test x${CONFIG_USB4RT_APP_PING} = xy &&
+cat >>confdefs.h <<\_ACEOF
+#define CONFIG_USB4RT_APP_PING 1
+_ACEOF
+
+
+
+if test x${CONFIG_USB4RT_APP_PING} = xy; then
+  CONFIG_USB4RT_APP_PING_TRUE=
+  CONFIG_USB4RT_APP_PING_FALSE='#'
+else
+  CONFIG_USB4RT_APP_PING_TRUE='#'
+  CONFIG_USB4RT_APP_PING_FALSE=
+fi
+
+
+
+
+echo "$as_me:$LINENO: checking for realtime ftdi_sio driver" >&5
+echo $ECHO_N "checking for realtime ftdi_sio driver... $ECHO_C" >&6
+
+# Check whether --enable-drv-ftdi or --disable-drv-ftdi was given.
+if test "${enable_drv_ftdi+set}" = set; then
+  enableval="$enable_drv_ftdi"
+  case "$enableval" in
+  y | yes) CONFIG_USB4RT_DRV_FTDI_SIO=y ;;
+  *) unset CONFIG_USB4RT_DRV_FTDI_SIO ;;
+  esac
+fi;
+
+echo "$as_me:$LINENO: result: ${CONFIG_USB4RT_DRV_FTDI_SIO:-n}" >&5
+echo "${ECHO_T}${CONFIG_USB4RT_DRV_FTDI_SIO:-n}" >&6
+
+test x${CONFIG_USB4RT_DRV_FTDI_SIO} = xy &&
+cat >>confdefs.h <<\_ACEOF
+#define CONFIG_USB4RT_DRV_FTDI_SIO 1
+_ACEOF
+
+
+
+if test x${CONFIG_USB4RT_DRV_FTDI_SIO} = xy; then
+  CONFIG_USB4RT_DRV_FTDI_SIO_TRUE=
+  CONFIG_USB4RT_DRV_FTDI_SIO_FALSE='#'
+else
+  CONFIG_USB4RT_DRV_FTDI_SIO_TRUE='#'
+  CONFIG_USB4RT_DRV_FTDI_SIO_FALSE=
+fi
+
+
+
+
+
 echo "$as_me:$LINENO: checking for common debug messages" >&5
 echo $ECHO_N "checking for common debug messages... $ECHO_C" >&6
 
@@ -19516,14 +19585,15 @@ fi
 for DIR in \
   core \
   host \
-  prog \
+  apps \
+  drivers \
   ; do
                 ac_config_links="$ac_config_links ${DIR}/Makefile:${DIR}/Makefile.kbuild"
 
 done
 
 
-                                                                      ac_config_files="$ac_config_files GNUmakefile core/GNUmakefile host/GNUmakefile prog/GNUmakefile config/GNUmakefile config/kconfig/GNUmakefile config/kconfig/lxdialog/GNUmakefile"
+                                                                                ac_config_files="$ac_config_files GNUmakefile core/GNUmakefile host/GNUmakefile apps/GNUmakefile drivers/GNUmakefile config/GNUmakefile config/kconfig/GNUmakefile config/kconfig/lxdialog/GNUmakefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -19641,6 +19711,20 @@ if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"am__fastdepCXX\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"am__fastdepCXX\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${CONFIG_USB4RT_APP_PING_TRUE}" && test -z "${CONFIG_USB4RT_APP_PING_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_USB4RT_APP_PING\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"CONFIG_USB4RT_APP_PING\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${CONFIG_USB4RT_DRV_FTDI_SIO_TRUE}" && test -z "${CONFIG_USB4RT_DRV_FTDI_SIO_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_USB4RT_DRV_FTDI_SIO\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"CONFIG_USB4RT_DRV_FTDI_SIO\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -20129,7 +20213,8 @@ do
   "GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES GNUmakefile" ;;
   "core/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES core/GNUmakefile" ;;
   "host/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES host/GNUmakefile" ;;
-  "prog/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES prog/GNUmakefile" ;;
+  "apps/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES apps/GNUmakefile" ;;
+  "drivers/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/GNUmakefile" ;;
   "config/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES config/GNUmakefile" ;;
   "config/kconfig/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES config/kconfig/GNUmakefile" ;;
   "config/kconfig/lxdialog/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES config/kconfig/lxdialog/GNUmakefile" ;;
@@ -20304,6 +20389,12 @@ s,@USB4RT_KBUILD_CLEAN@,$USB4RT_KBUILD_CLEAN,;t t
 s,@USB4RT_MODULE_DIR@,$USB4RT_MODULE_DIR,;t t
 s,@USB4RT_KMOD_CFLAGS@,$USB4RT_KMOD_CFLAGS,;t t
 s,@USB4RT_USER_CFLAGS@,$USB4RT_USER_CFLAGS,;t t
+s,@CONFIG_USB4RT_APP_PING_TRUE@,$CONFIG_USB4RT_APP_PING_TRUE,;t t
+s,@CONFIG_USB4RT_APP_PING_FALSE@,$CONFIG_USB4RT_APP_PING_FALSE,;t t
+s,@CONFIG_USB4RT_APP_PING@,$CONFIG_USB4RT_APP_PING,;t t
+s,@CONFIG_USB4RT_DRV_FTDI_SIO_TRUE@,$CONFIG_USB4RT_DRV_FTDI_SIO_TRUE,;t t
+s,@CONFIG_USB4RT_DRV_FTDI_SIO_FALSE@,$CONFIG_USB4RT_DRV_FTDI_SIO_FALSE,;t t
+s,@CONFIG_USB4RT_DRV_FTDI_SIO@,$CONFIG_USB4RT_DRV_FTDI_SIO,;t t
 s,@CONFIG_USB4RT_DBG_COMMON_TRUE@,$CONFIG_USB4RT_DBG_COMMON_TRUE,;t t
 s,@CONFIG_USB4RT_DBG_COMMON_FALSE@,$CONFIG_USB4RT_DBG_COMMON_FALSE,;t t
 s,@CONFIG_USB4RT_DBG_COMMON@,$CONFIG_USB4RT_DBG_COMMON,;t t

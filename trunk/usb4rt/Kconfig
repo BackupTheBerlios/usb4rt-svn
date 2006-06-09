@@ -34,6 +34,9 @@ config USB4RT_INSTALLDIR
 
 endmenu
 
+source "apps/Kconfig"
+source "drivers/Kconfig"
+
 menu "Debugging"
 
 config USB4RT_DBG_COMMON

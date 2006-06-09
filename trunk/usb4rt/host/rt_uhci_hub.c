@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Jörg Langenberg                                 *
+ *   Copyright (C) 2005, 2006 by Joerg Langenberg                          *
  *   joerg.langenberg@gmx.net                                              *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,7 +17,6 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <asm/io.h>

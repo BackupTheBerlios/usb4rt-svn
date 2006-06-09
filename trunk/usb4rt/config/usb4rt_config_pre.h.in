@@ -3,6 +3,9 @@
 /* we are building for x86 */
 #undef CONFIG_ARCH_I386
 
+/* Define to 1 if you want to use the realtime usb ping application. */
+#undef CONFIG_USB4RT_APP_PING
+
 /* Kconfig */
 #undef CONFIG_USB4RT_BANDW_RECLAM
 
@@ -23,6 +26,9 @@
 
 /* Define to 1 if you want to enable time debugging. */
 #undef CONFIG_USB4RT_DBG_TIME
+
+/* Define to 1 if you want to use the realtime ftdi_sio driver. */
+#undef CONFIG_USB4RT_DRV_FTDI_SIO
 
 /* Host system alias */
 #undef CONFIG_USB4RT_HOST_STRING

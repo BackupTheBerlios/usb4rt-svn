@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Jörg Langenberg                                 *
+ *   Copyright (C) 2005, 2006 by Joerg Langenberg                          *
  *   joerg.langenberg@gmx.net                                              *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,9 +17,8 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-
-#ifndef RT_UHCI_HUB_H
-#define RT_UHCI_HUB_H
+#ifndef __RT_UHCI_HUB_H__
+#define __RT_UHCI_HUB_H__
 
 #include "rt_uhci.h"
 
@@ -37,4 +36,4 @@
 #define PORTSC_OCC          0x0800    /* Over-current Change */
 #define PORTSC_SUSPEND      0x1000    /* Suspend */
 
-#endif
+#endif // __RT_UHCI_HUB_H__
