@@ -1,0 +1,11 @@
+
+menu "Applications"
+
+config USB4RT_APP_PING
+    bool "Realtime USB ping module"
+    default y
+    help
+    Realtime USB ping module. You can test the realtime USB connection to any USB devices with this module.
+    More information are in the README file in the root directory of usb4rt.
+
+endmenu
