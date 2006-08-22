@@ -601,6 +601,7 @@ void usb_check_device(struct usb_device *p_usbdev)
 */
 
     int bytes;
+    int alternate = 0;
     void *buffer;
     __u16 epa;
     __u8 out;
@@ -639,6 +640,7 @@ void usb_check_device(struct usb_device *p_usbdev)
             p_ifd = (struct usb_interface_descriptor *)buffer;
             buffer += p_ifd->bLength;
             bytes -= p_ifd->bLength;
+            alternate = p_ifd->bAlternateSetting;
             //dump_interface_descriptor(addr, p_ifd);
             break;
         }
@@ -651,6 +653,9 @@ void usb_check_device(struct usb_device *p_usbdev)
             buffer += p_epd->bLength;
             bytes -= p_epd->bLength;
             //dump_endpoint_descriptor(addr, p_epd);
+            if (alternate)
+                break; /* discard endpoints in alternate interfaces */
+
             if (out)
                 p_usbdev->epmaxpacketout[epa] = le16_to_cpu(p_epd->wMaxPacketSize);
             else
