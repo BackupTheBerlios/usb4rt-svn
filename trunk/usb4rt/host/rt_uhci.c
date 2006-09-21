@@ -2469,7 +2469,6 @@ int nrt_uhci_register_urb(struct rt_urb *p_urb)
     }
 
     // check if the URB is registered yet
-    p_purb = NULL;
     p_list = p_uhcd->reg_urb_list.next;;
 
     while (p_list != &p_uhcd->reg_urb_list)
@@ -2539,7 +2538,7 @@ int nrt_uhci_register_urb(struct rt_urb *p_urb)
         destroy_td_table(p_purb);
         kfree(p_purb);
         alloc_bytes -= 1 * sizeof(struct rt_privurb);
-        ERR_MSG1(p_purb->p_hcd, " %s - Error while creating Queue-Header \n",
+        ERR_MSG1(p_urb->p_hcd, " %s - Error while creating Queue-Header \n",
                  __FUNCTION__);
         return ret;
     }
@@ -2575,7 +2574,7 @@ int nrt_uhci_unregister_urb(struct rt_urb *p_urb)
     if ((p_purb->status == PURB_IN_PROGRESS) ||
         (p_purb->status == PURB_IN_HANDLE))
     {
-        ERR_MSG1(p_purb->p_hcd, " %s - URB 0x%p: IN PROGRESS, UNSCHEDULE !!!\n",
+        ERR_MSG1(p_urb->p_hcd, " %s - URB 0x%p: IN PROGRESS, UNSCHEDULE !!!\n",
                  __FUNCTION__, p_purb->p_urb);
 
         rt_complete_urb(p_purb);
@@ -2596,7 +2595,7 @@ int nrt_uhci_unregister_urb(struct rt_urb *p_urb)
     kfree(p_purb);
     alloc_bytes -= 1 * sizeof(struct rt_privurb);
 
-    DBG_MSG1(p_purb->p_hcd, " URB 0x%p unregistered\n", p_urb);
+    DBG_MSG1(p_urb->p_hcd, " URB 0x%p unregistered\n", p_urb);
     return 0;
 }
 
