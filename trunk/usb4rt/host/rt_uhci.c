@@ -1205,7 +1205,8 @@ static void release_ioport(struct uhc_device *p_uhcd)
   }
 
   size = p_uhcd->p_io->end - p_uhcd->p_io->start + 1;
-  PRNT("RT-UHC-Driver: Release IO-Port 0x%08lx (%lu Byte)\n", p_uhcd->p_io->start, size);
+  PRNT("RT-UHC-Driver: Release IO-Port 0x%08llx (%lu Byte)\n",
+       (unsigned long long)p_uhcd->p_io->start, size);
   release_region(p_uhcd->p_io->start, size);
   p_uhcd->p_io = NULL;
   return;

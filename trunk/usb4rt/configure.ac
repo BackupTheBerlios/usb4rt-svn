@@ -61,7 +61,15 @@ AC_MSG_CHECKING([for USB4RT target architecture])
 case "$host" in
   i*86*-*)
     USB4RT_TARGET_ARCH=i386
-    wanted_kernel_arch=CONFIG_X86
+    ;;
+  x86_64-*)
+    USB4RT_TARGET_ARCH=x86_64
+    ;;
+  arm-*)
+    USB4RT_TARGET_ARCH=arm
+    ;;
+  powerpc-*|ppc-*)
+    USB4RT_TARGET_ARCH=ppc
     ;;
  *)
     AC_MSG_ERROR([ *** Sorry, unsupported architecture])
@@ -222,7 +230,7 @@ AC_MSG_CHECKING([for Xenomai version])
 XENO_VERSION_PRE="`${XENO_USER_CONFIG} --version`"
 
 case "$XENO_VERSION_PRE" in
-  2.1* | 2.0.9* | 2.2* )
+  2.[[1-9]]* )
     XENO_VERSION=xeno-21x
     ;;
   *)
