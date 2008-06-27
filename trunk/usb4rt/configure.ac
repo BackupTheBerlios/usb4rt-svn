@@ -274,19 +274,6 @@ AC_MSG_RESULT([${XENO_USER_ARCH}])
 AC_MSG_CHECKING([for USB4RT target arch])
 AC_MSG_RESULT([${USB4RT_TARGET_ARCH}])
 
-if test x"${USB4RT_TARGET_ARCH}" != x"${XENO_USER_ARCH}"; then
-    AC_MSG_ERROR([*** Xenomai and USB4RT target architectures are not the same])
-fi
-
-case "${XENO_USER_ARCH}" in
-    i386)
-        AC_DEFINE(CONFIG_ARCH_I386, 1,[we are building for x86])
-        ;;
-    *)
-        AC_MSG_ERROR([*** unsupported architecture])
-        ;;
-esac
-
 AC_SUBST(USB4RT_TARGET_ARCH)
 
 dnl ======================================================================
