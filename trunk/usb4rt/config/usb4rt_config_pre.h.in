@@ -1,8 +1,5 @@
 /* config/usb4rt_config_pre.h.in.  Generated from configure.ac by autoheader.  */
 
-/* we are building for x86 */
-#undef CONFIG_ARCH_I386
-
 /* Define to 1 if you want to use the realtime usb ping application. */
 #undef CONFIG_USB4RT_APP_PING
 
