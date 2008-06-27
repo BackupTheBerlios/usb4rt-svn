@@ -22,7 +22,14 @@
 #define RT_USB_H
 
 #include <linux/types.h>
+#include <linux/version.h>
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,21)
 #include <linux/usb_ch9.h>
+#else
+#include <linux/usb/ch9.h>
+#endif
+
 #include <rtdm/rtdm_driver.h>
 
 /*--------------------------*
